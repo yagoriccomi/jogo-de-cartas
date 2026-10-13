@@ -1,0 +1,50 @@
+.configuracao {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.passo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.passo__rotulo {
+  font-weight: 600;
+}
+
+.passo__controle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.passo__botao {
+  width: 2.75rem;
+  padding: 0;
+  font-size: 1.25rem;
+}
+
+.passo__valor {
+  min-width: 2rem;
+  text-align: center;
+  font-weight: 800;
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.configuracao__marcar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 2.75rem;
+  cursor: pointer;
+}
+
+.configuracao__marcar input {
+  width: 1.25rem;
+  height: 1.25rem;
+  accent-color: var(--destaque);
+}

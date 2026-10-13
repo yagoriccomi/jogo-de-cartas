@@ -1,0 +1,587 @@
+/* ---------- Layout da mesa (celular primeiro) ---------- */
+.mesa {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.mesa__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  font-size: 0.9375rem;
+}
+
+.mesa__sala {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--texto-suave);
+  font-weight: 600;
+}
+
+.mesa__cega {
+  margin-left: 0.5rem;
+}
+
+.mesa__jogadores {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  gap: 0.4rem;
+}
+
+/* ---------- Chip de jogador ---------- */
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding: 0.4rem 0.55rem;
+  background: var(--superficie);
+  border: 2px solid var(--borda);
+  border-radius: var(--raio-p);
+  min-width: 0;
+}
+
+.chip--vez {
+  border-color: var(--destaque);
+  background: var(--destaque-suave);
+}
+
+.chip--eu .chip__nome {
+  color: var(--destaque);
+}
+
+.chip--eliminado {
+  opacity: 0.5;
+}
+
+.chip--offline {
+  border-style: dashed;
+}
+
+.chip__corpo {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.05rem 0.4rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.chip__nome {
+  font-weight: 700;
+  font-size: 0.875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chip__voce {
+  font-weight: 400;
+  color: var(--texto-suave);
+}
+
+.chip__vidas {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-weight: 800;
+  font-size: 0.875rem;
+  color: var(--vida);
+}
+
+.chip__vida-icone {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.chip__placar {
+  grid-column: 1 / -1;
+  font-size: 0.75rem;
+  color: var(--texto-suave);
+}
+
+.chip__selos {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  min-height: 1.1rem;
+}
+
+.contagem {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  font-size: 0.8125rem;
+  color: var(--texto-suave);
+}
+
+.contagem--urgente {
+  color: var(--perigo);
+  animation: pulsar 1s ease-in-out infinite;
+}
+
+@keyframes pulsar {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* ---------- Feltro ---------- */
+.feltro {
+  background: var(--mesa);
+  color: var(--mesa-texto);
+  border: 2px solid var(--mesa-borda);
+  border-radius: var(--raio);
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  box-shadow: var(--sombra);
+}
+
+.feltro__cabecalho {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+}
+
+.feltro__vira,
+.feltro__manilha {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.feltro__rotulo {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  opacity: 0.85;
+}
+
+.feltro__manilha-valor {
+  display: grid;
+  place-items: center;
+  min-width: 3rem;
+  height: 3rem;
+  padding: 0 0.5rem;
+  border-radius: 50%;
+  background: var(--manilha);
+  color: #1a1d29;
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.feltro__situacao {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-left: auto;
+  text-align: right;
+}
+
+.feltro__situacao .contagem {
+  color: var(--mesa-texto);
+  font-size: 1.1rem;
+}
+
+.feltro__situacao .contagem--urgente {
+  color: var(--manilha);
+}
+
+.feltro__vez {
+  font-weight: 700;
+}
+
+.feltro__vez--eu {
+  background: var(--manilha);
+  color: #1a1d29;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+}
+
+.feltro__jogadas {
+  min-height: 5.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--mesa-suave);
+  border-radius: var(--raio-p);
+  padding: 0.5rem;
+}
+
+.feltro__vazio {
+  opacity: 0.8;
+  font-size: 0.875rem;
+}
+
+.jogadas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.jogadas__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  max-width: 4.6rem;
+}
+
+.jogadas__nome {
+  font-size: 0.6875rem;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ultima {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.75rem;
+}
+
+.ultima__cartas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+/* ---------- Minha área (fixa embaixo no celular) ---------- */
+.mesa__minha {
+  position: sticky;
+  bottom: 0;
+  margin: 0 -1rem;
+  padding: 0.75rem 1rem max(0.75rem, env(safe-area-inset-bottom));
+  background: var(--superficie);
+  border-top: 1px solid var(--borda);
+  box-shadow: 0 -4px 16px rgb(0 0 0 / 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.mesa__dica,
+.mesa__eliminado,
+.mao__vazia {
+  font-size: 0.875rem;
+  color: var(--texto-suave);
+  text-align: center;
+}
+
+.mesa__eliminado {
+  font-weight: 600;
+  color: var(--perigo);
+}
+
+.mao {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.mao__inerte {
+  opacity: 0.85;
+}
+
+/* ---------- Palpite ---------- */
+.palpite {
+  width: 100%;
+  max-width: 28rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.palpite__titulo {
+  font-weight: 700;
+  text-align: center;
+}
+
+.palpite__opcoes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.palpite__opcao {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  border: 2px solid var(--borda);
+  border-radius: var(--raio-p);
+  background: var(--superficie);
+  font-weight: 800;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.palpite__opcao[aria-checked='true'] {
+  border-color: var(--destaque);
+  background: var(--destaque);
+  color: var(--destaque-texto);
+}
+
+.palpite__opcao:disabled {
+  opacity: 0.35;
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+
+.palpite__dica {
+  font-size: 0.8125rem;
+  color: var(--alerta);
+  font-weight: 600;
+  text-align: center;
+}
+
+/* ---------- Cartas ---------- */
+.carta {
+  --largura: 3.2rem;
+  position: relative;
+  display: block;
+  flex: none;
+  width: var(--largura);
+  aspect-ratio: 5 / 7;
+  padding: 0;
+  font-size: calc(var(--largura) * 0.3);
+  line-height: 1;
+  background: var(--carta-fundo);
+  border: 1px solid var(--carta-borda);
+  border-radius: calc(var(--largura) * 0.12);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+  overflow: hidden;
+}
+
+.carta--p {
+  --largura: 2.1rem;
+}
+
+.carta--g {
+  --largura: 4.4rem;
+}
+
+.carta--vermelha {
+  color: var(--naipe-vermelho);
+}
+
+.carta--preta {
+  color: var(--naipe-preto);
+}
+
+.carta--manilha {
+  box-shadow:
+    0 0 0 2px var(--manilha),
+    0 1px 3px rgb(0 0 0 / 0.25);
+}
+
+.carta__canto {
+  position: absolute;
+  top: 0.18em;
+  left: 0.22em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.05em;
+  font-weight: 800;
+}
+
+.carta__valor {
+  font-size: 1em;
+}
+
+.carta__canto .naipe {
+  width: 0.8em;
+  height: 0.8em;
+}
+
+.carta__centro {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+.carta__centro .naipe {
+  width: 1.9em;
+  height: 1.9em;
+  opacity: 0.9;
+}
+
+.carta--p .carta__centro {
+  display: none;
+}
+
+.carta--verso {
+  border-color: var(--verso-b);
+  background: repeating-linear-gradient(
+    45deg,
+    var(--verso-a) 0 0.35rem,
+    var(--verso-b) 0.35rem 0.7rem
+  );
+}
+
+.carta--clicavel {
+  cursor: pointer;
+  transition: transform 0.12s;
+}
+
+.carta--clicavel:hover,
+.carta--clicavel:focus-visible {
+  transform: translateY(-6px);
+}
+
+.carta--ativa {
+  outline: 2px solid var(--destaque);
+  outline-offset: 2px;
+}
+
+/* ---------- Resultado / fim ---------- */
+.sobreposicao {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: var(--sobreposicao);
+}
+
+.folha {
+  width: 100%;
+  max-width: 26rem;
+  max-height: 90dvh;
+  overflow: auto;
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+  padding: 1.1rem;
+}
+
+.folha__titulo {
+  font-size: 1.1rem;
+  margin-bottom: 0.75rem;
+}
+
+.folha__rodape {
+  margin-top: 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--texto-suave);
+  text-align: center;
+}
+
+.resultado {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.resultado th,
+.resultado td {
+  padding: 0.4rem 0.35rem;
+  border-bottom: 1px solid var(--borda);
+  text-align: center;
+}
+
+.resultado th:first-child {
+  text-align: left;
+  font-weight: 600;
+}
+
+.resultado thead th {
+  font-size: 0.75rem;
+  color: var(--texto-suave);
+  text-transform: uppercase;
+}
+
+.resultado__eu th {
+  color: var(--destaque);
+}
+
+.resultado__perdeu {
+  color: var(--perigo);
+  font-weight: 800;
+}
+
+.resultado__ok {
+  color: var(--sucesso);
+  font-weight: 700;
+}
+
+.fim {
+  max-width: 28rem;
+  width: 100%;
+  margin: 1rem auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  text-align: center;
+}
+
+.fim .cartao__titulo {
+  margin-bottom: 0;
+}
+
+.fim__titulo {
+  font-size: 1.75rem;
+  letter-spacing: -0.02em;
+}
+
+.fim__texto {
+  color: var(--texto-suave);
+}
+
+.fim__placar {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+
+.fim__placar li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--borda);
+}
+
+.fim__acoes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media (min-width: 40rem) {
+  .mesa__minha {
+    margin: 0;
+    border: 1px solid var(--borda);
+    border-radius: var(--raio);
+  }
+}
