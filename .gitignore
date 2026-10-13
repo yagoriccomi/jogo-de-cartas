@@ -1,0 +1,36 @@
+# Dependências
+node_modules/
+
+# Builds
+dist/
+build/
+.next/
+.vite/
+*.tsbuildinfo
+
+# Testes
+coverage/
+
+# Ambiente — NUNCA versionar segredos
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# Vercel / Render
+.vercel/
+
+# Sistema / editores
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Android (fase futura)
+android/app/build/
+*.keystore
+local.properties
