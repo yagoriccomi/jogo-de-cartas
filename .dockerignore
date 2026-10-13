@@ -1,0 +1,21 @@
+# Contexto de build do Dockerfile de produção (apps/server/Dockerfile) — mantém a imagem enxuta e sem segredos.
+**/node_modules
+**/dist
+**/build
+**/.vite
+**/coverage
+**/*.tsbuildinfo
+**/*.log
+
+.env
+.env.*
+!.env.example
+
+.git
+.github
+.vscode
+.idea
+docs
+android
+**/.DS_Store
+**/Thumbs.db

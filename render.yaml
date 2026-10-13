@@ -1,0 +1,22 @@
+# Blueprint da Render — backend (servidor de jogo). O frontend vai para a Vercel (root: apps/web).
+# Atenção: o plano free hiberna após ~15 min sem tráfego e reinicia o processo,
+# o que apaga as salas e derruba partidas em andamento (estado vive em memória).
+services:
+  - type: web
+    name: fodinha-server
+    runtime: node
+    plan: free
+    # rootDir vazio = raiz do monorepo (os workspaces precisam do package-lock.json da raiz)
+    buildCommand: npm ci --include=dev && npm run build -w @fodinha/server
+    startCommand: npm run start -w @fodinha/server
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: '24'
+      - key: CORS_ORIGINS
+        sync: false # defina no painel: URL do frontend na Vercel (várias, separadas por vírgula)
+      - key: LOG_LEVEL
+        value: info
+      - key: TURN_TIMEOUT_SECONDS
+        value: '30'
