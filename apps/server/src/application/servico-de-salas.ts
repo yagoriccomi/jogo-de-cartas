@@ -1,4 +1,4 @@
-import type { SessaoJogador } from '@fodinha/shared';
+import { LIMITES, type ConfiguracaoPartida, type SessaoJogador } from '@fodinha/shared';
 import type { GeradorAleatorio } from '../domain/aleatoriedade';
 import { ErroDeRegra } from '../domain/erros';
 import { Sala, type Expulsao, type Participante } from '../domain/sala';
@@ -13,6 +13,18 @@ import type {
 } from './portas';
 
 const APELIDOS_DE_BOT = ['Zé', 'Dona Cida', 'Tião', 'Lurdinha', 'Juca', 'Neide', 'Bastião', 'Fia'];
+
+// Quatro baralhos sem 8-9-10 e vidas cheias: o maior palco possível para testar mesas lotadas.
+const CONFIGURACAO_DE_CENARIO: ConfiguracaoPartida = {
+  quantidadeBaralhos: LIMITES.maxBaralhos,
+  vidasIniciais: LIMITES.maxVidas,
+  incluirOitoNoveDez: false,
+};
+
+function inteiroEntre(valor: unknown, minimo: number, maximo: number): number | null {
+  const ok = Number.isInteger(valor) && (valor as number) >= minimo && (valor as number) <= maximo;
+  return ok ? (valor as number) : null;
+}
 
 /** Quem está agindo: extraído da sessão do socket, nunca do payload do cliente. */
 export interface Ator {
@@ -47,6 +59,40 @@ export class ServicoDeSalas {
       normalizarDispositivo(dados.dispositivoId),
     );
     const sala = new Sala(this.codigoLivre(), criador, dados.configuracao);
+    return this.abrirSala(sala, criador);
+  }
+
+  /**
+   * Só para desenvolvimento (o gateway barra quando a flag está desligada): sala lotada de bots
+   * já em partida, para testar mesas cheias sem precisar de outras pessoas.
+   */
+  criarCenario(dados: {
+    apelido?: unknown;
+    dispositivoId?: unknown;
+    jogadores?: unknown;
+    cartas?: unknown;
+  }): SessaoJogador {
+    const jogadores = inteiroEntre(dados.jogadores, LIMITES.minJogadores, LIMITES.maxJogadores);
+    const cartas = inteiroEntre(dados.cartas, 1, Number.MAX_SAFE_INTEGER);
+    if (jogadores === null || cartas === null) {
+      throw new ErroDeRegra(
+        'ENTRADA_INVALIDA',
+        `Cenário inválido: jogadores de ${LIMITES.minJogadores} a ${LIMITES.maxJogadores} e cartas a partir de 1.`,
+      );
+    }
+    const criador = this.novoHumano(
+      normalizarApelido(dados.apelido),
+      normalizarDispositivo(dados.dispositivoId),
+    );
+    const sala = new Sala(this.codigoLivre(), criador, CONFIGURACAO_DE_CENARIO, {
+      maxBots: LIMITES.maxJogadores - 1,
+    });
+    for (let i = 1; i < jogadores; i++) sala.adicionarBot(criador.id, this.novoBot(sala));
+    sala.iniciarPartida(criador.id, this.deps.gerarAleatorio, cartas);
+    return this.abrirSala(sala, criador);
+  }
+
+  private abrirSala(sala: Sala, criador: Participante): SessaoJogador {
     this.deps.repositorio.salvar(sala);
     this.deps.registrador.info({ sala: sala.codigo }, 'Sala criada');
     this.deps.condutor.aposMudanca(sala);

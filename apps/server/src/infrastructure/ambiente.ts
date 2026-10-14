@@ -7,6 +7,8 @@ export interface Ambiente {
   readonly origensPermitidas: readonly string[];
   readonly nivelDeLog: NivelDeLog;
   readonly prazoDaVezMs: number;
+  /** Só para desenvolvimento: libera o evento `dev:cenario`. Nunca ligar em produção. */
+  readonly cenariosDeTeste: boolean;
 }
 
 function numeroPositivo(nome: string, valor: string | undefined, padrao: number): number {
@@ -33,5 +35,6 @@ export function lerAmbiente(variaveis: NodeJS.ProcessEnv = process.env): Ambient
       .filter(Boolean),
     nivelDeLog: nivel,
     prazoDaVezMs: numeroPositivo('TURN_TIMEOUT_SECONDS', variaveis.TURN_TIMEOUT_SECONDS, 30) * 1000,
+    cenariosDeTeste: variaveis.CENARIOS_DE_TESTE === 'true',
   };
 }

@@ -65,6 +65,14 @@ export interface EventosClienteParaServidor {
     dados: { apelido: string; configuracao: ConfiguracaoPartida } & IdentificacaoDispositivo,
     responder: (resposta: Resposta<SessaoJogador>) => void,
   ) => void;
+  /**
+   * Só em servidor com `CENARIOS_DE_TESTE=true` (desenvolvimento): cria a sala já em partida,
+   * com `jogadores` participantes (o resto bots) e `cartas` cartas na primeira rodada.
+   */
+  'dev:cenario': (
+    dados: { apelido: string; jogadores: number; cartas: number } & IdentificacaoDispositivo,
+    responder: (resposta: Resposta<SessaoJogador>) => void,
+  ) => void;
   'sala:entrar': (
     dados: { codigoSala: string; apelido: string } & IdentificacaoDispositivo,
     responder: (resposta: Resposta<SessaoJogador>) => void,
