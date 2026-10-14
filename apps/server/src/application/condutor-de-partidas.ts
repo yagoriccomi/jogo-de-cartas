@@ -77,7 +77,9 @@ export class CondutorDePartidas {
       prazoDaVezEm: momento?.tipo === 'vez' ? momento.em : null,
       prazoDaVezRestanteMs: restante('vez'),
       proximaRodada: previsao && { ...previsao, comecaEmMs: restante('proximaRodada') },
-      pausa: sala.pausada ? { votacoes: sala.votacoesVisiveis() } : null,
+      pausa: sala.pausada
+        ? { votacoes: sala.votacoesVisiveis(), pausadaPeloDono: sala.pausadaPeloDono }
+        : null,
       jogadores: visao.jogadores.map((jogador) => {
         const participante = sala.participante(jogador.id);
         return {

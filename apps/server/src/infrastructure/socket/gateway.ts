@@ -99,6 +99,12 @@ export class GatewayDoJogo {
     socket.on('sala:reiniciar', (responder) =>
       this.responder(socket, responder, () => nulo(this.servico.reiniciar(this.ator(socket)))),
     );
+    socket.on('sala:pausar', (responder) =>
+      this.responder(socket, responder, () => nulo(this.servico.pausar(this.ator(socket)))),
+    );
+    socket.on('sala:retomar', (responder) =>
+      this.responder(socket, responder, () => nulo(this.servico.retomar(this.ator(socket)))),
+    );
     socket.on('jogo:votarEspera', (dados, responder) =>
       this.responder(socket, responder, () =>
         nulo(this.servico.votarEspera(this.ator(socket), objeto(dados))),

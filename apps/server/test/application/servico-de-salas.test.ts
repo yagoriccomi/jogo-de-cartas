@@ -480,3 +480,62 @@ describe('ServicoDeSalas — saída voluntária', () => {
     ).toThrow();
   });
 });
+
+describe('ServicoDeSalas — pausa pelo dono', () => {
+  function mesaComBot() {
+    const dono = criarSala();
+    const bia = entrar(dono, 'Bia');
+    servico.adicionarBot(ator(dono));
+    servico.iniciarPartida(ator(dono));
+    return { dono, bia };
+  }
+
+  it('deveCongelarAMesaAteODonoRetomar', () => {
+    const { dono } = mesaComBot();
+    servico.pausar(ator(dono));
+    const pausado = partidaDe(dono);
+    expect(pausado?.pausa).toEqual({ votacoes: [], pausadaPeloDono: true });
+    expect(pausado?.prazoDaVezEm).toBeNull();
+
+    const fotografia = JSON.stringify(partidaDe(dono)?.jogadores);
+    relogio.avancar(10 * PRAZO_MS);
+    expect(JSON.stringify(partidaDe(dono)?.jogadores)).toBe(fotografia);
+
+    servico.retomar(ator(dono));
+    expect(partidaDe(dono)?.pausa).toBeNull();
+    expect(partidaDe(dono)?.prazoDaVezEm ?? 0).toBeGreaterThan(0);
+  });
+
+  it('deveRecusarJogadasEnquantoPausada', () => {
+    const { dono, bia } = mesaComBot();
+    servico.pausar(ator(dono));
+    const daVez = [dono, bia].find((h) => partidaDe(h)?.idDaVez === h.jogadorId);
+    if (daVez) {
+      expect(() => servico.palpitar(ator(daVez), 0)).toThrow(
+        expect.objectContaining({ codigo: 'JOGO_PAUSADO' }),
+      );
+    }
+  });
+
+  it('deveDeixarSoODonoPausarERetomar', () => {
+    const { dono, bia } = mesaComBot();
+    const sem = expect.objectContaining({ codigo: 'SEM_PERMISSAO' });
+    expect(() => servico.pausar(ator(bia))).toThrow(sem);
+    servico.pausar(ator(dono));
+    expect(() => servico.retomar(ator(bia))).toThrow(sem);
+  });
+
+  it('naoDevePausarForaDePartida', () => {
+    const dono = criarSala();
+    expect(() => servico.pausar(ator(dono))).toThrow(
+      expect.objectContaining({ codigo: 'ENTRADA_INVALIDA' }),
+    );
+  });
+
+  it('deveDesfazerAPausaAoReiniciar', () => {
+    const { dono } = mesaComBot();
+    servico.pausar(ator(dono));
+    servico.reiniciar(ator(dono));
+    expect(partidaDe(dono)?.pausa).toBeNull();
+  });
+});

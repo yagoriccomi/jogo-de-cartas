@@ -86,6 +86,9 @@ export interface EventosClienteParaServidor {
   'sala:iniciarPartida': (responder: (resposta: Resposta<null>) => void) => void;
   /** Só o dono: volta à rodada 1 com as vidas iniciais para todos. */
   'sala:reiniciar': (responder: (resposta: Resposta<null>) => void) => void;
+  /** Só o dono: congela a partida (sem prazo da vez nem bots) até ele retomar. */
+  'sala:pausar': (responder: (resposta: Resposta<null>) => void) => void;
+  'sala:retomar': (responder: (resposta: Resposta<null>) => void) => void;
   'sala:sair': (responder: (resposta: Resposta<null>) => void) => void;
   'jogo:palpitar': (
     dados: { quantidade: number },

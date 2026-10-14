@@ -142,6 +142,20 @@ export class ServicoDeSalas {
     });
   }
 
+  pausar(ator: Ator): void {
+    this.alterar(ator, (sala) => {
+      sala.pausar(ator.jogadorId);
+      this.deps.registrador.info({ sala: sala.codigo }, 'Partida pausada pelo dono');
+    });
+  }
+
+  retomar(ator: Ator): void {
+    this.alterar(ator, (sala) => {
+      sala.retomar(ator.jogadorId);
+      this.deps.registrador.info({ sala: sala.codigo }, 'Partida retomada pelo dono');
+    });
+  }
+
   sair(ator: Ator): void {
     const sala = this.salaExistente(ator.codigoSala);
     sala.sair(ator.jogadorId);
@@ -196,7 +210,7 @@ export class ServicoDeSalas {
       throw new ErroDeRegra('JOGADA_INVALIDA', 'Não há partida em andamento.');
     }
     if (sala.pausada) {
-      throw new ErroDeRegra('JOGO_PAUSADO', 'A partida está pausada esperando uma votação.');
+      throw new ErroDeRegra('JOGO_PAUSADO', 'A partida está pausada.');
     }
     return sala.partida;
   }

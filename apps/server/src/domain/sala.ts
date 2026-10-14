@@ -44,6 +44,7 @@ export class Sala {
   private anfitriaoId: string;
   private configuracao: ConfiguracaoPartida;
   private partidaAtual: Partida | null = null;
+  private pausaDoDono = false;
 
   constructor(
     readonly codigo: string,
@@ -67,7 +68,12 @@ export class Sala {
 
   /** Com votação aberta nada anda: sem prazo da vez, sem jogada de bot, sem jogada humana. */
   get pausada(): boolean {
-    return this.votacoes.size > 0;
+    return this.votacoes.size > 0 || this.pausadaPeloDono;
+  }
+
+  /** O dono congelou a mesa: dura até ele retomar (ou a partida acabar/reiniciar). */
+  get pausadaPeloDono(): boolean {
+    return this.pausaDoDono && this.emPartida;
   }
 
   get todos(): readonly Participante[] {
@@ -151,6 +157,19 @@ export class Sala {
       throw new ErroDeRegra('ENTRADA_INVALIDA', 'Ainda não há partida para reiniciar.');
     }
     return this.comecarPartida(gerarAleatorio);
+  }
+
+  pausar(solicitanteId: string): void {
+    this.exigirAnfitriao(solicitanteId);
+    if (!this.emPartida) {
+      throw new ErroDeRegra('ENTRADA_INVALIDA', 'Não há partida em andamento para pausar.');
+    }
+    this.pausaDoDono = true;
+  }
+
+  retomar(solicitanteId: string): void {
+    this.exigirAnfitriao(solicitanteId);
+    this.pausaDoDono = false;
   }
 
   /** Saída voluntária: no meio da rodada, um bot termina por ele e o assento some depois. */
@@ -267,6 +286,7 @@ export class Sala {
     });
     this.participantes.splice(0, this.participantes.length, ...ativos);
     this.votacoes.clear();
+    this.pausaDoDono = false;
     this.partidaAtual = partida;
     return partida;
   }

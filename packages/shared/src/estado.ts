@@ -82,6 +82,8 @@ export interface ProximaRodadaVisivel {
 /** Partida congelada (sem prazo da vez, sem jogada de bot) enquanto houver votação aberta. */
 export interface PausaVisivel {
   readonly votacoes: readonly VotacaoEspera[];
+  /** O dono pausou: só ele retoma. Pode coexistir com votações de ausentes. */
+  readonly pausadaPeloDono: boolean;
 }
 
 /**
