@@ -54,7 +54,11 @@ test('o tutorial vai do começo ao fim com todo balão apontando para algo visí
       await proximo.click();
       if (ultimo) break;
     } else if (await page.locator('.palpite').isVisible()) {
-      await page.locator('.palpite__opcao', { hasText: /^2$/ }).click();
+      // O balão diz qual palpite o roteiro espera ("Escolha 2 e confirme").
+      const dica = (await balao.locator('.tutorial__dica').textContent()) ?? '';
+      const pedido = /Escolha (\d+)/.exec(dica)?.[1];
+      if (pedido === undefined) throw new Error(`Passo de palpite sem número na dica: "${dica}"`);
+      await page.locator('.palpite__opcao', { hasText: new RegExp(`^${pedido}$`) }).click();
       await page.locator('.palpite__rodape .botao').click();
     } else if ((await balao.locator('.tutorial__dica', { hasText: 'Toque duas' }).count()) > 0) {
       await jogarCartaDestacada(page);

@@ -421,12 +421,13 @@
 
 /* Duas linhas sem divisória; as cartas se sobrepõem e o canto com valor/naipe fica à mostra. */
 .mesa-linhas {
-  /* A carta encolhe (48-68px no celular) até caber a fila mais longa: a líder inteira, a folga e
-     `--visivel` de cada carta da pilha (o canto do valor). Também respeita a altura do feltro. */
+  /* A carta encolhe até caber a fila mais longa: a líder inteira, a folga, a primeira da pilha
+     inteira e `--visivel` de cada uma das demais (o canto do valor). Também respeita a altura. */
   --visivel: 0.55;
   --folga-lider: 0.22;
   --l-pela-largura: calc(
-    100cqw / (1 + var(--folga-lider) + (var(--n-max, 1) - 1) * var(--visivel))
+    100cqw /
+      (min(var(--n-max, 1), 2) + var(--folga-lider) + max(var(--n-max, 1) - 2, 0) * var(--visivel))
   );
   --l-pela-altura: calc((100cqh - 8px) / 2.85);
   --l-carta: clamp(40px, min(var(--l-pela-largura), var(--l-pela-altura)), 68px);
@@ -440,6 +441,9 @@
 }
 
 .mesa-linha {
+  /* Linha de cima: a folga depois da líder e uma carta a menos dividindo a sobreposição. */
+  --folga: calc(var(--l-carta) * var(--folga-lider));
+  --divisor: max(var(--n) - 2, 1);
   display: flex;
   align-items: center;
   /* A fila começa à esquerda, na carta mais forte, e cresce para a direita. */
@@ -449,13 +453,20 @@
   list-style: none;
 }
 
-/* Pilha: cada carta entra por cima da anterior (ordem do DOM), sobrepondo o necessário para caber. */
+/* Linha de baixo (anuladas): sem líder, sem folga. */
+.mesa-linha--anuladas {
+  --folga: 0px;
+  --divisor: max(var(--n) - 1, 1);
+}
+
+/* Pilha: cada carta entra por cima da anterior (ordem do DOM), sobrepondo o necessário para caber
+   (a sobra da linha, descontada a folga da líder, dividida entre as cartas sobrepostas). */
 .mesa-linha__carta {
   position: relative;
   flex: none;
   margin-left: min(
     calc(var(--l-carta) * var(--sobreposicao) * -1),
-    calc((100% - var(--n) * var(--l-carta)) / max(var(--n) - 1, 1))
+    calc((100% - var(--n) * var(--l-carta) - var(--folga)) / var(--divisor))
   );
   will-change: transform;
 }
@@ -466,7 +477,7 @@
 
 /* A que está ganhando fica sozinha: a pilha das demais começa depois de uma folga. */
 .mesa-linha__carta--lider + .mesa-linha__carta {
-  margin-left: calc(var(--l-carta) * var(--folga-lider));
+  margin-left: var(--folga);
 }
 
 .mesa-linha__carta--lider .carta {

@@ -21,22 +21,23 @@ Fodinha é um jogo de cartas multiplayer online, jogado direto no navegador. Cri
 - **Entrar no meio:** dá para entrar com a partida em andamento. Quem chega assiste até a próxima rodada e senta com a mesma quantidade de vidas do jogador vivo com mais vidas.
 - **Dono da sala:** quem criou a sala pode pausar e retomar a partida quando quiser, reiniciá-la (volta à rodada 1 com vidas cheias para todos) e expulsar pessoas. Quem é expulso não consegue voltar àquela sala pelo mesmo navegador. Se o dono sair, o posto passa para quem está há mais tempo na sala, e volta para o criador se ele retornar.
 - **Saída no meio da rodada:** quem sai (ou é expulso) tem a rodada terminada por um bot e só então deixa a mesa.
-- **Reações rápidas:** durante a partida, o botão 😀 acima do seu status abre 8 emojis (😂 🔥 😱 👏 🤡 🍀 😭 🙏). A reação aparece por cerca de 2,5 segundos sobre a placa de quem reagiu, para todos da sala; cada jogador pode reagir no máximo a cada 1,5 segundo. Não é salva em lugar nenhum.
 - **Mão organizada:** suas cartas aparecem sempre da mais forte (à esquerda) para a mais fraca (à direita), considerando a manilha da rodada.
 - **Mesa:** a carta que está ganhando fica sozinha à esquerda; as demais que valem formam uma pilha ao lado, da mais forte para a mais fraca. As que empataram e se anularam ficam na linha de baixo. Cada vaza ganha vira um montinho na frente de quem ganhou; vaza toda empatada vira um montinho no canto inferior direito da mesa.
 
 ## Features
 
 - Salas por código, sem cadastro: entre como convidado com um apelido.
+- Reações rápidas durante a partida: o botão 😀 abre 8 emojis que aparecem por uns 2,5 segundos sobre a placa de quem reagiu (no máximo uma a cada 1,5 segundo por jogador).
 - Convite por link com mensagem pronta: compartilhamento nativo do aparelho, botão direto do WhatsApp ou cópia do link; o link preenche o código da sala.
 - Site responsivo e instalável no celular (abre em tela cheia, com ícone na tela inicial).
 - Visual "Vice City": mesa de feltro com neon e cartas em pixel art; manilhas com brilho holográfico.
 - Anfitrião configura a partida (baralhos, vidas, 8-9-10), adiciona bots e inicia.
-- Bots com estratégia simples para completar a mesa.
+- Bots que palpitam pela força da mão (e, na rodada cega, pelas cartas que veem na testa dos outros) e jogam para acertar o palpite.
 - Servidor autoritativo: o cliente só recebe a própria mão, a vira, as cartas jogadas e, na rodada cega, a carta dos outros.
 - Reconexão por token após recarregar a página.
 - Prazo da vez com jogada automática, para a mesa nunca travar.
-- Tutorial interativo na tela inicial: uma rodada roteirada contra 2 bots, com cartas sempre iguais e balões de fala apontando cada parte da mesa. Funciona sem servidor.
+- Tutorial interativo na tela inicial: uma rodada de 3 cartas e uma rodada cega roteiradas contra 2 bots, com cartas sempre iguais e balões de fala apontando cada parte da mesa. Funciona sem servidor.
+- Sons de fliperama (sintetizados, sem arquivos de áudio) e vibração na sua vez e ao perder vida, com opção de silenciar no menu.
 - Placar a qualquer momento (vidas, palpite e vazas feitas de todos) e guia de regras ilustrado, passo a passo.
 - Partida sem rolar a tela: no celular o topo fica recolhido (toque na alça ou deslize para baixo a partir do topo para abrir) e o palpite aparece dentro da mesa, sem cobrir a mão nem as suas vidas.
 

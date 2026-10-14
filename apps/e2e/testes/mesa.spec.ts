@@ -14,6 +14,8 @@ import {
 
 /** Quantas cartas na mesa bastam para a fila da líder + pilha ficar apertada. */
 const CARTAS_NA_MESA_PARA_MEDIR = 6;
+/** Entre uma vaza e outra as cartas voam por ~1 s; isso dá folga para alguma pousar. */
+const ESPERA_PARA_POUSAR_MS = 10_000;
 /** Coração menor que isso some na tela do celular (já aconteceu). */
 const LARGURA_MINIMA_DO_CORACAO_PX = 8;
 
@@ -66,16 +68,23 @@ test.describe('Mesa cheia (10 jogadores, 13 cartas)', () => {
     await esperarSemRolagem(page);
 
     const feltro = await medir(page.locator('.feltro'));
-    // Com bots instantâneos outras cartas continuam chegando: mede só as que já pousaram.
-    const pousadas = await page.evaluate(() =>
-      Array.from(document.querySelectorAll<HTMLElement>('[data-carta-mesa]'))
-        .filter((carta) => carta.getAnimations({ subtree: true }).length === 0)
-        .map((carta) => {
-          const r = carta.getBoundingClientRect();
-          return { x: r.x, y: r.y, width: r.width, height: r.height };
-        }),
-    );
-    expect(pousadas.length).toBeGreaterThan(0);
+    // Com bots instantâneos outras cartas continuam chegando (ou a vaza fecha e todas voam para o
+    // montinho): mede só as que já pousaram, esperando haver alguma.
+    const medirPousadas = () =>
+      page.evaluate(() =>
+        Array.from(document.querySelectorAll<HTMLElement>('[data-carta-mesa]'))
+          .filter((carta) => carta.getAnimations({ subtree: true }).length === 0)
+          .map((carta) => {
+            const r = carta.getBoundingClientRect();
+            return { x: r.x, y: r.y, width: r.width, height: r.height };
+          }),
+      );
+    let pousadas = await medirPousadas();
+    await expect
+      .poll(async () => (pousadas = await medirPousadas()).length, {
+        timeout: ESPERA_PARA_POUSAR_MS,
+      })
+      .toBeGreaterThan(0);
     for (const caixa of pousadas) {
       expect(contem(feltro, caixa), 'carta da mesa vazando do feltro').toBe(true);
     }

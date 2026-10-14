@@ -5,9 +5,10 @@
   position: relative;
 }
 
+/* Canto esquerdo: o direito do feltro é dos montinhos de vazas empatadas. */
 .reacoes {
   position: absolute;
-  right: 0;
+  left: 0;
   bottom: 100%;
   z-index: 7;
   margin-bottom: 4px;
@@ -40,10 +41,10 @@
   outline-offset: 2px;
 }
 
-/* Abre para cima e para a esquerda: nunca cobre a mão nem o painel de palpite. */
+/* Abre para cima e para a direita: nunca cobre a mão. */
 .reacoes__painel {
   position: absolute;
-  right: 0;
+  left: 0;
   bottom: calc(100% + 8px);
   display: grid;
   grid-template-columns: repeat(4, var(--alvo-minimo));
