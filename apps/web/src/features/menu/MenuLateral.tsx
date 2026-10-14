@@ -21,6 +21,7 @@ import {
 import { useApp } from '../../estado/armazem';
 import { convidar } from '../../estado/convite';
 import { useAcao } from '../../lib/useAcao';
+import { OpcaoSom } from '../som/OpcaoSom';
 import { DialogoRegras } from './DialogoRegras';
 
 interface Props {
@@ -114,6 +115,8 @@ export function MenuLateral({ onFechar }: Props) {
               ›
             </span>
           </button>
+
+          <OpcaoSom />
 
           {souDono && (
             <div className="menu__dono">
