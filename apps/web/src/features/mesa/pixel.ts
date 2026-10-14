@@ -125,3 +125,8 @@ export function caminhoDoNaipe(naipe: Naipe): string {
   cacheDeNaipes.set(naipe, d);
   return d;
 }
+
+/** `path` de um desenho em pixel livre (ícones), no mesmo formato de linhas dos glifos. */
+export function caminhoDoDesenho(linhas: readonly string[]): string {
+  return caminho(linhas, 0);
+}

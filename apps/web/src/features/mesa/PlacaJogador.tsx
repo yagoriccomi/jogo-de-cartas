@@ -5,6 +5,7 @@ import { MARCADORES } from './animacao-compartilhada';
 import { Carta } from './Carta';
 import { ContagemRegressiva } from './ContagemRegressiva';
 import { Montinhos } from './Montinhos';
+import { SimbolosMaoEPe } from './SimbolosMaoEPe';
 
 /** Largura da carta "na testa" exibida na placa durante a rodada cega. */
 const LARGURA_CARTA_NA_TESTA = 46;
@@ -32,7 +33,7 @@ function descreverPlaca(jogador: JogadorVisivel): string {
   return partes.join(', ');
 }
 
-/** Placa de um adversário: nome, selos (PÉ, bot), corações de vida, fez/palpite e montinhos de vazas. */
+/** Placa de um adversário: nome, selo de bot, mão/pé, corações de vida, fez/palpite e montinhos. */
 export function PlacaJogador({
   jogador,
   vidasIniciais,
@@ -62,7 +63,6 @@ export function PlacaJogador({
         <div className="placa__texto">
           <span className="placa__nome">
             <span className="placa__apelido">{jogador.apelido}</span>
-            {ehPe && <span className="selo selo--pe">Pé</span>}
             {jogador.ehBot && <span className="selo so-computador">Bot</span>}
           </span>
           {!jogador.eliminado && (
@@ -116,11 +116,7 @@ export function PlacaJogador({
         className="montes--placa"
       />
 
-      {ehPrimeiro && (
-        <span className="ficha-primeiro" role="img" aria-label="Abre a rodada">
-          1º
-        </span>
-      )}
+      <SimbolosMaoEPe ehMao={ehPrimeiro} ehPe={ehPe} className="simbolos--placa" />
     </li>
   );
 }

@@ -15,6 +15,7 @@ import { Montinhos } from './Montinhos';
 import { PainelPalpite, type PalpiteDado } from './PainelPalpite';
 import { PainelPausa } from './PainelPausa';
 import { PainelResultado } from './PainelResultado';
+import { SimbolosMaoEPe } from './SimbolosMaoEPe';
 import { PlacaJogador } from './PlacaJogador';
 import { TelaFimDePartida } from './TelaFimDePartida';
 import { useAnimacaoDeVaza } from './useAnimacaoDeVaza';
@@ -196,6 +197,11 @@ export function TelaMesa() {
       >
         <div className="minha__barra">
           <div className="minha__dados">
+            <SimbolosMaoEPe
+              ehMao={jogo.idDoPrimeiro === meuId}
+              ehPe={jogo.idDoPe === meuId}
+              className="simbolos--minha"
+            />
             {/* Neon só em quem está com a vez; fora dela o status fica apagado. */}
             <span
               className={classes(
@@ -207,8 +213,6 @@ export function TelaMesa() {
             </span>
             {eu && !eu.eliminado && (
               <span className="minha__info">
-                {jogo.idDoPe === meuId && <span className="selo selo--pe">Pé</span>}
-                {jogo.idDoPrimeiro === meuId && <span className="selo selo--dono">Abre</span>}
                 Palpite {eu.palpite ?? '–'} · Fez {eu.vazasFeitas}
               </span>
             )}
