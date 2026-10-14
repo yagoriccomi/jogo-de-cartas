@@ -7,6 +7,7 @@ import { useApp } from '../../estado/armazem';
 import { classes } from '../../lib/classes';
 import { useAcao } from '../../lib/useAcao';
 import { CONSULTA_COMPUTADOR, useMediaQuery } from '../../lib/useMediaQuery';
+import { useSonsDaMesa } from '../som/useSonsDaMesa';
 import { CabecalhoApp } from '../menu/CabecalhoApp';
 import { DialogoRegras } from '../menu/DialogoRegras';
 import { DESTINO_DOS_EMPATES } from './animacao-compartilhada';
@@ -44,6 +45,7 @@ export function TelaMesa() {
     (jogo?.mesa.length ?? 0) === 0,
     jogo?.rodadaCega ?? false,
   );
+  useSonsDaMesa(jogo, sessao?.jogadorId ?? null);
   const viraRef = useRef<HTMLDivElement>(null);
   // Enquanto a vaza fechada está em cena, é ela que as linhas exibem (a mesa já foi limpa).
   const cartasNaMesa = animacao.vaza?.jogadas ?? jogo?.mesa ?? SEM_CARTAS;
