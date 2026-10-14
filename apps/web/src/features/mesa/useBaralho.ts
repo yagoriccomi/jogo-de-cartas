@@ -12,6 +12,8 @@ import { centroDe, criarVersoSolto } from './mesa-voos';
 const MAXIMO_DE_VOOS_POR_JOGADOR = 10;
 /** Ao montar a tela no começo da partida (sem rodada anterior) ainda vale distribuir. */
 const JANELA_DE_ABERTURA_MS = 2500;
+/** O baralho só ganha destaque (maior e com brilho) enquanto embaralha e distribui. */
+const CLASSE_BARALHO_EM_CENA = 'baralho--em-cena';
 const ESCALA_AO_CHEGAR = 0.55;
 const FRACAO_ANTES_DE_SUMIR = 0.85;
 /** Quanto as metades do monte se afastam ao embaralhar, em frações da largura da carta. */
@@ -67,7 +69,8 @@ export function aberturaDaPartida(jogo: EstadoPartidaVisivel, recebidoEm: number
 
 function embaralhar(baralho: HTMLElement): Animation[] {
   const cartas = Array.from(baralho.querySelectorAll<HTMLElement>('.baralho__carta'));
-  const largura = baralho.getBoundingClientRect().width;
+  // offsetWidth ignora a escala de destaque do baralho: o deslocamento já é multiplicado por ela.
+  const largura = baralho.offsetWidth;
   return cartas.map((carta, indice) => {
     // Metade do monte vai para cada lado e volta cruzada: o "corte" do embaralhar.
     const lado = indice % 2 === 0 ? 1 : -1;
@@ -146,6 +149,7 @@ function iniciarEntrega(baralhoEl: HTMLElement, vira: HTMLElement, entrega: Entr
   let cancelado = false;
   // A vira some até ser "virada" do baralho; ocultar aqui (antes da pintura) evita um lampejo.
   vira.style.opacity = '0';
+  baralhoEl.classList.add(CLASSE_BARALHO_EM_CENA);
 
   const corte = embaralhar(baralhoEl);
   animacoes.push(...corte);
@@ -168,6 +172,7 @@ function iniciarEntrega(baralhoEl: HTMLElement, vira: HTMLElement, entrega: Entr
       if (cancelado || !retangulo) return;
       revelarVira(vira, retangulo);
       clones.forEach((clone) => clone.remove());
+      baralhoEl.classList.remove(CLASSE_BARALHO_EM_CENA);
     })
     // Cancelar rejeita `finished`; é o caminho normal de desmontagem.
     .catch(() => undefined);
@@ -178,6 +183,7 @@ function iniciarEntrega(baralhoEl: HTMLElement, vira: HTMLElement, entrega: Entr
     cancelamentos.forEach((cancelar) => cancelar());
     clones.forEach((clone) => clone.remove());
     vira.style.opacity = '';
+    baralhoEl.classList.remove(CLASSE_BARALHO_EM_CENA);
   };
 }
 

@@ -57,8 +57,14 @@ function LinhaDeCartas({ cartas, manilha, nomeDe, anuladas }: LinhaProps) {
 export function MesaLinhas({ cartas, manilha, nomeDe, voando, raiz }: Props) {
   const valendo = cartas.filter((jogada) => !jogada.anulada);
   const anuladas = cartas.filter((jogada) => jogada.anulada);
+  // A carta encolhe conforme a maior das filas (o CSS usa `--n-max` para caber na largura).
+  const estilo: EstiloComVariaveis = { '--n-max': Math.max(valendo.length, anuladas.length, 1) };
   return (
-    <div ref={raiz} className={classes('mesa-linhas', voando && 'mesa-linhas--voando')}>
+    <div
+      ref={raiz}
+      className={classes('mesa-linhas', voando && 'mesa-linhas--voando')}
+      style={estilo}
+    >
       <LinhaDeCartas cartas={valendo} manilha={manilha} nomeDe={nomeDe} anuladas={false} />
       <LinhaDeCartas cartas={anuladas} manilha={manilha} nomeDe={nomeDe} anuladas />
     </div>

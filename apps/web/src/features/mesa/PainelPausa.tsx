@@ -1,6 +1,7 @@
 import type { EstadoPartidaVisivel, VotacaoEspera } from '@fodinha/shared';
 import { Dialogo } from '../../componentes/Dialogo';
-import { votarEspera } from '../../estado/acoes';
+import { retomarPartida, votarEspera } from '../../estado/acoes';
+import { useApp } from '../../estado/armazem';
 import { classes } from '../../lib/classes';
 import { useAcao } from '../../lib/useAcao';
 import { useAgora } from '../../lib/useAgora';
@@ -104,11 +105,38 @@ function Votacao({ votacao, jogo, meuId, agora }: VotacaoProps) {
   );
 }
 
-/** Diálogo bloqueante: a partida fica congelada até a votação sobre quem caiu se resolver. */
+/** Pausa decidida pelo dono: só ele retoma; os demais aguardam. */
+function PausaDoDono({ souDono }: { readonly souDono: boolean }) {
+  const [ocupado, executar] = useAcao();
+  if (!souDono) {
+    return <p className="votacao__espera">O dono da sala pausou a partida. Aguarde ele retomar.</p>;
+  }
+  return (
+    <div className="votacao__pergunta">
+      <p className="votacao__titulo">Você pausou a partida.</p>
+      <button
+        type="button"
+        className="botao botao--primario"
+        disabled={ocupado}
+        onClick={() => void executar(() => retomarPartida())}
+      >
+        Retomar partida
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Diálogo bloqueante: a partida fica congelada enquanto houver votação sobre quem caiu ou
+ * enquanto o dono a mantiver pausada.
+ */
 export function PainelPausa({ jogo, meuId }: Props) {
   const agora = useAgora(INTERVALO_RELOGIO_MS);
-  const votacoes = jogo.pausa?.votacoes ?? [];
-  if (votacoes.length === 0) return null;
+  const { sala } = useApp();
+  const pausa = jogo.pausa;
+  if (pausa === null) return null;
+  const votacoes = pausa.votacoes;
+  const souDono = sala?.participantes.find((p) => p.id === meuId)?.ehAnfitriao ?? false;
 
   return (
     <Dialogo idTitulo="titulo-pausa" papel="alertdialog" destaque="ciano">
@@ -118,6 +146,7 @@ export function PainelPausa({ jogo, meuId }: Props) {
           Partida pausada
         </h2>
       </div>
+      {pausa.pausadaPeloDono && <PausaDoDono souDono={souDono} />}
       {votacoes.map((votacao) => (
         <Votacao
           key={votacao.ausenteId}

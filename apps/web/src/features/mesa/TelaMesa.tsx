@@ -70,7 +70,8 @@ export function TelaMesa() {
     return jogo.jogadores.find((j) => j.id === id)?.apelido ?? 'Jogador';
   };
 
-  const pausado = (jogo.pausa?.votacoes.length ?? 0) > 0;
+  // Pausa por votação de ausente ou pelo dono: em ambos a mesa fica congelada.
+  const pausado = jogo.pausa !== null;
   const emRodada = jogo.fase === 'palpites' || jogo.fase === 'jogando';
   const souDaVez = emRodada && jogo.idDaVez === meuId && !pausado;
   const estouEliminado = eu?.eliminado ?? false;

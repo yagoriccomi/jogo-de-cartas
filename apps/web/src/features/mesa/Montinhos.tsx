@@ -13,6 +13,8 @@ interface Props {
   /** Esconde o montinho mais novo enquanto a animação ainda o leva até aqui. */
   readonly ocultarUltimo: boolean;
   readonly className?: string;
+  /** Celular, na placa de adversário: miniaturas não se leem; vira ícone de monte + contagem. */
+  readonly compacto?: boolean;
 }
 
 /**
@@ -20,7 +22,34 @@ interface Props {
  * sugerindo quantas cartas vieram junto. O espaçamento é calculado no CSS a partir de `--n`, de
  * modo que muitas vazas se sobrepõem em vez de estourar a placa.
  */
-export function Montinhos({ jogadorId, vazas, manilha, ocultarUltimo, className }: Props) {
+export function Montinhos({
+  jogadorId,
+  vazas,
+  manilha,
+  ocultarUltimo,
+  className,
+  compacto = false,
+}: Props) {
+  if (compacto) {
+    // Enquanto o último montinho está a caminho, a contagem espera a animação chegar.
+    const visiveis = vazas.length - (ocultarUltimo && vazas.length > 0 ? 1 : 0);
+    return (
+      <div
+        className={classes('contador-vazas', className)}
+        data-monte-destino={jogadorId}
+        role="img"
+        aria-label={`Vazas ganhas: ${vazas.length}`}
+      >
+        <span className="contador-vazas__monte" aria-hidden="true">
+          <span />
+          <span />
+        </span>
+        <span className="contador-vazas__numero" aria-hidden="true">
+          {visiveis}
+        </span>
+      </div>
+    );
+  }
   if (vazas.length === 0) return null;
 
   const estilo: EstiloComVariaveis = { '--n': vazas.length };

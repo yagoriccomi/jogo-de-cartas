@@ -121,6 +121,14 @@ export function reiniciarSala(): Promise<boolean> {
   return comando('sala:reiniciar', (r) => socket.emit('sala:reiniciar', r));
 }
 
+export function pausarPartida(): Promise<boolean> {
+  return comando('sala:pausar', (r) => socket.emit('sala:pausar', r));
+}
+
+export function retomarPartida(): Promise<boolean> {
+  return comando('sala:retomar', (r) => socket.emit('sala:retomar', r));
+}
+
 export function palpitar(quantidade: number): Promise<boolean> {
   return comando('jogo:palpitar', (r) => socket.emit('jogo:palpitar', { quantidade }, r));
 }

@@ -1,6 +1,7 @@
 import type { JogadorVisivel, Valor } from '@fodinha/shared';
 import { Coracoes } from '../../componentes/Coracoes';
 import { classes } from '../../lib/classes';
+import { CONSULTA_COMPUTADOR, useMediaQuery } from '../../lib/useMediaQuery';
 import { MARCADORES } from './animacao-compartilhada';
 import { Carta } from './Carta';
 import { ContagemRegressiva } from './ContagemRegressiva';
@@ -45,6 +46,7 @@ export function PlacaJogador({
   ocultarUltimoMonte,
 }: Props) {
   const offline = !jogador.conectado && !jogador.ehBot;
+  const computador = useMediaQuery(CONSULTA_COMPUTADOR);
 
   return (
     <li
@@ -114,6 +116,7 @@ export function PlacaJogador({
         manilha={manilha}
         ocultarUltimo={ocultarUltimoMonte}
         className="montes--placa"
+        compacto={!computador}
       />
 
       <SimbolosMaoEPe ehMao={ehPrimeiro} ehPe={ehPe} className="simbolos--placa" />

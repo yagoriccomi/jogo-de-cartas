@@ -297,10 +297,34 @@
 }
 
 .baralho {
+  --l-baralho: 28px;
+  --escala-em-cena: 2;
+  --l-carta: var(--l-baralho);
   position: relative;
   flex: none;
-  width: var(--l-carta);
+  width: var(--l-baralho);
   aspect-ratio: 120 / 168;
+  /* A escala (e não o tamanho) muda: o lugar na mesa não se mexe e o centro do voo é o mesmo. */
+  transition: scale 0.2s;
+}
+
+/* Fora da animação: monte pequeno e apagado, para não competir com as cartas jogadas. */
+.baralho:not(.baralho--em-cena) .carta {
+  box-shadow: 0 2px 0 rgb(0 0 0 / 0.8);
+}
+
+.baralho:not(.baralho--em-cena) .carta__neon {
+  opacity: 0.35;
+  box-shadow: none;
+}
+
+.baralho:not(.baralho--em-cena) .carta__selo {
+  filter: none;
+}
+
+.baralho--em-cena {
+  scale: var(--escala-em-cena);
+  z-index: 5;
 }
 
 .baralho__carta {
@@ -312,6 +336,8 @@
 
 .feltro__jogadas {
   position: relative;
+  /* Referência de largura (cqw) para as cartas da mesa se ajustarem à fila. */
+  container-type: inline-size;
   display: flex;
   flex: 1;
   justify-content: center;
@@ -335,8 +361,11 @@
 
 /* Duas linhas sem divisória; as cartas se sobrepõem e o canto com valor/naipe fica à mostra. */
 .mesa-linhas {
-  --l-carta: 36px;
-  --sobreposicao: 0.62;
+  /* Celular: a carta encolhe (48-68px) até caber `--n-max` cartas com `--visivel` de cada uma à
+     mostra, que é o canto do valor/naipe; passado do mínimo, só então a sobreposição aumenta. */
+  --visivel: 0.55;
+  --l-carta: clamp(48px, calc(100cqw / (1 + (var(--n-max, 1) - 1) * var(--visivel))), 68px);
+  --sobreposicao: calc(1 - var(--visivel));
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -436,6 +465,42 @@
 .minha__vidas {
   --l-coracao: 15px;
   margin-top: 2px;
+}
+
+/* Celular: contagem de vazas no lugar das miniaturas (ícone de monte + número). */
+.contador-vazas {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 6px;
+  min-height: 22px;
+}
+
+.contador-vazas__monte {
+  position: relative;
+  width: 14px;
+  height: 19px;
+}
+
+.contador-vazas__monte span {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--carta-borda);
+  border-radius: 2px;
+  background: var(--carta-fundo);
+}
+
+.contador-vazas__monte span:first-child {
+  transform: translate(2px, -2px);
+  filter: brightness(0.75);
+}
+
+.contador-vazas__numero {
+  font-family: var(--fonte-numeros);
+  font-weight: 700;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: #fff;
 }
 
 /* No computador há espaço: o montinho precisa deixar ler a carta vencedora de relance. */
@@ -1158,7 +1223,7 @@
   }
 
   .feltro__esquerda {
-    --l-carta: 76px;
+    --l-carta: 84px;
     gap: 12px;
   }
 
@@ -1179,8 +1244,14 @@
   }
 
   .mesa-linhas {
-    --l-carta: 66px;
-    gap: 12px;
+    --l-carta: 84px;
+    --sobreposicao: 0.55;
+    gap: 14px;
+  }
+
+  .baralho {
+    --l-baralho: 52px;
+    --escala-em-cena: 1.45;
   }
 
   .minha--palpitando .minha__barra {
@@ -1226,4 +1297,117 @@
 /* O "s" dos segundos não pode virar maiúsculo dentro da pílula "SUA VEZ". */
 .vez .pilula {
   text-transform: none;
+}
+
+/* ---------- Celular (< 900px) ---------- */
+
+@media (max-width: 899px) {
+  /* Feltro ocupa o espaço entre as placas e a minha área; o conteúdo fica centrado nele. */
+  .palco {
+    flex: 1;
+  }
+
+  .feltro {
+    flex: 1;
+    min-height: 0;
+    gap: 10px;
+    padding: 14px 16px;
+    border-radius: 36px;
+  }
+
+  .feltro--palpitando {
+    flex: none;
+  }
+
+  .minha {
+    flex: none;
+    margin-top: auto;
+  }
+
+  .feltro__esquerda {
+    --l-carta: 56px;
+    gap: 6px;
+  }
+
+  .feltro__monte {
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .feltro__manilha-valor {
+    font-size: 1.9rem;
+  }
+
+  .feltro__rotulo {
+    font-size: 0.7rem;
+  }
+
+  /* Valor menor nas cartas da mesa: com 55% à mostra, até o "10" cabe no canto. */
+  .mesa-linha__carta .carta__face {
+    --u: 5.5cqw;
+  }
+
+  /* Placas estreitas, rolagem escondida e esmaecida na borda: convite a arrastar. */
+  .adversarios {
+    padding-right: 40px;
+    scrollbar-width: none;
+    mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+  }
+
+  .adversarios::-webkit-scrollbar {
+    display: none;
+  }
+
+  .placa {
+    flex-basis: 112px;
+    padding: 5px 8px;
+  }
+
+  .placa--com-testa {
+    flex-basis: 150px;
+  }
+
+  /* Nome na primeira linha (com folga para os símbolos); placar e testa abaixo. */
+  .placa:has(.simbolos--placa) .placa__linha {
+    padding-top: 0;
+  }
+
+  .placa__linha {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+
+  .placa__texto {
+    flex: 1 1 100%;
+  }
+
+  .placa:has(.simbolos--placa) .placa__nome {
+    padding-right: 24px;
+  }
+
+  .placa:has(.simbolo--mao):has(.simbolo--pe) .placa__nome {
+    padding-right: 46px;
+  }
+
+  .placa__placar {
+    align-items: flex-start;
+  }
+
+  .simbolos--placa {
+    top: 4px;
+    right: 5px;
+    gap: 3px;
+  }
+
+  .simbolos--placa .simbolo {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+  }
+
+  .simbolos--placa .simbolo svg {
+    width: 11px;
+    height: 11px;
+  }
 }

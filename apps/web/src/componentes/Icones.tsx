@@ -55,6 +55,18 @@ export const IconeReiniciar = (p: Props) => (
   </Icone>
 );
 
+export const IconePausar = (p: Props) => (
+  <Icone {...p}>
+    <path d="M8 5v14M16 5v14" />
+  </Icone>
+);
+
+export const IconeRetomar = (p: Props) => (
+  <Icone {...p}>
+    <path d="M7 4l13 8-13 8z" />
+  </Icone>
+);
+
 export const IconeExpulsar = (p: Props) => (
   <Icone {...p}>
     <circle cx="9" cy="8" r="4" />

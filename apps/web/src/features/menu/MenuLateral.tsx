@@ -6,10 +6,18 @@ import {
   IconeFechar,
   IconeLink,
   IconeLivro,
+  IconePausar,
   IconeReiniciar,
+  IconeRetomar,
   IconeSair,
 } from '../../componentes/Icones';
-import { expulsarParticipante, reiniciarSala, sairDaSala } from '../../estado/acoes';
+import {
+  expulsarParticipante,
+  pausarPartida,
+  reiniciarSala,
+  retomarPartida,
+  sairDaSala,
+} from '../../estado/acoes';
 import { useApp } from '../../estado/armazem';
 import { convidar } from '../../estado/convite';
 import { useAcao } from '../../lib/useAcao';
@@ -29,9 +37,9 @@ type Confirmacao =
       readonly ehBot: boolean;
     };
 
-/** Gaveta lateral: convite, regras e, só para o dono, reiniciar a sala e expulsar jogadores. */
+/** Gaveta lateral: convite, regras e, só para o dono, pausar, reiniciar e expulsar jogadores. */
 export function MenuLateral({ onFechar }: Props) {
-  const { sala, sessao } = useApp();
+  const { sala, sessao, jogo } = useApp();
   const [regrasAbertas, definirRegrasAbertas] = useState(false);
   const [listaAberta, definirListaAberta] = useState(false);
   const [confirmacao, definirConfirmacao] = useState<Confirmacao | null>(null);
@@ -42,6 +50,14 @@ export function MenuLateral({ onFechar }: Props) {
   const eu = sala.participantes.find((p) => p.id === sessao.jogadorId);
   const souDono = eu?.ehAnfitriao ?? false;
   const expulsaveis = sala.participantes.filter((p) => p.id !== sessao.jogadorId && !p.saindo);
+  const pausadaPorMim = jogo?.pausa?.pausadaPeloDono ?? false;
+
+  function alternarPausa() {
+    void executar(async () => {
+      const sucesso = pausadaPorMim ? await retomarPartida() : await pausarPartida();
+      if (sucesso) onFechar();
+    });
+  }
 
   function confirmar() {
     if (!confirmacao) return;
@@ -99,6 +115,24 @@ export function MenuLateral({ onFechar }: Props) {
           {souDono && (
             <div className="menu__dono">
               <span className="menu__dono-titulo">Só para o dono da sala</span>
+              {sala.emPartida && (
+                <button
+                  type="button"
+                  className="menu__item menu__item--dono"
+                  disabled={ocupado}
+                  onClick={alternarPausa}
+                >
+                  {pausadaPorMim ? <IconeRetomar /> : <IconePausar />}
+                  <span className="menu__texto">
+                    {pausadaPorMim ? 'Retomar partida' : 'Pausar partida'}
+                    <small>
+                      {pausadaPorMim
+                        ? 'O tempo da vez e os bots voltam a correr'
+                        : 'Congela a mesa até você retomar'}
+                    </small>
+                  </span>
+                </button>
+              )}
               {sala.emPartida && (
                 <button
                   type="button"
