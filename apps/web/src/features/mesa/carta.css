@@ -10,11 +10,12 @@
   width: var(--carta-l);
   aspect-ratio: 120 / 168;
   padding: 0;
-  border: max(2px, calc(var(--carta-l) * 0.025)) solid var(--carta-borda);
+  /* Contorno escuro e sólido (estilo Balatro) + sombra dura: a carta se destaca do feltro. */
+  border: max(3px, calc(var(--carta-l) * 0.03)) solid var(--carta-borda);
   border-radius: calc(var(--carta-l) * 0.1);
   background: var(--carta-fundo);
   color: var(--naipe-preto);
-  box-shadow: 0 calc(var(--carta-l) * 0.05) 0 rgb(0 0 0 / 0.45);
+  box-shadow: 0 calc(var(--carta-l) * 0.05) 0 rgb(0 0 0 / 0.8);
   font: inherit;
   cursor: default;
   transition:
@@ -46,7 +47,7 @@
 .carta__moldura {
   position: absolute;
   inset: 4.2cqw;
-  border: 2px solid rgb(42 33 64 / 0.16);
+  border: 2px solid rgb(42 33 64 / 0.28);
   border-radius: 6cqw;
 }
 
@@ -65,7 +66,7 @@
   top: calc(11.7cqw + var(--u) * 7 + var(--espaco-naipe));
   width: 22.5cqw;
   height: 22.5cqw;
-  opacity: 0.55;
+  opacity: 0.85;
 }
 
 .carta--densa .carta__face {
@@ -76,7 +77,7 @@
 /* Manilha: naipe grande, faixas holográficas e contorno rosa (sem selo). */
 .carta--manilha {
   box-shadow:
-    0 calc(var(--carta-l) * 0.05) 0 rgb(0 0 0 / 0.45),
+    0 calc(var(--carta-l) * 0.05) 0 rgb(0 0 0 / 0.8),
     0 0 0 3px var(--rosa),
     0 0 18px var(--rosa),
     0 0 30px rgb(45 226 230 / 0.5);
@@ -130,7 +131,7 @@
 .carta--selecionada:hover {
   transform: translateY(-26px);
   box-shadow:
-    0 calc(var(--carta-l) * 0.08) 0 rgb(0 0 0 / 0.45),
+    0 calc(var(--carta-l) * 0.08) 0 rgb(0 0 0 / 0.8),
     0 0 0 3px var(--ciano),
     0 0 22px var(--ciano);
 }
@@ -146,7 +147,7 @@
   background-image: repeating-conic-gradient(rgb(255 42 138 / 0.5) 0 25%, transparent 0 50%);
   background-size: calc(var(--carta-l) * 0.133) calc(var(--carta-l) * 0.133);
   box-shadow:
-    0 calc(var(--carta-l) * 0.05) 0 rgb(0 0 0 / 0.45),
+    0 calc(var(--carta-l) * 0.05) 0 rgb(0 0 0 / 0.8),
     0 0 18px rgb(255 42 138 / 0.45);
 }
 
@@ -186,4 +187,11 @@
   .carta__holo {
     animation: none;
   }
+}
+
+/* Verso por cima da face enquanto a carta da mão ainda está sendo distribuída/desvirada. */
+.mao__verso {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }

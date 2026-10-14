@@ -1,12 +1,16 @@
+import { useRef } from 'react';
+import type { JogadaNaMesa } from '@fodinha/shared';
 import { Coracoes } from '../../componentes/Coracoes';
 import { jogarCarta, palpitar } from '../../estado/acoes';
 import { useApp } from '../../estado/armazem';
 import { classes } from '../../lib/classes';
 import { useAcao } from '../../lib/useAcao';
 import { CabecalhoApp } from '../menu/CabecalhoApp';
+import { Baralho } from './Baralho';
 import { Carta } from './Carta';
 import { ContagemRegressiva } from './ContagemRegressiva';
 import { Mao } from './Mao';
+import { MesaLinhas } from './MesaLinhas';
 import { Montinhos } from './Montinhos';
 import { PainelPalpite, type PalpiteDado } from './PainelPalpite';
 import { PainelPausa } from './PainelPausa';
@@ -14,12 +18,11 @@ import { PainelResultado } from './PainelResultado';
 import { PlacaJogador } from './PlacaJogador';
 import { TelaFimDePartida } from './TelaFimDePartida';
 import { useAnimacaoDeVaza } from './useAnimacaoDeVaza';
+import { aberturaDaPartida, useBaralho } from './useBaralho';
+import { useMesaJogadas } from './useMesaJogadas';
 import './mesa.css';
 
-/** Pequenas inclinações alternadas para as cartas jogadas parecerem lançadas na mesa. */
-const INCLINACOES_NA_MESA: readonly number[] = [-6, 5, -3, 4, -5, 3, -2, 6];
-/** Acima disto as cartas jogadas encolhem para caberem no feltro. */
-const JOGADAS_QUE_CABEM_GRANDES = 4;
+const SEM_CARTAS: readonly JogadaNaMesa[] = [];
 /** Acima de quantos adversários vale a dica "arraste para ver mais". */
 const ADVERSARIOS_VISIVEIS_NO_CELULAR = 2;
 
@@ -27,7 +30,26 @@ export function TelaMesa() {
   const { jogo, sala, sessao, jogoRecebidoEm } = useApp();
   const [ocupado, executar] = useAcao();
   // Hook antes dos retornos antecipados: a ordem dos hooks não pode depender do estado do jogo.
-  const animacao = useAnimacaoDeVaza(jogo?.ultimaVaza ?? null, (jogo?.mesa.length ?? 0) === 0);
+  const animacao = useAnimacaoDeVaza(
+    jogo?.ultimaVaza ?? null,
+    (jogo?.mesa.length ?? 0) === 0,
+    jogo?.rodadaCega ?? false,
+  );
+  const viraRef = useRef<HTMLDivElement>(null);
+  // Enquanto a vaza fechada está em cena, é ela que as linhas exibem (a mesa já foi limpa).
+  const cartasNaMesa = animacao.vaza?.jogadas ?? jogo?.mesa ?? SEM_CARTAS;
+  useBaralho({
+    jogo,
+    meuId: sessao?.jogadorId ?? null,
+    recebidoEm: jogoRecebidoEm,
+    vira: viraRef,
+  });
+  useMesaJogadas({
+    cartas: cartasNaMesa,
+    meuId: sessao?.jogadorId ?? null,
+    rodadaCega: jogo?.rodadaCega ?? false,
+    raiz: animacao.raiz,
+  });
 
   // O roteador garante jogo e sessão; o guard evita `!` e protege contra corrida de estado.
   if (!jogo || !sessao) return null;
@@ -77,7 +99,6 @@ export function TelaMesa() {
   const vazaEmCena = animacao.vaza;
   // O montinho novo só aparece quando a animação chega; até lá fica reservado (invisível).
   const donoDoMonteOculto = vazaEmCena?.vencedorId ?? null;
-  const euJogueiNaVaza = jogo.mesa.some((jogada) => jogada.jogadorId === meuId);
   const cartasTexto = jogo.cartasPorJogador === 1 ? 'carta' : 'cartas';
 
   return (
@@ -118,12 +139,16 @@ export function TelaMesa() {
           className={classes('feltro', palpitando && 'feltro--palpitando')}
           aria-label="Mesa"
         >
-          <div className="feltro__vira">
-            <span className="rotulo-pequeno feltro__rotulo">Vira</span>
-            <Carta carta={jogo.vira} manilha={jogo.manilha} rotulo="Vira" />
-            <span className="feltro__seta" aria-hidden="true">
-              →
-            </span>
+          <div className="feltro__esquerda">
+            <div className="feltro__monte">
+              <div className="feltro__vira-bloco">
+                <span className="rotulo-pequeno feltro__rotulo">Vira</span>
+                <div ref={viraRef} className="feltro__vira">
+                  <Carta carta={jogo.vira} manilha={jogo.manilha} rotulo="Vira" />
+                </div>
+              </div>
+              <Baralho />
+            </div>
             <div className="feltro__manilha">
               <span className="rotulo-pequeno feltro__rotulo">Manilha</span>
               <strong className="feltro__manilha-valor">{jogo.manilha ?? '–'}</strong>
@@ -131,67 +156,23 @@ export function TelaMesa() {
           </div>
 
           <div className="feltro__jogadas">
-            {vazaEmCena ? (
-              <ul
-                ref={animacao.raiz}
-                className={classes(
-                  'jogadas',
-                  'jogadas--cena',
-                  vazaEmCena.jogadas.length > JOGADAS_QUE_CABEM_GRANDES && 'jogadas--muitas',
-                  animacao.voando && 'jogadas--voando',
-                )}
-                aria-label="Vaza fechada"
-              >
-                {vazaEmCena.jogadas.map((jogada, indice) => (
-                  <li key={jogada.jogadorId} className="jogadas__item">
-                    <span className="jogadas__carta" data-carta-cena>
-                      <Carta
-                        carta={jogada.carta}
-                        manilha={jogo.manilha}
-                        inclinacao={INCLINACOES_NA_MESA[indice % INCLINACOES_NA_MESA.length] ?? 0}
-                      />
-                    </span>
-                    <span className="jogadas__nome">{nomeDe(jogada.jogadorId)}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : jogo.mesa.length === 0 && !podeJogar ? (
+            {cartasNaMesa.length === 0 && (
               <p className="feltro__vazio">
                 {jogo.fase === 'palpites'
                   ? 'Palpites em andamento…'
-                  : 'Nenhuma carta na mesa ainda.'}
+                  : podeJogar
+                    ? 'Sua vez: jogue uma carta'
+                    : 'Nenhuma carta na mesa ainda.'}
               </p>
-            ) : (
-              <ul
-                className={classes(
-                  'jogadas',
-                  jogo.mesa.length + (podeJogar ? 1 : 0) > JOGADAS_QUE_CABEM_GRANDES &&
-                    'jogadas--muitas',
-                )}
-                aria-label="Cartas na mesa"
-              >
-                {jogo.mesa.map((jogada, indice) => (
-                  <li key={jogada.jogadorId} className="jogadas__item">
-                    <Carta
-                      carta={jogada.carta}
-                      manilha={jogo.manilha}
-                      inclinacao={INCLINACOES_NA_MESA[indice % INCLINACOES_NA_MESA.length] ?? 0}
-                    />
-                    <span className="jogadas__nome">{nomeDe(jogada.jogadorId)}</span>
-                  </li>
-                ))}
-                {podeJogar && !euJogueiNaVaza && (
-                  <li className="jogadas__item">
-                    <span className="jogadas__vazio">
-                      sua
-                      <br />
-                      carta
-                    </span>
-                    <span className="jogadas__nome">Você</span>
-                  </li>
-                )}
-              </ul>
             )}
+            {/* Sempre montadas: manter o mesmo DOM entre a mesa e a vaza fechada preserva os voos. */}
+            <MesaLinhas
+              cartas={cartasNaMesa}
+              manilha={jogo.manilha}
+              nomeDe={(id) => nomeDe(id) ?? 'Jogador'}
+              voando={animacao.voando}
+              raiz={animacao.raiz}
+            />
           </div>
         </section>
 
@@ -275,6 +256,9 @@ export function TelaMesa() {
           <Mao
             cartas={jogo.minhaMao}
             manilha={jogo.manilha}
+            numeroRodada={jogo.numeroRodada}
+            jogadoresNaMesa={jogo.jogadores.filter((j) => !j.eliminado).length}
+            animarAoMontar={aberturaDaPartida(jogo, jogoRecebidoEm)}
             podeJogar={podeJogar && !ocupado}
             apagar={jogo.fase === 'jogando' && !souDaVez}
             onJogar={(cartaId) => void executar(() => jogarCarta(cartaId))}

@@ -1,8 +1,12 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import type { VazaResolvida } from '@fodinha/shared';
+import { MARCADORES, prefereMenosMovimento, TEMPOS_DA_ANIMACAO } from './animacao-compartilhada';
+import { centroDe, ESCALONAMENTO_DA_REVELACAO_MS } from './mesa-voos';
 
 /** O servidor limpa a mesa no mesmo estado que fecha a vaza: seguramos as cartas para serem vistas. */
 const PAUSA_ANTES_DO_VOO_MS = 800;
+/** Na rodada cega as cartas chegam desvirando; depois de pousarem, todos precisam de um instante para ler. */
+const LEITURA_DA_REVELACAO_MS = 900;
 const DURACAO_DO_VOO_MS = 950;
 /** Fração do voo gasta juntando as cartas num montinho antes de ele sair andando. */
 const FRACAO_JUNTANDO = 0.38;
@@ -18,27 +22,21 @@ type FaseDaCena = 'espera' | 'voo';
 interface Cena {
   readonly vaza: VazaResolvida;
   readonly fase: FaseDaCena;
+  /** Rodada cega: as cartas ainda estão chegando à mesa, então a espera é maior. */
+  readonly revelacao: boolean;
 }
 
 export interface AnimacaoDeVaza {
   /** Vaza que ainda está sendo exibida no centro da mesa (`null` fora da animação). */
   readonly vaza: VazaResolvida | null;
   readonly voando: boolean;
-  /** Lista que contém os elementos `[data-carta-cena]` a animar. */
-  readonly raiz: RefObject<HTMLUListElement>;
+  /** Contêiner das duas linhas, que contém os elementos `[data-carta-mesa]` a animar. */
+  readonly raiz: RefObject<HTMLDivElement>;
 }
 
 function chaveDaVaza(vaza: VazaResolvida | null): string | null {
   if (vaza === null) return null;
   return `${vaza.vencedorId ?? '-'}:${vaza.jogadas.map((jogada) => jogada.carta.id).join(',')}`;
-}
-
-function prefereMenosMovimento(): boolean {
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-
-function centroDe(retangulo: DOMRect): { x: number; y: number } {
-  return { x: retangulo.left + retangulo.width / 2, y: retangulo.top + retangulo.height / 2 };
 }
 
 function buscarDestino(vencedorId: string | null): HTMLElement | null {
@@ -55,11 +53,12 @@ function buscarDestino(vencedorId: string | null): HTMLElement | null {
 export function useAnimacaoDeVaza(
   ultimaVaza: VazaResolvida | null,
   mesaVazia: boolean,
+  rodadaCega: boolean,
 ): AnimacaoDeVaza {
   const chave = chaveDaVaza(ultimaVaza);
   const [chaveVista, definirChaveVista] = useState(chave);
   const [cena, definirCena] = useState<Cena | null>(null);
-  const raiz = useRef<HTMLUListElement>(null);
+  const raiz = useRef<HTMLDivElement>(null);
 
   // Ajuste durante a renderização: a cena nasce no mesmo render em que o estado novo chega,
   // então o montinho de destino nunca aparece antes da hora.
@@ -67,29 +66,36 @@ export function useAnimacaoDeVaza(
     definirChaveVista(chave);
     // Mesa já ocupada = a próxima vaza começou rápido; não há onde exibir a cena.
     const animar = ultimaVaza !== null && mesaVazia && !prefereMenosMovimento();
-    definirCena(animar ? { vaza: ultimaVaza, fase: 'espera' } : null);
+    definirCena(animar ? { vaza: ultimaVaza, fase: 'espera', revelacao: rodadaCega } : null);
   }
 
   // Se alguém jogou na vaza seguinte, a cena não cabe mais na mesa: derivada, sem efeito.
   const ativa = cena !== null && mesaVazia ? cena : null;
   const fase = ativa?.fase ?? null;
   const vazaAtiva = ativa?.vaza ?? null;
+  const revelacao = ativa?.revelacao ?? false;
 
   useEffect(() => {
     if (fase !== 'espera') return;
+    const cartasReveladas = vazaAtiva?.jogadas.length ?? 0;
+    const tempoDeChegada = revelacao
+      ? TEMPOS_DA_ANIMACAO.vooDaCartaMs +
+        Math.max(cartasReveladas - 1, 0) * ESCALONAMENTO_DA_REVELACAO_MS +
+        LEITURA_DA_REVELACAO_MS
+      : 0;
     const temporizador = setTimeout(
       () => definirCena((atual) => (atual ? { ...atual, fase: 'voo' } : atual)),
-      PAUSA_ANTES_DO_VOO_MS,
+      PAUSA_ANTES_DO_VOO_MS + tempoDeChegada,
     );
     return () => clearTimeout(temporizador);
-  }, [fase, vazaAtiva]);
+  }, [fase, vazaAtiva, revelacao]);
 
   useEffect(() => {
     if (fase !== 'voo' || vazaAtiva === null) return;
     const encerrar = () => definirCena(null);
 
     const cartas = Array.from(
-      raiz.current?.querySelectorAll<HTMLElement>('[data-carta-cena]') ?? [],
+      raiz.current?.querySelectorAll<HTMLElement>(`[${MARCADORES.cartaNaMesa}]`) ?? [],
     );
     const origens = cartas.map((elemento) => elemento.getBoundingClientRect());
     const primeira = origens[0];
@@ -109,7 +115,10 @@ export function useAnimacaoDeVaza(
       const origem = origens[indice];
       if (!origem) return null;
       const centro = centroDe(origem);
-      const ehVencedora = vazaAtiva.jogadas[indice]?.jogadorId === vazaAtiva.vencedorId;
+      // A ordem no DOM é "linha de cima, linha de baixo": a dona da carta vem do id, não do índice.
+      const idDaCarta = elemento.getAttribute(MARCADORES.cartaNaMesa);
+      const dona = vazaAtiva.jogadas.find((jogada) => jogada.carta.id === idDaCarta);
+      const ehVencedora = dona !== undefined && dona.jogadorId === vazaAtiva.vencedorId;
       const desvio = (indice % 3) * DESVIO_DA_PILHA_PX;
       const juntarX = centroDoGrupo.x - centro.x + desvio;
       const juntarY = centroDoGrupo.y - centro.y - desvio;

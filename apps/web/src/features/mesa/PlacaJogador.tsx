@@ -1,6 +1,7 @@
 import type { JogadorVisivel, Valor } from '@fodinha/shared';
 import { Coracoes } from '../../componentes/Coracoes';
 import { classes } from '../../lib/classes';
+import { MARCADORES } from './animacao-compartilhada';
 import { Carta } from './Carta';
 import { ContagemRegressiva } from './ContagemRegressiva';
 import { Montinhos } from './Montinhos';
@@ -55,6 +56,7 @@ export function PlacaJogador({
       )}
       aria-current={ehDaVez ? 'true' : undefined}
       aria-label={descreverPlaca(jogador)}
+      {...{ [MARCADORES.placaDoJogador]: jogador.id }}
     >
       <div className="placa__linha">
         <div className="placa__texto">

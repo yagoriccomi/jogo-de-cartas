@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react';
 import { ehCartaOculta, type CartaNaMao, type Naipe, type Valor } from '@fodinha/shared';
 import { classes } from '../../lib/classes';
 import type { EstiloComVariaveis } from '../../lib/estiloComVariaveis';
@@ -53,8 +54,10 @@ interface Props {
   /** Inclinação (graus) das cartas jogadas na mesa. */
   readonly inclinacao?: number;
   /** Com `onClick` a carta vira um botão; sem ele, uma imagem com rótulo. */
-  readonly onClick?: () => void;
+  readonly onClick?: (evento: MouseEvent<HTMLButtonElement>) => void;
   readonly pressionada?: boolean;
+  /** Atributos `data-*` de marcação (ex.: ponto de origem dos voos de animação). */
+  readonly atributosDeDados?: Readonly<Record<`data-${string}`, string>>;
   /** Prefixo do rótulo acessível (ex.: "Vira", "Testa de Bia"). */
   readonly rotulo?: string;
 }
@@ -68,6 +71,7 @@ export function Carta({
   inclinacao,
   onClick,
   pressionada,
+  atributosDeDados,
   rotulo,
 }: Props) {
   const virada = carta === null || ehCartaOculta(carta);
@@ -123,6 +127,7 @@ export function Carta({
         aria-label={textoAcessivel}
         aria-pressed={pressionada}
         onClick={onClick}
+        {...atributosDeDados}
       >
         {face}
       </button>
@@ -130,7 +135,13 @@ export function Carta({
   }
 
   return (
-    <div className={nomeDaClasse} style={estilo} role="img" aria-label={textoAcessivel}>
+    <div
+      className={nomeDaClasse}
+      style={estilo}
+      role="img"
+      aria-label={textoAcessivel}
+      {...atributosDeDados}
+    >
       {face}
     </div>
   );
