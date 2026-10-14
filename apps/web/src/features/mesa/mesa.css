@@ -241,7 +241,7 @@
 .numeros__valor {
   font-family: var(--fonte-numeros);
   font-weight: 700;
-  font-size: 1.15rem;
+  font-size: 1.44rem;
   line-height: 1.05;
   color: #fff;
 }
@@ -338,7 +338,7 @@
 
 .feltro__manilha-valor {
   font-family: var(--fonte-numeros);
-  font-size: 1.7rem;
+  font-size: 2.12rem;
   line-height: 1;
   color: var(--texto-neon);
   text-shadow: 0 0 10px var(--rosa);
@@ -640,18 +640,18 @@
   color: var(--ciano-branco);
   font-family: var(--fonte-numeros);
   font-weight: 700;
-  font-size: 1.25rem;
+  font-size: 1.56rem;
 }
 
 .palpite__grade--grande .palpite__opcao {
   height: clamp(40px, 15cqh, 64px);
   border-radius: 14px;
-  font-size: 1.5rem;
+  font-size: 1.88rem;
 }
 
 .palpite__grade--pequena .palpite__opcao {
   border-radius: 10px;
-  font-size: 1.1rem;
+  font-size: 1.38rem;
 }
 
 /* Soma e confirmação na mesma linha: o painel cabe no feltro do celular sem rolar. */
@@ -689,7 +689,7 @@
 
 .palpite__soma strong {
   font-family: var(--fonte-numeros);
-  font-size: 1rem;
+  font-size: 1.25rem;
   color: #fff;
 }
 
@@ -1264,7 +1264,7 @@
   }
 
   .feltro__manilha-valor {
-    font-size: 2.75rem;
+    font-size: 3.44rem;
   }
 
   .feltro__rotulo {
@@ -1296,7 +1296,7 @@
   }
 
   .palpite__grade--grande .palpite__opcao {
-    font-size: 1.8rem;
+    font-size: 2.25rem;
   }
 
   .minha__nome {
@@ -1343,7 +1343,7 @@
   }
 
   .feltro__manilha-valor {
-    font-size: 1.9rem;
+    font-size: 2.38rem;
   }
 
   .feltro__rotulo {
@@ -1531,7 +1531,7 @@
 .placar__vidas-numero {
   font-family: var(--fonte-numeros);
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 1.12rem;
 }
 
 .placar__situacao {
@@ -1554,7 +1554,7 @@
   }
 
   .feltro__manilha-valor {
-    font-size: 1.5rem;
+    font-size: 1.88rem;
   }
 
   .palpite {

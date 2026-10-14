@@ -131,7 +131,7 @@
 .guia__seta {
   color: var(--rosa-claro);
   font-family: var(--fonte-numeros);
-  font-size: 1.8rem;
+  font-size: 2.25rem;
   line-height: 1;
   text-shadow: 0 0 8px var(--rosa);
 }
@@ -163,7 +163,7 @@
   background: var(--fundo);
   color: var(--ciano-branco);
   font-family: var(--fonte-numeros);
-  font-size: 1.6rem;
+  font-size: 2rem;
   box-shadow: var(--brilho-ciano);
 }
 
@@ -191,7 +191,7 @@
 .guia__operador {
   color: var(--texto-neon);
   font-family: var(--fonte-numeros);
-  font-size: 1.5rem;
+  font-size: 1.88rem;
 }
 
 .guia__operador--forte {
@@ -206,7 +206,7 @@
   height: 50px;
   color: var(--ciano-claro);
   font-family: var(--fonte-numeros);
-  font-size: 2rem;
+  font-size: 2.5rem;
 }
 
 /* ---------- Vidas ---------- */
@@ -228,7 +228,7 @@
 .guia__resultado {
   color: var(--rosa-claro);
   font-family: var(--fonte-numeros);
-  font-size: 2.1rem;
+  font-size: 2.62rem;
   line-height: 1;
   text-shadow:
     0 0 6px var(--rosa),
@@ -382,7 +382,7 @@
   border-radius: 50%;
   color: var(--rosa-palido);
   font-family: var(--fonte-numeros);
-  font-size: 1.5rem;
+  font-size: 1.88rem;
   box-shadow: var(--brilho-rosa);
   animation: guia-pulso 1.2s ease-in-out infinite;
 }
