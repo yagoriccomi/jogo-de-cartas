@@ -343,6 +343,8 @@ describe('proximaRodada publicada pelo condutor', () => {
   it('deveInformarOQueVemEACorrerOTempoAteADistribuicao', () => {
     const ana = mesaComUmHumanoETresBots();
     jogarAteFimDeRodada([ana], ana);
+    // O fim da rodada pode ter caído no meio do último avanço do relógio: lê o estado de agora.
+    c.servico.republicar(ana.codigoSala);
 
     const previsao = c.partidaDe(ana)?.proximaRodada;
     expect(previsao?.comecaEmMs).toBeGreaterThan(0);
@@ -379,9 +381,12 @@ describe('proximaRodada publicada pelo condutor', () => {
 
   it('deveConsiderarASaidaDoPeNoIntervaloEntreRodadas', () => {
     const ana = mesaComUmHumanoETresBots();
+    // A dona não pode se expulsar: re-sorteia o pé (reiniciando) até ele ser um bot.
+    for (let i = 0; i < 20 && c.partidaDe(ana)?.idDoPe === ana.jogadorId; i++) {
+      c.servico.reiniciar(ator(ana));
+    }
     jogarAteFimDeRodada([ana], ana);
 
-    // O pé é sorteado pela semente fixa; se fosse a própria Ana, o teste avisaria em vez de passar em falso.
     const peId = c.partidaDe(ana)?.idDoPe as string;
     expect(peId).not.toBe(ana.jogadorId);
     c.servico.expulsar(ator(ana), peId);

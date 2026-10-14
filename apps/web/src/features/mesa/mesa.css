@@ -113,6 +113,18 @@
   font-size: 0.9rem;
 }
 
+.selo-bot {
+  display: inline-flex;
+  flex: none;
+  color: var(--ciano);
+  filter: drop-shadow(0 0 3px var(--ciano));
+}
+
+.selo-bot svg {
+  width: 13px;
+  height: 13px;
+}
+
 .placa__apelido {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1355,8 +1367,13 @@
   }
 
   .placa {
-    flex-basis: 112px;
+    flex-basis: 128px;
     padding: 5px 8px;
+  }
+
+  /* Nomes de bot com nome e sobrenome ("Toko Kunavara") precisam caber inteiros. */
+  .placa__nome {
+    font-size: 0.8rem;
   }
 
   .placa--com-testa {
