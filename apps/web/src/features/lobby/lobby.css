@@ -30,8 +30,8 @@
 
 .lobby__convite {
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr);
+  /* Com 3 ações cabem lado a lado; em 360px quebram em linhas sem estourar. */
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 10px;
   width: 100%;
 }

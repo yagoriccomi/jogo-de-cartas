@@ -99,6 +99,14 @@ export const IconePlacar = (p: Props) => (
   </Icone>
 );
 
+/** Balão de conversa com um fone, desenhado à mão (não é a marca oficial). */
+export const IconeWhatsApp = (p: Props) => (
+  <Icone {...p}>
+    <path d="M3 21l1.6-4.9A9 9 0 1 1 8 19.6L3 21z" />
+    <path d="M9 9c0 3 3 6 6 6l1.5-1.5-2-1-1 .8c-1-.4-2-1.4-2.4-2.4l.8-1-1-2L9 9z" />
+  </Icone>
+);
+
 export const IconeAbaixo = (p: Props) => (
   <Icone {...p}>
     <path d="M6 9l6 6 6-6" />

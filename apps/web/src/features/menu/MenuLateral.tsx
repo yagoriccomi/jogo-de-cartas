@@ -19,6 +19,7 @@ import {
   sairDaSala,
 } from '../../estado/acoes';
 import { useApp } from '../../estado/armazem';
+import { BotaoWhatsApp } from '../../componentes/BotaoWhatsApp';
 import { convidar } from '../../estado/convite';
 import { useAcao } from '../../lib/useAcao';
 import { DialogoRegras } from './DialogoRegras';
@@ -100,10 +101,13 @@ export function MenuLateral({ onFechar }: Props) {
                 <span className="rotulo-pequeno">Sala</span>
                 <strong className="menu__codigo">{sala.codigo}</strong>
               </div>
-              <button type="button" className="botao" onClick={() => void convidar(sala.codigo)}>
-                <IconeLink className="icone" />
-                Convidar
-              </button>
+              <div className="menu__convites">
+                <button type="button" className="botao" onClick={() => void convidar(sala.codigo)}>
+                  <IconeLink className="icone" />
+                  Convidar
+                </button>
+                <BotaoWhatsApp codigo={sala.codigo} />
+              </div>
             </div>
           )}
 

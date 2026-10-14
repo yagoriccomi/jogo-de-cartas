@@ -27,6 +27,7 @@ Fodinha é um jogo de cartas multiplayer online, jogado direto no navegador. Cri
 ## Features
 
 - Salas por código, sem cadastro: entre como convidado com um apelido.
+- Convite por link com mensagem pronta: compartilhamento nativo do aparelho, botão direto do WhatsApp ou cópia do link; o link preenche o código da sala.
 - Site responsivo e instalável no celular (abre em tela cheia, com ícone na tela inicial).
 - Visual "Vice City": mesa de feltro com neon e cartas em pixel art; manilhas com brilho holográfico.
 - Anfitrião configura a partida (baralhos, vidas, 8-9-10), adiciona bots e inicia.
