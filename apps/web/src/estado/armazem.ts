@@ -28,6 +28,13 @@ export interface EstadoApp {
   /** Mensagem fixa exibida na tela inicial (ex.: "você foi expulso"). */
   readonly avisoEntrada: string | null;
   readonly avisos: readonly Aviso[];
+  /** Tutorial em andamento: a mesa é alimentada por um roteiro local, não pelo servidor. */
+  readonly tutorial: EstadoTutorial | null;
+}
+
+export interface EstadoTutorial {
+  /** Passo atual do roteiro (índice). */
+  readonly passo: number;
 }
 
 const DURACAO_AVISO_MS = 6000;
@@ -42,6 +49,7 @@ let estado: EstadoApp = {
   voltouAoLobby: false,
   avisoEntrada: null,
   avisos: [],
+  tutorial: null,
 };
 let proximoIdAviso = 1;
 const ouvintes = new Set<() => void>();

@@ -1,0 +1,156 @@
+/* ---------- Tutorial: destaque e balões de fala ---------- */
+
+.tutorial {
+  /* Acima de tudo, inclusive dos diálogos (o resultado da rodada é explicado por cima dele). */
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+/* Escurece a tela inteira menos o alvo (a sombra gigante "recorta" o buraco). */
+.tutorial__destaque {
+  position: fixed;
+  border: 2px solid var(--ciano);
+  border-radius: 14px;
+  box-shadow:
+    0 0 0 9999px rgb(8 3 16 / 0.55),
+    0 0 18px var(--ciano),
+    inset 0 0 12px rgb(45 226 230 / 0.35);
+  transition:
+    top 0.25s ease,
+    left 0.25s ease,
+    width 0.25s ease,
+    height 0.25s ease;
+  animation: tutorial-pulso 1.6s ease-in-out infinite;
+}
+
+.tutorial__veu {
+  position: fixed;
+  inset: 0;
+  background: rgb(8 3 16 / 0.6);
+}
+
+@keyframes tutorial-pulso {
+  50% {
+    border-color: var(--ciano-branco);
+    box-shadow:
+      0 0 0 9999px rgb(8 3 16 / 0.55),
+      0 0 30px var(--ciano),
+      inset 0 0 16px rgb(45 226 230 / 0.5);
+  }
+}
+
+.tutorial__balao {
+  --seta: 50%;
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(320px, calc(100vw - 24px));
+  padding: 12px 14px 14px;
+  border: 2px solid var(--rosa);
+  border-radius: 18px;
+  background: var(--superficie);
+  box-shadow:
+    0 0 22px rgb(255 42 138 / 0.55),
+    0 14px 30px rgb(0 0 0 / 0.6);
+  pointer-events: auto;
+  animation: tutorial-entrada 0.25s ease-out;
+}
+
+.tutorial__balao--medindo {
+  visibility: hidden;
+}
+
+.tutorial__balao--centro {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: none;
+}
+
+/* A seta do balão: um losango na borda, apontando para o alvo. */
+.tutorial__balao--abaixo::before,
+.tutorial__balao--acima::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--seta) - 9px);
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--rosa);
+  background: var(--superficie);
+  transform: rotate(45deg);
+}
+
+.tutorial__balao--abaixo::before {
+  top: -10px;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.tutorial__balao--acima::before {
+  bottom: -10px;
+  border-top: 0;
+  border-left: 0;
+}
+
+@keyframes tutorial-entrada {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+}
+
+.tutorial__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tutorial__progresso {
+  font-family: var(--fonte-numeros);
+  font-size: 1rem;
+  color: var(--texto-fraco);
+}
+
+.tutorial__pular {
+  padding: 2px 4px;
+  border: 0;
+  background: none;
+  color: var(--texto-suave);
+  font: inherit;
+  font-size: 0.75rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.tutorial__titulo {
+  font-size: 1.7rem;
+}
+
+.tutorial__texto {
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.tutorial__proximo {
+  align-self: flex-end;
+  min-height: 40px;
+  padding: 0 18px;
+}
+
+.tutorial__dica {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--ciano-claro);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tutorial__destaque,
+  .tutorial__balao {
+    animation: none;
+    transition: none;
+  }
+}

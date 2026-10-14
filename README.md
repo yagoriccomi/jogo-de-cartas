@@ -34,6 +34,7 @@ Fodinha é um jogo de cartas multiplayer online, jogado direto no navegador. Cri
 - Servidor autoritativo: o cliente só recebe a própria mão, a vira, as cartas jogadas e, na rodada cega, a carta dos outros.
 - Reconexão por token após recarregar a página.
 - Prazo da vez com jogada automática, para a mesa nunca travar.
+- Tutorial interativo na tela inicial: uma rodada roteirada contra 2 bots, com cartas sempre iguais e balões de fala apontando cada parte da mesa. Funciona sem servidor.
 - Placar a qualquer momento (vidas, palpite e vazas feitas de todos) e guia de regras ilustrado, passo a passo.
 - Partida sem rolar a tela: no celular o topo fica recolhido (toque na alça ou deslize para baixo a partir do topo para abrir) e o palpite aparece dentro da mesa, sem cobrir a mão nem as suas vidas.
 

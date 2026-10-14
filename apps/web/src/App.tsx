@@ -6,6 +6,7 @@ import { useApp } from './estado/armazem';
 import { TelaEntrada } from './features/entrada/TelaEntrada';
 import { TelaLobby } from './features/lobby/TelaLobby';
 import { TelaMesa } from './features/mesa/TelaMesa';
+import { BalaoTutorial } from './features/tutorial/BalaoTutorial';
 
 /**
  * No plano gratuito da Render o servidor dorme sem uso e leva até ~1 min para acordar. Depois
@@ -55,8 +56,9 @@ function Rotas() {
 }
 
 export function App() {
-  const { conexao, sessao } = useApp();
-  const semConexao = conexao !== 'conectado';
+  const { conexao, sessao, tutorial } = useApp();
+  // O tutorial roda sem servidor: a queda ou o cold start não devem aparecer no meio dele.
+  const semConexao = conexao !== 'conectado' && tutorial === null;
   const demorando = useDemorandoParaConectar(semConexao);
 
   return (
@@ -76,6 +78,7 @@ export function App() {
         <Rotas />
       </main>
       <Avisos />
+      {tutorial && <BalaoTutorial />}
     </div>
   );
 }

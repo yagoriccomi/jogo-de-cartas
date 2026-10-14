@@ -7,6 +7,22 @@ import { lerCenarioDaUrl, type CenarioDeTeste } from './cenario';
 
 const MENSAGEM_GENERICA = 'Algo deu errado. Tente novamente.';
 
+/**
+ * Quem responde às ações da mesa no lugar do servidor (o tutorial). Assim a mesa de verdade é
+ * reaproveitada sem saber que está num roteiro, e `estado/` não depende de `features/`.
+ */
+export interface InterceptadorDeAcoes {
+  palpitar(quantidade: number): boolean;
+  jogarCarta(cartaId: string): boolean;
+  sair(): void;
+}
+
+let interceptador: InterceptadorDeAcoes | null = null;
+
+export function interceptarAcoes(novo: InterceptadorDeAcoes | null): void {
+  interceptador = novo;
+}
+
 /** Ponto único de tratamento: loga o detalhe técnico e mostra só a mensagem limpa ao usuário. */
 function tratarErro(operacao: string, erro: unknown): void {
   if (erro instanceof ErroDeRequisicao) {
@@ -124,6 +140,10 @@ export function cancelarRetomada(): void {
 }
 
 export async function sairDaSala(): Promise<void> {
+  if (interceptador) {
+    interceptador.sair();
+    return;
+  }
   // Sai localmente mesmo se o servidor não confirmar: o usuário pediu para sair.
   await comando('sala:sair', (r) => socket.emit('sala:sair', r));
   esquecerSessao();
@@ -158,10 +178,12 @@ export function retomarPartida(): Promise<boolean> {
 }
 
 export function palpitar(quantidade: number): Promise<boolean> {
+  if (interceptador) return Promise.resolve(interceptador.palpitar(quantidade));
   return comando('jogo:palpitar', (r) => socket.emit('jogo:palpitar', { quantidade }, r));
 }
 
 export function jogarCarta(cartaId: string): Promise<boolean> {
+  if (interceptador) return Promise.resolve(interceptador.jogarCarta(cartaId));
   return comando('jogo:jogarCarta', (r) => socket.emit('jogo:jogarCarta', { cartaId }, r));
 }
 
