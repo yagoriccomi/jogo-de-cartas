@@ -6,6 +6,7 @@ import {
   type EstadoSala,
   type EventosClienteParaServidor,
   type EventosServidorParaCliente,
+  type ReacaoNaMesa,
   type Resposta,
   type SessaoJogador,
 } from '@fodinha/shared';
@@ -40,12 +41,14 @@ class ClienteDeTeste {
   readonly salas: EstadoSala[] = [];
   readonly jogos: EstadoPartidaVisivel[] = [];
   readonly expulsoes: { mensagem: string }[] = [];
+  readonly reacoes: ReacaoNaMesa[] = [];
   private readonly ouvintes = new Set<() => void>();
 
   constructor(readonly socket: SocketCliente) {
     socket.on('sala:estado', (estado) => this.registrar(this.salas, estado));
     socket.on('jogo:estado', (estado) => this.registrar(this.jogos, estado));
     socket.on('sala:expulso', (aviso) => this.registrar(this.expulsoes, aviso));
+    socket.on('jogo:reacao', (reacao) => this.registrar(this.reacoes, reacao));
   }
 
   private registrar<T>(lista: T[], item: T): void {
@@ -343,5 +346,54 @@ describe('GatewayDoJogo — cenários de teste', () => {
     );
 
     expect(resposta).toMatchObject({ ok: false, erro: { codigo: 'SEM_PERMISSAO' } });
+  });
+});
+
+describe('GatewayDoJogo — reações', () => {
+  async function mesaComDoisClientes() {
+    const dono = await conectar();
+    const convidado = await conectar();
+    const sessaoDono = dadosDe(await criarSala(dono));
+    const sessaoConvidado = dadosDe(
+      await entrarNaSala(convidado, sessaoDono.codigoSala, 'Beto', 'disp-beto'),
+    );
+    dadosDe(await dono.emitir<null>((r) => dono.socket.emit('sala:iniciarPartida', r)));
+    return { dono, convidado, sessaoConvidado };
+  }
+
+  it('deveTransmitirReacaoParaTodosDaSalaIncluindoQuemReagiu', async () => {
+    const { dono, convidado, sessaoConvidado } = await mesaComDoisClientes();
+
+    const resposta = await convidado.emitir<null>((r) =>
+      convidado.socket.emit('jogo:reagir', { reacao: '🔥' }, r),
+    );
+
+    expect(resposta.ok).toBe(true);
+    for (const cliente of [dono, convidado]) {
+      const reacao = await cliente.aguardar(() => cliente.reacoes[0], 'jogo:reacao');
+      expect(reacao).toMatchObject({ jogadorId: sessaoConvidado.jogadorId, reacao: '🔥' });
+    }
+  });
+
+  it('deveRejeitarReacaoInvalidaEBloquearSpam', async () => {
+    const { dono, convidado } = await mesaComDoisClientes();
+
+    const invalida = await convidado.emitir<null>((r) =>
+      semContrato(convidado).emit('jogo:reagir', { reacao: 'x' }, r),
+    );
+    expect(invalida).toMatchObject({ ok: false, erro: { codigo: 'ENTRADA_INVALIDA' } });
+
+    dadosDe(
+      await convidado.emitir<null>((r) =>
+        convidado.socket.emit('jogo:reagir', { reacao: '😂' }, r),
+      ),
+    );
+    const spam = await convidado.emitir<null>((r) =>
+      convidado.socket.emit('jogo:reagir', { reacao: '😂' }, r),
+    );
+    expect(spam).toMatchObject({ ok: false, erro: { codigo: 'MUITAS_REQUISICOES' } });
+
+    await dono.aguardar(() => dono.reacoes[0], 'jogo:reacao');
+    expect(dono.reacoes).toHaveLength(1);
   });
 });

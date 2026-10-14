@@ -1,5 +1,10 @@
 import { useSyncExternalStore } from 'react';
-import type { EstadoPartidaVisivel, EstadoSala, SessaoJogador } from '@fodinha/shared';
+import type {
+  EstadoPartidaVisivel,
+  EstadoSala,
+  ReacaoNaMesa,
+  SessaoJogador,
+} from '@fodinha/shared';
 import { lerSessao } from '../lib/sessao';
 
 export type TipoAviso = 'erro' | 'info' | 'sucesso';
@@ -30,6 +35,8 @@ export interface EstadoApp {
   readonly avisos: readonly Aviso[];
   /** Tutorial em andamento: a mesa é alimentada por um roteiro local, não pelo servidor. */
   readonly tutorial: EstadoTutorial | null;
+  /** Reações recentes na mesa (uma por jogador); cada uma some sozinha após o TTL. */
+  readonly reacoes: readonly ReacaoNaMesa[];
 }
 
 export interface EstadoTutorial {
@@ -38,6 +45,8 @@ export interface EstadoTutorial {
 }
 
 const DURACAO_AVISO_MS = 6000;
+/** Tempo que o emoji fica na mesa; precisa bater com a animação em `reacoes.css`. */
+export const DURACAO_REACAO_MS = 2500;
 
 let estado: EstadoApp = {
   conexao: 'conectando',
@@ -50,6 +59,7 @@ let estado: EstadoApp = {
   avisoEntrada: null,
   avisos: [],
   tutorial: null,
+  reacoes: [],
 };
 let proximoIdAviso = 1;
 const ouvintes = new Set<() => void>();
@@ -85,4 +95,14 @@ export function avisar(tipo: TipoAviso, mensagem: string): void {
 
 export function dispensarAviso(id: number): void {
   atualizar((atual) => ({ avisos: atual.avisos.filter((a) => a.id !== id) }));
+}
+
+/** Uma reação nova do mesmo jogador substitui a anterior, para o balão não empilhar. */
+export function registrarReacao(reacao: ReacaoNaMesa): void {
+  atualizar((atual) => ({
+    reacoes: [...atual.reacoes.filter((r) => r.jogadorId !== reacao.jogadorId), reacao],
+  }));
+  setTimeout(() => {
+    atualizar((atual) => ({ reacoes: atual.reacoes.filter((r) => r !== reacao) }));
+  }, DURACAO_REACAO_MS);
 }

@@ -1,0 +1,142 @@
+/* Reações rápidas: botão flutuante, painel de emojis e balões sobre quem reagiu. */
+
+/* Âncora do botão: ele flutua logo acima da minha barra, na borda direita. */
+.minha {
+  position: relative;
+}
+
+.reacoes {
+  position: absolute;
+  right: 0;
+  bottom: 100%;
+  z-index: 7;
+  margin-bottom: 4px;
+}
+
+.reacoes__botao {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  font-size: 1.35rem;
+  line-height: 1;
+  color: var(--texto);
+  background: var(--superficie);
+  border: 2px solid var(--ciano);
+  border-radius: 50%;
+  box-shadow: var(--brilho-ciano);
+  cursor: pointer;
+}
+
+.reacoes__botao[aria-expanded='true'] {
+  border-color: var(--rosa);
+  box-shadow: var(--brilho-rosa);
+}
+
+.reacoes__botao:focus-visible,
+.reacoes__opcao:focus-visible {
+  outline: 2px solid var(--rosa-claro);
+  outline-offset: 2px;
+}
+
+/* Abre para cima e para a esquerda: nunca cobre a mão nem o painel de palpite. */
+.reacoes__painel {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  display: grid;
+  grid-template-columns: repeat(4, var(--alvo-minimo));
+  gap: 4px;
+  padding: 8px;
+  background: var(--superficie);
+  border: 2px solid var(--rosa);
+  border-radius: 14px;
+  box-shadow: var(--brilho-rosa);
+  animation: reacoes-painel 0.14s ease-out;
+}
+
+.reacoes__opcao {
+  display: grid;
+  place-items: center;
+  width: var(--alvo-minimo);
+  height: var(--alvo-minimo);
+  padding: 0;
+  font-size: 1.6rem;
+  line-height: 1;
+  background: var(--superficie-funda);
+  border: 1px solid var(--linha);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.reacoes__opcao:hover:not(:disabled) {
+  border-color: var(--ciano);
+  background: var(--linha-suave);
+}
+
+.reacoes__opcao:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Fixo na janela: a faixa de adversários rola e cortaria um balão que sobe para fora da placa. */
+.reacao-bolha {
+  position: fixed;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  min-width: 52px;
+  height: 52px;
+  padding: 0 8px;
+  font-size: 2.2rem;
+  line-height: 1;
+  pointer-events: none;
+  background: var(--superficie);
+  border: 2px solid var(--rosa);
+  border-radius: 26px;
+  box-shadow: var(--brilho-rosa);
+  transform: translate(-50%, -50%);
+  /* Duração igual a DURACAO_REACAO_MS em estado/armazem.ts. */
+  animation: reacao-sobe 2.5s ease-out forwards;
+}
+
+@keyframes reacao-sobe {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -30%) scale(0.4);
+  }
+  12% {
+    opacity: 1;
+    transform: translate(-50%, -60%) scale(1.25);
+  }
+  22% {
+    transform: translate(-50%, -60%) scale(1);
+  }
+  78% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -150%) scale(1);
+  }
+}
+
+@keyframes reacoes-painel {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+  }
+}
+
+/* Sem movimento: o balão fica parado e o armazém o remove quando o tempo acaba. */
+@media (prefers-reduced-motion: reduce) {
+  .reacao-bolha {
+    animation: none;
+    transform: translate(-50%, -60%);
+  }
+
+  .reacoes__painel {
+    animation: none;
+  }
+}

@@ -1,4 +1,4 @@
-import type { EstadoPartidaVisivel } from '@fodinha/shared';
+import type { EstadoPartidaVisivel, ReacaoNaMesa } from '@fodinha/shared';
 import type { EstrategiaDeJogo } from '../domain/estrategia-bot';
 import type { Partida } from '../domain/partida';
 import type { Sala } from '../domain/sala';
@@ -64,6 +64,12 @@ export class CondutorDePartidas {
     for (const id of humanos) {
       this.deps.notificador.enviarEstadoPartida(id, this.estadoVisivel(sala, partida, id));
     }
+  }
+
+  /** Reação é efêmera: vai a quem está na sala agora e não altera nem agenda nada. */
+  publicarReacao(sala: Sala, reacao: ReacaoNaMesa): void {
+    const humanos = sala.todos.filter((p) => !p.ehBot && !p.saindo).map((p) => p.id);
+    this.deps.notificador.enviarReacao(humanos, reacao);
   }
 
   private estadoVisivel(sala: Sala, partida: Partida, jogadorId: string): EstadoPartidaVisivel {
