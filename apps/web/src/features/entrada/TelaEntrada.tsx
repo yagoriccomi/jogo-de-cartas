@@ -69,13 +69,13 @@ export function TelaEntrada() {
       <div className="entrada__apresentacao">
         <div className="entrada__leque" aria-hidden="true">
           <div className="entrada__carta entrada__carta--esquerda">
-            <Carta carta={{ id: 'a', valor: 'A', naipe: 'espadas' }} manilha="K" />
+            <Carta carta={{ id: 'a', valor: '7', naipe: 'copas' }} manilha="A" />
           </div>
           <div className="entrada__carta entrada__carta--centro">
-            <Carta carta={{ id: 'b', valor: 'K', naipe: 'copas' }} manilha="K" />
+            <Carta carta={{ id: 'b', valor: 'A', naipe: 'espadas' }} manilha="A" />
           </div>
           <div className="entrada__carta entrada__carta--direita">
-            <Carta carta={{ id: 'c', valor: '3', naipe: 'ouros' }} manilha="K" />
+            <Carta carta={{ id: 'c', valor: '4', naipe: 'paus' }} manilha="A" />
           </div>
         </div>
         <h1 className="neon entrada__logo">Fodinha</h1>

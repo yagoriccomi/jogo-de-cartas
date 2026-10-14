@@ -39,7 +39,6 @@ export function descreverCarta(carta: CartaNaMao | null, manilha: Valor | null):
 
 const VIEWBOX_VALOR = '0 0 11 7';
 const VIEWBOX_NAIPE = '0 0 9 9';
-const VIEWBOX_F = '0 0 5 7';
 
 interface Props {
   /** `null` ou carta oculta desenham o verso (carta virada). */
@@ -108,9 +107,7 @@ export function Carta({
     <span className="carta__face" aria-hidden="true">
       <span className="carta__neon" />
       <span className="carta__selo">
-        <svg viewBox={VIEWBOX_F} shapeRendering="crispEdges">
-          <path fill="currentColor" d={caminhoDoTexto('F')} />
-        </svg>
+        <span className="carta__letra">F</span>
       </span>
     </span>
   ) : (
