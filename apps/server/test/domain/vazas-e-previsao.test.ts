@@ -141,6 +141,9 @@ describe('Partida — previsaoDaProximaRodada', () => {
   it('deveSerNulaForaDoIntervaloEntreRodadas', () => {
     const partida = criarPartida(3, 4);
     expect(partida.previsaoDaProximaRodada()).toBeNull();
+    // A rodada 1 é cega e se resolve sozinha ao fim dos palpites: a fase de jogadas é da rodada 2.
+    jogarRodadaAteOFim(partida);
+    partida.iniciarProximaRodada();
     while (partida.faseAtual === 'palpites') avancarPartida(partida);
     expect(partida.faseAtual).toBe('jogando');
     expect(partida.previsaoDaProximaRodada()).toBeNull();

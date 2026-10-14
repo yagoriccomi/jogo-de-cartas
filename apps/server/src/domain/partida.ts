@@ -4,6 +4,7 @@ import type {
   ConfiguracaoPartida,
   FasePartida,
   Jogada,
+  JogadaNaMesa,
   ResultadoJogadorNaRodada,
   Valor,
   VazaGanha,
@@ -21,7 +22,7 @@ import {
   proximaQuantidadeDeCartas,
   vidasPerdidas,
 } from './rodadas';
-import { resolverVaza } from './vaza';
+import { marcarAnuladas, resolverVaza } from './vaza';
 
 interface JogadorNaPartida {
   readonly id: string;
@@ -64,7 +65,7 @@ export interface VisaoDaPartida {
   readonly idDoPrimeiro: string | null;
   readonly idDaVez: string | null;
   readonly minhaMao: readonly CartaNaMao[];
-  readonly mesa: readonly Jogada[];
+  readonly mesa: readonly JogadaNaMesa[];
   readonly ultimaVaza: VazaResolvida | null;
   readonly palpiteProibido: number | null;
   readonly resultadoRodada: readonly ResultadoJogadorNaRodada[] | null;
@@ -210,6 +211,19 @@ export class Partida {
     this.fase = 'jogando';
     this.indiceQueAbriuVaza = this.proximoVivo(this.indiceDoPe);
     this.indiceDaVez = this.indiceQueAbriuVaza;
+    if (this.rodadaCega) this.revelarRodadaCega();
+  }
+
+  /**
+   * Na rodada cega não há o que decidir na hora de jogar (ninguém vê a própria carta): assim que
+   * os palpites terminam, todas as cartas vão à mesa em ordem e a vaza é resolvida.
+   */
+  private revelarRodadaCega(): void {
+    while (this.fase === 'jogando') {
+      const idDaVez = this.idDaVez as string;
+      const [carta] = this.cartasNaMaoDe(idDaVez);
+      this.jogarCarta(idDaVez, (carta as Carta).id);
+    }
   }
 
   jogarCarta(jogadorId: string, cartaId: string): void {
@@ -331,7 +345,7 @@ export class Partida {
       idDoPrimeiro: rodadaEmJogo ? this.jogador(this.proximoVivo(this.indiceDoPe)).id : null,
       idDaVez: this.idDaVez,
       minhaMao: observador ? this.maoVistaPeloDono(observador) : [],
-      mesa: [...this.mesa],
+      mesa: marcarAnuladas(this.mesa, this.manilha as Valor, this.valores),
       ultimaVaza: this.ultimaVaza,
       palpiteProibido:
         observador && indiceObservador === this.indiceDoPe && this.fase === 'palpites'
@@ -380,7 +394,10 @@ export class Partida {
   private fecharVaza(): void {
     const jogadas = this.mesa;
     const vencedorId = resolverVaza(jogadas, this.manilha as Valor, this.valores);
-    this.ultimaVaza = { jogadas, vencedorId };
+    this.ultimaVaza = {
+      jogadas: marcarAnuladas(jogadas, this.manilha as Valor, this.valores),
+      vencedorId,
+    };
     this.mesa = [];
 
     // Vaza anulada: quem abriu continua abrindo (premissa P4 do plano).

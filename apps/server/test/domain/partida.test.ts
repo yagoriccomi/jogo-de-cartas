@@ -225,3 +225,17 @@ describe('Partida — mão, saídas e entradas', () => {
     expect(partida.participa('novo')).toBe(false);
   });
 });
+
+describe('Partida — rodada cega', () => {
+  it('deveRevelarTodasAsCartasEResolverAVazaAssimQueOsPalpitesTerminam', () => {
+    const partida = novaPartida(3, 17);
+    expect(partida.visaoPara('j0').minhaMao.every(ehCartaOculta)).toBe(true);
+
+    palpitarTodos(partida);
+    const visao = partida.visaoPara('j0');
+    expect(visao.fase).toBe('fim_de_rodada');
+    expect(visao.ultimaVaza?.jogadas).toHaveLength(3);
+    expect(visao.jogadores.every((j) => j.cartasNaMao === 0)).toBe(true);
+    expect(visao.resultadoRodada).toHaveLength(3);
+  });
+});

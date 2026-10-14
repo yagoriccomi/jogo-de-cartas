@@ -16,12 +16,18 @@ export interface Jogada {
   readonly carta: Carta;
 }
 
+/** Carta na mesa. A mesa mostra as que valem numa linha e as anuladas (empatadas) em outra. */
+export interface JogadaNaMesa extends Jogada {
+  /** Empatou em força com outra carta da mesma vaza: não vale mais. */
+  readonly anulada: boolean;
+}
+
 /**
  * A vaza recém-fechada. A mesa não a exibe como "última vaza": serve para animar o montinho
  * indo da mesa até quem ganhou (ou saindo da mesa, se todas se anularam).
  */
 export interface VazaResolvida {
-  readonly jogadas: readonly Jogada[];
+  readonly jogadas: readonly JogadaNaMesa[];
   /** `null` quando todas as cartas se anularam. */
   readonly vencedorId: string | null;
 }
@@ -101,7 +107,7 @@ export interface EstadoPartidaVisivel {
   readonly prazoDaVezRestanteMs: number | null;
   /** Ordenada da carta mais forte para a mais fraca (considerando a manilha da rodada). */
   readonly minhaMao: readonly CartaNaMao[];
-  readonly mesa: readonly Jogada[];
+  readonly mesa: readonly JogadaNaMesa[];
   readonly ultimaVaza: VazaResolvida | null;
   /** Palpite que o jogador não pode dar por ser o pé (null se não houver restrição). */
   readonly palpiteProibido: number | null;

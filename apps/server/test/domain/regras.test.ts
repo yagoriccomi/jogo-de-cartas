@@ -8,7 +8,7 @@ import {
   proximaQuantidadeDeCartas,
   vidasPerdidas,
 } from '../../src/domain/rodadas';
-import { resolverVaza } from '../../src/domain/vaza';
+import { marcarAnuladas, resolverVaza } from '../../src/domain/vaza';
 import { carta, geradorComSemente } from '../apoio';
 
 const TRUCO = valoresEmJogo(false);
@@ -143,5 +143,31 @@ describe('rodadas e pontuação', () => {
     expect(vidasPerdidas(3, 1)).toBe(2);
     expect(vidasPerdidas(0, 2)).toBe(2);
     expect(vidasPerdidas(2, 2)).toBe(0);
+  });
+});
+
+describe('cartas anuladas na mesa', () => {
+  it('deveMarcarComoAnuladasSoAsCartasQueEmpatamEmForca', () => {
+    const jogadas = [
+      { jogadorId: 'a', carta: carta('3', 'ouros') },
+      { jogadorId: 'b', carta: carta('K', 'copas') },
+      { jogadorId: 'c', carta: carta('3', 'paus') },
+      { jogadorId: 'd', carta: carta('5', 'paus') },
+    ];
+    const marcadas = marcarAnuladas(jogadas, '5', TRUCO);
+    expect(marcadas.map((j) => [j.jogadorId, j.anulada])).toEqual([
+      ['a', true],
+      ['b', false],
+      ['c', true],
+      ['d', false],
+    ]);
+  });
+
+  it('naoDeveAnularManilhasDeNaipesDiferentes', () => {
+    const jogadas = [
+      { jogadorId: 'a', carta: carta('5', 'ouros') },
+      { jogadorId: 'b', carta: carta('5', 'paus') },
+    ];
+    expect(marcarAnuladas(jogadas, '5', TRUCO).some((j) => j.anulada)).toBe(false);
   });
 });
