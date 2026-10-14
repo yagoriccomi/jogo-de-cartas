@@ -1,4 +1,9 @@
-import { CONFIGURACAO_PADRAO, type EstadoPartidaVisivel, type EstadoSala } from '@fodinha/shared';
+import {
+  CONFIGURACAO_PADRAO,
+  type EstadoPartidaVisivel,
+  type EstadoSala,
+  type ReacaoNaMesa,
+} from '@fodinha/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { CondutorDePartidas } from '../../src/application/condutor-de-partidas';
 import type { Notificador, Relogio } from '../../src/application/portas';
@@ -48,6 +53,7 @@ class RelogioFalso implements Relogio {
 class NotificadorFalso implements Notificador {
   readonly salas = new Map<string, EstadoSala>();
   readonly partidas = new Map<string, EstadoPartidaVisivel>();
+  readonly reacoes: { destinatarios: readonly string[]; reacao: ReacaoNaMesa }[] = [];
 
   enviarEstadoSala(ids: readonly string[], estado: EstadoSala): void {
     for (const id of ids) this.salas.set(id, estado);
@@ -55,6 +61,10 @@ class NotificadorFalso implements Notificador {
 
   enviarEstadoPartida(id: string, estado: EstadoPartidaVisivel): void {
     this.partidas.set(id, estado);
+  }
+
+  enviarReacao(destinatarios: readonly string[], reacao: ReacaoNaMesa): void {
+    this.reacoes.push({ destinatarios, reacao });
   }
 }
 
@@ -549,5 +559,54 @@ describe('ServicoDeSalas — pausa pelo dono', () => {
     servico.pausar(ator(dono));
     servico.reiniciar(ator(dono));
     expect(partidaDe(dono)?.pausa).toBeNull();
+  });
+});
+
+describe('ServicoDeSalas — reações', () => {
+  function mesaComDoisHumanos() {
+    const dono = criarSala();
+    const bia = entrar(dono, 'Bia');
+    servico.adicionarBot(ator(dono));
+    servico.iniciarPartida(ator(dono));
+    return { dono, bia };
+  }
+
+  it('deveTransmitirReacaoValidaAosHumanosDaSala', () => {
+    const { dono, bia } = mesaComDoisHumanos();
+    servico.reagir(ator(bia), '🔥');
+    expect(notificador.reacoes).toHaveLength(1);
+    const envio = notificador.reacoes[0];
+    expect(envio?.reacao).toMatchObject({ jogadorId: bia.jogadorId, reacao: '🔥' });
+    expect([...(envio?.destinatarios ?? [])].sort()).toEqual(
+      [dono.jogadorId, bia.jogadorId].sort(),
+    );
+  });
+
+  it('deveRejeitarReacaoForaDaLista', () => {
+    const { dono } = mesaComDoisHumanos();
+    const invalida = expect.objectContaining({ codigo: 'ENTRADA_INVALIDA' });
+    expect(() => servico.reagir(ator(dono), '💩')).toThrow(invalida);
+    expect(() => servico.reagir(ator(dono), 42)).toThrow(invalida);
+    expect(notificador.reacoes).toHaveLength(0);
+  });
+
+  it('deveLimitarReacoesEmSequenciaDoMesmoJogador', () => {
+    const { dono, bia } = mesaComDoisHumanos();
+    servico.reagir(ator(dono), '😂');
+    expect(() => servico.reagir(ator(dono), '😂')).toThrow(
+      expect.objectContaining({ codigo: 'MUITAS_REQUISICOES' }),
+    );
+    // O limite é por jogador: outra pessoa reage normalmente.
+    servico.reagir(ator(bia), '👏');
+    relogio.avancar(1_500);
+    servico.reagir(ator(dono), '🙏');
+    expect(notificador.reacoes).toHaveLength(3);
+  });
+
+  it('naoDevePermitirReacaoForaDePartida', () => {
+    const dono = criarSala();
+    expect(() => servico.reagir(ator(dono), '😂')).toThrow(
+      expect.objectContaining({ codigo: 'JOGADA_INVALIDA' }),
+    );
   });
 });

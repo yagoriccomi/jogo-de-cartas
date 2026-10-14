@@ -1,8 +1,8 @@
-import type { ConfiguracaoPartida, SessaoJogador } from '@fodinha/shared';
+import type { ConfiguracaoPartida, Reacao, SessaoJogador } from '@fodinha/shared';
 import { descreverErro, registrar } from '../lib/log';
 import { limparSessao, lerSessao, obterDispositivoId, salvarSessao } from '../lib/sessao';
 import { ErroDeRequisicao, requisitar, socket, type Envio } from '../lib/socket';
-import { atualizar, avisar, obterEstado } from './armazem';
+import { atualizar, avisar, obterEstado, registrarReacao } from './armazem';
 import { lerCenarioDaUrl, type CenarioDeTeste } from './cenario';
 
 const MENSAGEM_GENERICA = 'Algo deu errado. Tente novamente.';
@@ -193,6 +193,10 @@ export function votarEspera(ausenteId: string, esperar: boolean): Promise<boolea
   );
 }
 
+export function reagir(reacao: Reacao): Promise<boolean> {
+  return comando('jogo:reagir', (r) => socket.emit('jogo:reagir', { reacao }, r));
+}
+
 export function voltarAoLobby(): void {
   atualizar({ voltouAoLobby: true });
 }
@@ -222,6 +226,7 @@ export function iniciarConexao(): void {
       voltouAoLobby: jogo.fase === 'encerrada' ? atual.voltouAoLobby : false,
     }));
   });
+  socket.on('jogo:reacao', registrarReacao);
   socket.on('sala:expulso', ({ mensagem }) => {
     // O servidor já desvinculou este socket da sala: só falta limpar o que é local.
     esquecerSessao();

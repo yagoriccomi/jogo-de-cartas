@@ -23,6 +23,7 @@ import { PainelPausa } from './PainelPausa';
 import { PainelResultado } from './PainelResultado';
 import { SimbolosMaoEPe } from './SimbolosMaoEPe';
 import { PlacaJogador } from './PlacaJogador';
+import { ReacoesDaMesa } from './ReacoesDaMesa';
 import { TelaFimDePartida } from './TelaFimDePartida';
 import { useAnimacaoDeVaza } from './useAnimacaoDeVaza';
 import { aberturaDaPartida, useBaralho } from './useBaralho';
@@ -34,7 +35,7 @@ const SEM_CARTAS: readonly JogadaNaMesa[] = [];
 type Consulta = 'placar' | 'regras' | null;
 
 export function TelaMesa() {
-  const { jogo, sala, sessao, jogoRecebidoEm } = useApp();
+  const { jogo, sala, sessao, jogoRecebidoEm, tutorial } = useApp();
   const [ocupado, executar] = useAcao();
   const [consulta, definirConsulta] = useState<Consulta>(null);
   const computador = useMediaQuery(CONSULTA_COMPUTADOR);
@@ -235,6 +236,8 @@ export function TelaMesa() {
       </div>
 
       <section className="minha" aria-label="Minha área">
+        {/* O tutorial roda sem sala no servidor: não há para quem reagir. */}
+        {tutorial === null && <ReacoesDaMesa meuId={meuId} />}
         <div className="minha__barra">
           <div className="minha__dados">
             <SimbolosMaoEPe

@@ -3,6 +3,7 @@ import type {
   EstadoSala,
   EventosClienteParaServidor,
   EventosServidorParaCliente,
+  ReacaoNaMesa,
   Resposta,
   SessaoJogador,
 } from '@fodinha/shared';
@@ -41,6 +42,11 @@ export class NotificadorSocketIo implements Notificador {
 
   enviarEstadoPartida(destinatarioId: string, estado: EstadoPartidaVisivel): void {
     this.io.to(canalDoJogador(destinatarioId)).emit('jogo:estado', estado);
+  }
+
+  enviarReacao(destinatarioIds: readonly string[], reacao: ReacaoNaMesa): void {
+    if (destinatarioIds.length === 0) return;
+    this.io.to(destinatarioIds.map(canalDoJogador)).emit('jogo:reacao', reacao);
   }
 }
 
@@ -134,6 +140,11 @@ export class GatewayDoJogo {
     socket.on('jogo:jogarCarta', (dados, responder) =>
       this.responder(socket, responder, () =>
         nulo(this.servico.jogarCarta(this.ator(socket), objeto(dados).cartaId)),
+      ),
+    );
+    socket.on('jogo:reagir', (dados, responder) =>
+      this.responder(socket, responder, () =>
+        nulo(this.servico.reagir(this.ator(socket), objeto(dados).reacao)),
       ),
     );
     socket.on('disconnect', () => {

@@ -17,6 +17,18 @@ export const CODIGOS_ERRO = [
 ] as const;
 export type CodigoErro = (typeof CODIGOS_ERRO)[number];
 
+/** Reações rápidas permitidas na mesa; o servidor rejeita qualquer outro texto. */
+export const REACOES = ['😂', '🔥', '😱', '👏', '🤡', '🍀', '😭', '🙏'] as const;
+export type Reacao = (typeof REACOES)[number];
+
+/** Reação já carimbada pelo servidor, enviada a todos os humanos da sala (não é persistida). */
+export interface ReacaoNaMesa {
+  readonly jogadorId: string;
+  readonly reacao: Reacao;
+  /** Instante do servidor (epoch ms); serve só para distinguir reações repetidas. */
+  readonly em: number;
+}
+
 export interface ErroDeJogo {
   readonly codigo: CodigoErro;
   readonly mensagem: string;
@@ -106,6 +118,8 @@ export interface EventosClienteParaServidor {
     dados: { cartaId: string },
     responder: (resposta: Resposta<null>) => void,
   ) => void;
+  /** Qualquer humano da sala durante a partida; limitado a uma reação por intervalo curto. */
+  'jogo:reagir': (dados: { reacao: Reacao }, responder: (resposta: Resposta<null>) => void) => void;
   /** Voto na pausa: `true` = esperar o retorno, `false` = seguir sem ele. Pode ser trocado. */
   'jogo:votarEspera': (
     dados: { ausenteId: string; esperar: boolean },
@@ -118,4 +132,5 @@ export interface EventosServidorParaCliente {
   'jogo:estado': (estado: EstadoPartidaVisivel) => void;
   /** Enviado a quem o dono expulsou, logo antes de desvinculá-lo da sala. */
   'sala:expulso': (aviso: { mensagem: string }) => void;
+  'jogo:reacao': (reacao: ReacaoNaMesa) => void;
 }
