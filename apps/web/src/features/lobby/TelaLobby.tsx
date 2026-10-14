@@ -17,6 +17,7 @@ import {
 } from '../../estado/acoes';
 import { useApp } from '../../estado/armazem';
 import { compartilharConviteComAviso, copiarConviteComAviso } from '../../estado/convite';
+import { BotaoWhatsApp } from '../../componentes/BotaoWhatsApp';
 import { podeCompartilhar } from '../../lib/convite';
 import { useAcao } from '../../lib/useAcao';
 import { CabecalhoApp } from '../menu/CabecalhoApp';
@@ -100,6 +101,7 @@ export function TelaLobby() {
               Compartilhar
             </button>
           )}
+          <BotaoWhatsApp codigo={sala.codigo} />
         </div>
       </section>
 

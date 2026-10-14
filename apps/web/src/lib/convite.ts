@@ -6,6 +6,15 @@ export function montarLinkDeConvite(codigo: string): string {
   return `${window.location.origin}/?sala=${encodeURIComponent(codigo)}`;
 }
 
+/** A mensagem já leva o link: o WhatsApp e a folha nativa mostram só o texto. */
+export function montarMensagemDeConvite(codigo: string): string {
+  return `Bora jogar Fodinha? 🃏 Entra na minha sala: ${montarLinkDeConvite(codigo)}`;
+}
+
+export function montarLinkWhatsApp(codigo: string): string {
+  return `https://wa.me/?text=${encodeURIComponent(montarMensagemDeConvite(codigo))}`;
+}
+
 export function podeCompartilhar(): boolean {
   return typeof navigator.share === 'function';
 }
@@ -24,8 +33,7 @@ export async function compartilharConvite(codigo: string): Promise<ResultadoConv
   try {
     await navigator.share({
       title: 'Fodinha',
-      text: `Entre na minha mesa de Fodinha! Código: ${codigo}`,
-      url: montarLinkDeConvite(codigo),
+      text: montarMensagemDeConvite(codigo),
     });
     return 'compartilhado';
   } catch (erro) {

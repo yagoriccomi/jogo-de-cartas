@@ -186,6 +186,20 @@ button:disabled {
   opacity: 0.45;
 }
 
+/* Verde do WhatsApp só no contorno e no ícone, para não brigar com o neon. */
+.botao--whatsapp {
+  border-color: #25d366;
+  color: #fff;
+}
+
+.botao--whatsapp .icone {
+  color: #25d366;
+}
+
+.botao--whatsapp:hover:not(:disabled) {
+  box-shadow: 0 0 14px rgb(37 211 102 / 0.6);
+}
+
 .botao--primario {
   min-height: 56px;
   border-color: var(--rosa);
