@@ -13,7 +13,7 @@ Fodinha é um jogo de cartas multiplayer online, jogado direto no navegador. Cri
 - **Vira e manilhas:** uma carta é virada a cada rodada; a partir dela definem-se as manilhas, as cartas mais fortes.
 - **Palpite:** antes de jogar, cada um diz quantas vazas (mãos) vai ganhar. O último a palpitar (o "pé") não pode dizer um número que feche a soma exatamente igual ao total de vazas da rodada, para que alguém sempre erre.
 - **Vazas:** vence a carta mais forte. Cartas iguais se anulam: vale a próxima maior; se todas se anularem, ninguém leva a vaza.
-- **Rodada cega:** na rodada de 1 carta, você não vê a sua, mas vê a dos outros jogadores (na testa).
+- **Rodada cega:** na rodada de 1 carta, você não vê a sua, mas vê a dos outros jogadores (na testa). Assim que todos palpitam, as cartas vão sozinhas para a mesa, o resultado sai e o jogo segue.
 - **Vidas:** ao fim da rodada, cada jogador perde 1 vida por vaza de diferença entre o palpite e o que ganhou. Quem zera vidas é eliminado; vence o último de pé.
 - **Mesa:** até 10 participantes, com até 4 bots.
 - **Tempo da vez:** se o jogador não agir dentro do prazo, o servidor joga por ele automaticamente.

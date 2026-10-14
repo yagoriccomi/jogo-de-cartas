@@ -15,7 +15,7 @@
 
 - 1 a 4 baralhos; 5 a 10 vidas iniciais; com ou sem 8-9-10.
 - Cartas iguais se anulam (a próxima maior vence; se todas se anulam, ninguém leva a vaza).
-- Rodadas: 1 carta → máximo possível → volta a 1. A rodada de 1 carta é **cega** (vê-se a carta dos outros, não a própria).
+- Rodadas: 1 carta → máximo possível → volta a 1. A rodada de 1 carta é **cega** (vê-se a carta dos outros, não a própria); terminados os palpites, todas as cartas vão sozinhas à mesa e a vaza é resolvida (`Partida.revelarRodadaCega`).
 - Perde 1 vida por vaza de diferença entre palpite e resultado. O "pé" (último a palpitar) não pode fechar a soma.
 - Prazo da vez (`TURN_TIMEOUT_SECONDS`): estourou, o servidor joga automaticamente.
 - Desconexão > 10 s (carência) pausa a partida e abre votação de espera por ausente; todos NÃO → eliminado (bot termina a rodada). Pausa congela prazos e bots.
