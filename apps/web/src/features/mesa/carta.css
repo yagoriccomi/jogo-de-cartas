@@ -194,7 +194,11 @@
     0 0 1.5cqw var(--rosa),
     0 0 4cqw var(--rosa),
     0 0 9cqw var(--rosa);
-  transform: translateX(-2cqw);
+  /*
+   * Na Yellowtail o traço do "F" fica bem à direita da caixa da letra (medido: centro do traço
+   * 0,235em à direita do centro da caixa e 0,025em acima). Compensa para o traço ficar no centro.
+   */
+  transform: translate(-0.235em, 0.025em);
 }
 
 @media (prefers-reduced-motion: reduce) {
