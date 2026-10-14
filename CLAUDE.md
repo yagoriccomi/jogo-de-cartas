@@ -18,8 +18,18 @@
 - Rodadas: 1 carta → máximo possível → volta a 1. A rodada de 1 carta é **cega** (vê-se a carta dos outros, não a própria).
 - Perde 1 vida por vaza de diferença entre palpite e resultado. O "pé" (último a palpitar) não pode fechar a soma.
 - Prazo da vez (`TURN_TIMEOUT_SECONDS`): estourou, o servidor joga automaticamente.
+- Desconexão > 10 s (carência) pausa a partida e abre votação de espera por ausente; todos NÃO → eliminado (bot termina a rodada). Pausa congela prazos e bots.
+- Entrada no meio da partida: senta na próxima rodada com a maior vida entre os vivos.
+- Dono (criador; passa ao humano mais antigo e volta ao criador pelo mesmo `dispositivoId`): reinicia a sala e expulsa (humano expulso fica banido pelo `dispositivoId`).
+- Saída/expulsão no meio da rodada: efetiva-se entre rodadas (`Partida.agendarSaida`), para não desfazer palpites e vazas.
+- A mão vai ao cliente ordenada da mais forte para a mais fraca (o cliente não reordena).
+- Plano dessas regras: `docs/planos/PLANO-pausa-entrada-moderacao.md`.
 
-**Fora do escopo do MVP** (YAGNI [#8]): login/contas, banco de dados, histórico/ranking, app Android, escala horizontal, chat, sons e animações elaboradas. São a fase 2.
+**Fora do escopo do MVP** (YAGNI [#8]): login/contas, banco de dados, histórico/ranking, escala horizontal, chat, sons e animações elaboradas. São a fase 2.
+
+**Mobile:** em vez de app nativo, o web é responsivo e instalável (PWA). Publicar na Play Store, se necessário, será empacotar esse mesmo site (TWA/Capacitor) [#7][#26].
+
+**Identidade visual aprovada:** "Feltro + neon Vice City" (fundo #120720, feltro #0d3a3c, neon rosa #ff2a8a e ciano #2de2e6, `Yellowtail` + `Kanit`) com cartas em pixel art (valor grande; naipe pequeno nas comuns, grande e holográfico só na manilha). Ficha "1º" marca quem abre a rodada.
 
 ## Stack Tecnológica e Ferramentas
 
