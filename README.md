@@ -115,9 +115,12 @@ npm run typecheck   # checagem de tipos
 npm run lint        # ESLint
 npm run build       # build de todos os pacotes
 npm run format      # formata com Prettier
+npm run test:e2e    # testes de tela (Playwright)
 ```
 
-A cada push e pull request, o GitHub Actions executa lint, typecheck, testes e build.
+Os **testes de tela** abrem o jogo de verdade num Chromium em 5 tamanhos (de 360×640 a 1920×1080) e conferem o que já quebrou antes: a mesa cheia (10 jogadores, 13 cartas) sem rolar a página, o palpite cabendo no feltro, as cartas dentro da mesa, placar e regras, e o tutorial inteiro, com todo balão apontando para algo visível. Eles sobem sozinhos um servidor e um web de teste nas portas 3101 e 5199, então funcionam com o Docker de desenvolvimento ligado. Na primeira vez, instale o navegador: `npx playwright install chromium` (dentro de `apps/e2e`).
+
+A cada push e pull request, o GitHub Actions executa lint, typecheck, testes, build e os testes de tela.
 
 ## Variáveis de Ambiente
 
@@ -128,6 +131,7 @@ Copie o `.env.example` para `.env`. Nada neste projeto exige segredos.
 | `PORT`                 | servidor | Porta HTTP/WebSocket do servidor de jogo (padrão `3001`).                                                                           |
 | `CORS_ORIGINS`         | servidor | Origens autorizadas a conectar, separadas por vírgula (padrão `http://localhost:5173`).                                             |
 | `LOG_LEVEL`            | servidor | Nível de log: `debug`, `info`, `warn` ou `error`.                                                                                   |
+| `BOT_DELAY_MS`         | servidor | Milissegundos que o bot espera antes de jogar (padrão `2000`). Os testes de tela usam um valor baixo.                               |
 | `TURN_TIMEOUT_SECONDS` | servidor | Segundos que o jogador tem para agir antes da jogada automática (padrão `30`).                                                      |
 | `CENARIOS_DE_TESTE`    | servidor | Só desenvolvimento (padrão `false`; o Docker de dev liga). Libera a criação de salas de teste com bots. Nunca habilite em produção. |
 | `VITE_SERVER_URL`      | web      | URL pública do servidor de jogo. Fica exposta no navegador: nunca coloque nada sensível.                                            |

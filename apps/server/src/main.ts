@@ -14,8 +14,6 @@ import {
 import { lerAmbiente } from './infrastructure/ambiente';
 import { GatewayDoJogo, NotificadorSocketIo } from './infrastructure/socket/gateway';
 
-// Ritmo de mesa real: dá tempo de os humanos acompanharem cada jogada do bot.
-const ATRASO_DO_BOT_MS = 2_000;
 // Inclui ~2 s da animação da última vaza indo para o montinho antes de o resultado aparecer.
 const PAUSA_FIM_DE_RODADA_MS = 6_000;
 const TEMPO_DE_ABANDONO_MS = 10 * 60_000;
@@ -48,7 +46,7 @@ async function iniciar(): Promise<void> {
     registrador,
     tempos: {
       prazoDaVezMs: ambiente.prazoDaVezMs,
-      atrasoDoBotMs: ATRASO_DO_BOT_MS,
+      atrasoDoBotMs: ambiente.atrasoDoBotMs,
       pausaFimDeRodadaMs: PAUSA_FIM_DE_RODADA_MS,
       carenciaDeDesconexaoMs: CARENCIA_DE_DESCONEXAO_MS,
     },

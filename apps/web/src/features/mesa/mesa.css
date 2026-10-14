@@ -747,8 +747,9 @@
 
 .minha__dados {
   position: relative;
-  /* Ocupa a sobra da barra: sem isso o nome curto espreme os corações. */
+  /* Ocupa a sobra da barra e nunca fica mais estreito que os corações: quem cede é o aviso da vez. */
   flex: 1 1 auto;
+  min-width: min-content;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -756,7 +757,11 @@
 
 /* Símbolos de mão/pé no canto superior direito do meu status, sem cobrir o nome. */
 .minha__dados:has(.simbolos--minha) {
-  padding-right: 64px;
+  padding-right: 30px;
+}
+
+.minha__dados:has(.simbolo--mao):has(.simbolo--pe) {
+  padding-right: 58px;
 }
 
 .simbolos--minha {
@@ -1402,6 +1407,19 @@
     padding-right: 46px;
   }
 
+  /* Com até 10 vidas, os corações encolheriam a 5px ao lado do aviso da vez: no celular quebram
+     em duas fileiras de 5, sem encolher. */
+  .minha__vidas {
+    --l-coracao: 12px;
+    flex-wrap: wrap;
+    row-gap: 2px;
+    width: calc(min(var(--total, 1), 5) * (var(--l-coracao) + 2px));
+  }
+
+  .minha__vidas .coracao {
+    flex: 0 0 var(--l-coracao);
+  }
+
   .simbolos--placa {
     top: 4px;
     right: 5px;
@@ -1564,16 +1582,20 @@
   }
 
   .palpite__vira {
-    --l-carta: 30px;
+    --l-carta: 24px;
+  }
+
+  .palpite__titulo {
+    font-size: 1.15rem;
+  }
+
+  .palpite__grade {
+    gap: 4px;
   }
 
   /* O botão riscado e o selo "Você é o pé" já dizem isso; a linha de texto não cabe aqui. */
   .palpite__bloqueio {
     display: none;
-  }
-
-  .palpite__titulo {
-    font-size: 1.2rem;
   }
 
   .palpite__rodape .botao {
