@@ -1,4 +1,16 @@
+/* Em jogo a página nunca rola: a mesa ocupa exatamente a tela e as áreas internas se ajustam. */
+.app:has(.mesa:not(.mesa--fim)) {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.app:has(.mesa:not(.mesa--fim)) .conteudo {
+  min-height: 0;
+}
+
 .mesa {
+  position: relative;
+  min-height: 0;
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
@@ -32,11 +44,6 @@
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scrollbar-width: thin;
-}
-
-.adversarios__dica {
-  font-size: 0.7rem;
-  color: var(--texto-fraco);
 }
 
 .placa {
@@ -112,21 +119,13 @@
   white-space: nowrap;
 }
 
-.placa__nome {
-  flex-wrap: wrap;
+.placa__nome .selo {
+  flex: none;
 }
 
 .placa__nome .selo {
   padding: 0 6px;
   font-size: 0.62rem;
-}
-
-.placa__detalhe {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 0.78rem;
-  color: var(--texto-suave);
 }
 
 /* Também usado na tela de fim de partida. */
@@ -149,34 +148,6 @@
   color: #fff;
   font-size: 0.72rem;
   font-weight: 800;
-}
-
-.placa__placar {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  flex: none;
-}
-
-.placa__numero {
-  font-family: var(--fonte-numeros);
-  font-weight: 700;
-  font-size: 1.3rem;
-  line-height: 1.1;
-  color: #fff;
-}
-
-.placa__barra {
-  margin: 0 1px;
-  color: var(--texto-fraco);
-}
-
-.placa__legenda {
-  display: none;
-  font-size: 0.6rem;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--texto-fraco);
 }
 
 .placa__testa {
@@ -218,26 +189,95 @@
   color: var(--ciano);
 }
 
-/* Na placa, o placar fez/palpite fica à direita: abre espaço para os símbolos acima dele. */
-.placa:has(.simbolos--placa) .placa__linha {
-  padding-top: 18px;
+/* Os símbolos ficam no canto de cima da placa: o nome não passa por baixo deles. */
+.placa:has(.simbolos--placa) .placa__nome {
+  padding-right: 28px;
+}
+
+.placa:has(.simbolo--mao):has(.simbolo--pe) .placa__nome {
+  padding-right: 56px;
+}
+
+/* ---------- Palpite e vazas feitas (placas, minha área e placar) ---------- */
+
+.numeros {
+  display: flex;
+  gap: 4px;
+}
+
+.numeros__item {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: center;
+  min-width: 44px;
+  padding: 2px 6px 3px;
+  border: 1px solid var(--linha);
+  border-radius: 8px;
+  background: var(--superficie-funda);
+}
+
+.numeros__rotulo {
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--texto-fraco);
+}
+
+.numeros__valor {
+  font-family: var(--fonte-numeros);
+  font-weight: 700;
+  font-size: 1.15rem;
+  line-height: 1.05;
+  color: #fff;
+}
+
+/* O "Fez" adianta o resultado: bateu o palpite (ciano) ou já passou dele (rosa). */
+.numeros__item--certa {
+  border-color: var(--ciano);
+}
+
+.numeros__item--certa .numeros__valor {
+  color: var(--ciano-branco);
+  text-shadow: 0 0 8px var(--ciano);
+}
+
+.numeros__item--estourou {
+  border-color: var(--rosa);
+}
+
+.numeros__item--estourou .numeros__valor {
+  color: var(--rosa-claro);
+  text-shadow: 0 0 8px var(--rosa);
+}
+
+.numeros--minha {
+  flex: none;
 }
 
 /* ---------- Mesa (feltro) ---------- */
 
 .palco {
   position: relative;
+  /* Referência de altura (cqh) para a vira encolher quando a mesa fica baixa. */
+  container-type: size;
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: 12px;
+  min-height: 0;
 }
 
 .feltro {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex: 1;
   gap: 14px;
-  min-height: 256px;
+  min-height: 0;
   padding: 20px 26px;
   border: 4px solid var(--rosa-palido);
   border-radius: 64px;
@@ -249,10 +289,6 @@
     inset 0 0 0 9px var(--ciano),
     inset 0 0 70px rgb(0 0 0 / 0.55);
   text-align: center;
-}
-
-.feltro--palpitando {
-  min-height: 0;
 }
 
 /* Vira, manilha e baralho ficam à esquerda, centralizados na vertical. */
@@ -336,16 +372,28 @@
 
 .feltro__jogadas {
   position: relative;
-  /* Referência de largura (cqw) para as cartas da mesa se ajustarem à fila. */
-  container-type: inline-size;
+  /* Referência de largura e altura (cqw/cqh) para as cartas da mesa caberem no feltro. */
+  container-type: size;
   display: flex;
   flex: 1;
+  align-self: stretch;
   justify-content: center;
   min-width: 0;
 }
 
-.feltro--palpitando .feltro__jogadas {
-  display: none;
+/* ---------- Montinhos das vazas empatadas (canto inferior direito da mesa) ---------- */
+
+.montes--empates {
+  --l-monte: 26px;
+  position: absolute;
+  right: 7%;
+  bottom: 12px;
+  z-index: 2;
+  max-width: 40%;
+  justify-content: flex-end;
+  opacity: 0.85;
+  filter: grayscale(0.5);
+  pointer-events: none;
 }
 
 .feltro__vazio {
@@ -361,13 +409,19 @@
 
 /* Duas linhas sem divisória; as cartas se sobrepõem e o canto com valor/naipe fica à mostra. */
 .mesa-linhas {
-  /* Celular: a carta encolhe (48-68px) até caber `--n-max` cartas com `--visivel` de cada uma à
-     mostra, que é o canto do valor/naipe; passado do mínimo, só então a sobreposição aumenta. */
+  /* A carta encolhe (48-68px no celular) até caber a fila mais longa: a líder inteira, a folga e
+     `--visivel` de cada carta da pilha (o canto do valor). Também respeita a altura do feltro. */
   --visivel: 0.55;
-  --l-carta: clamp(48px, calc(100cqw / (1 + (var(--n-max, 1) - 1) * var(--visivel))), 68px);
+  --folga-lider: 0.22;
+  --l-pela-largura: calc(
+    100cqw / (1 + var(--folga-lider) + (var(--n-max, 1) - 1) * var(--visivel))
+  );
+  --l-pela-altura: calc((100cqh - 8px) / 2.85);
+  --l-carta: clamp(40px, min(var(--l-pela-largura), var(--l-pela-altura)), 68px);
   --sobreposicao: calc(1 - var(--visivel));
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 8px;
   width: 100%;
   min-width: 0;
@@ -383,11 +437,9 @@
   list-style: none;
 }
 
-/* Sobrepõe o suficiente para as `--n` cartas caberem na largura da linha (margem negativa). */
+/* Pilha: cada carta entra por cima da anterior (ordem do DOM), sobrepondo o necessário para caber. */
 .mesa-linha__carta {
   position: relative;
-  /* A mais forte por cima: ninguém a cobre; cada seguinte entra por trás da anterior. */
-  z-index: var(--camada);
   flex: none;
   margin-left: min(
     calc(var(--l-carta) * var(--sobreposicao) * -1),
@@ -398,6 +450,18 @@
 
 .mesa-linha__carta:first-child {
   margin-left: 0;
+}
+
+/* A que está ganhando fica sozinha: a pilha das demais começa depois de uma folga. */
+.mesa-linha__carta--lider + .mesa-linha__carta {
+  margin-left: calc(var(--l-carta) * var(--folga-lider));
+}
+
+.mesa-linha__carta--lider .carta {
+  box-shadow:
+    0 0 0 max(2px, calc(var(--l-carta) * 0.022)) var(--carta-aro),
+    0 0 16px rgb(255 248 252 / 0.45),
+    0 calc(var(--l-carta) * 0.06) 0 rgb(0 0 0 / 0.8);
 }
 
 .mesa-linha--anuladas .carta {
@@ -458,49 +522,13 @@
 .montes--minha {
   --l-monte: 30px;
   --folga-monte: 4px;
-  max-width: 100%;
-  margin-top: 2px;
+  flex: 1;
+  justify-content: center;
 }
 
 .minha__vidas {
   --l-coracao: 15px;
   margin-top: 2px;
-}
-
-/* Celular: contagem de vazas no lugar das miniaturas (ícone de monte + número). */
-.contador-vazas {
-  display: inline-flex;
-  align-items: center;
-  align-self: flex-start;
-  gap: 6px;
-  min-height: 22px;
-}
-
-.contador-vazas__monte {
-  position: relative;
-  width: 14px;
-  height: 19px;
-}
-
-.contador-vazas__monte span {
-  position: absolute;
-  inset: 0;
-  border: 1px solid var(--carta-borda);
-  border-radius: 2px;
-  background: var(--carta-fundo);
-}
-
-.contador-vazas__monte span:first-child {
-  transform: translate(2px, -2px);
-  filter: brightness(0.75);
-}
-
-.contador-vazas__numero {
-  font-family: var(--fonte-numeros);
-  font-weight: 700;
-  font-size: 1.1rem;
-  line-height: 1;
-  color: #fff;
 }
 
 /* No computador há espaço: o montinho precisa deixar ler a carta vencedora de relance. */
@@ -518,15 +546,22 @@
 
 /* ---------- Palpite ---------- */
 
+/* Por cima da área das jogadas, dentro do feltro: não cobre a vira, a mão nem o meu status. */
 .palpite {
+  position: absolute;
+  inset: -4px;
+  z-index: 3;
   display: flex;
   flex-direction: column;
-  gap: 9px;
-  padding: 12px 14px;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 10px;
+  overflow-y: auto;
   border: 2px solid var(--rosa);
-  border-radius: 20px;
+  border-radius: 18px;
   background: var(--superficie);
   box-shadow: 0 0 24px rgb(255 42 138 / 0.5);
+  text-align: left;
 }
 
 .palpite__topo {
@@ -537,7 +572,7 @@
 }
 
 .palpite__titulo {
-  font-size: 1.8rem;
+  font-size: 1.45rem;
 }
 
 .palpite__pergunta {
@@ -548,11 +583,11 @@
 .palpite__grade {
   display: grid;
   grid-template-columns: repeat(var(--colunas, 4), minmax(0, 1fr));
-  gap: 8px;
+  gap: 6px;
 }
 
 .palpite__opcao {
-  height: 44px;
+  height: 38px;
   padding: 0;
   border: 2px solid var(--ciano);
   border-radius: 12px;
@@ -564,41 +599,31 @@
 }
 
 .palpite__grade--grande .palpite__opcao {
-  height: 56px;
+  height: 48px;
   border-radius: 14px;
-  font-size: 1.6rem;
+  font-size: 1.5rem;
 }
 
 .palpite__grade--media .palpite__opcao {
-  height: 48px;
-}
-
-.palpite__grade--pequena {
-  gap: 6px;
+  height: 42px;
 }
 
 .palpite__grade--pequena .palpite__opcao {
-  height: 40px;
+  height: 36px;
+  border-radius: 10px;
+  font-size: 1.1rem;
 }
 
-.palpite .botao--primario {
-  min-height: 48px;
+/* Soma e confirmação na mesma linha: o painel cabe no feltro do celular sem rolar. */
+.palpite__rodape {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-/* Contexto da mão (nome e vez) já está no próprio painel de palpite no celular. */
-.minha--palpitando .minha__barra {
-  display: none;
-}
-
-.palpite__resumo span:first-child {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.palpite__resumo span:last-child {
-  flex: none;
+.palpite__rodape .botao {
+  flex: 1;
+  min-height: 42px;
 }
 
 .palpite__opcao[aria-pressed='true'] {
@@ -615,20 +640,21 @@
   text-decoration: line-through;
 }
 
-.palpite__resumo {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
+.palpite__soma {
+  flex: none;
   font-size: 0.8rem;
+  line-height: 1.2;
   color: var(--texto-suave);
 }
 
-.palpite__resumo strong {
+.palpite__soma strong {
+  font-family: var(--fonte-numeros);
+  font-size: 1rem;
   color: #fff;
 }
 
 .palpite__bloqueio {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--rosa-suave);
 }
 
@@ -665,7 +691,7 @@
 
 .minha {
   display: flex;
-  flex: 1;
+  flex: none;
   flex-direction: column;
   justify-content: flex-end;
   gap: 8px;
@@ -705,19 +731,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.minha__info {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  font-size: 0.78rem;
-  color: var(--texto-suave);
-}
-
-.minha__info .selo {
-  padding: 0 6px;
 }
 
 .vez {
@@ -1134,18 +1147,18 @@
     padding: 20px 24px 24px;
   }
 
+  /* Uma fileira só, mesmo com 9 adversários: a altura que sobra fica para a mesa. */
   .adversarios {
-    flex-wrap: wrap;
-    gap: 12px;
+    gap: 10px;
     margin: 0;
-    padding: 12px 6px 0;
-    overflow: visible;
+    padding: 12px 6px 6px;
   }
 
   .placa {
-    flex: 1 1 200px;
-    max-width: 280px;
-    padding: 8px 14px;
+    flex: 1 1 0;
+    min-width: 112px;
+    max-width: 260px;
+    padding: 8px 12px;
   }
 
   .placa--com-testa {
@@ -1169,16 +1182,8 @@
     --l-coracao: 18px;
   }
 
-  .placa__legenda {
-    display: block;
-  }
-
-  .placa__numero {
-    font-size: 1.6rem;
-  }
-
   .feltro {
-    min-height: 300px;
+    min-height: 0;
     gap: 28px;
     padding: 24px 6%;
     border-width: 6px;
@@ -1192,39 +1197,24 @@
       inset 0 0 100px rgb(0 0 0 / 0.55);
   }
 
-  /* O painel de palpite fica encaixado à direita da mesa para não cobrir a mão. */
-  .palco:has(.palpite) {
-    min-height: 360px;
-  }
-
-  .feltro--palpitando {
-    min-height: 300px;
-    align-items: center;
-    justify-content: flex-start;
-    padding-left: 14%;
-    padding-right: 48%;
-  }
-
+  /* Computador: o feltro é alto; o painel flutua centralizado sobre as jogadas. */
   .palpite {
-    position: absolute;
-    right: 2%;
-    top: 50%;
-    width: min(430px, 46%);
-    transform: translateY(-50%);
-    padding: 18px 20px;
-    gap: 12px;
-    box-shadow:
-      0 0 30px rgb(255 42 138 / 0.55),
-      0 20px 40px rgb(0 0 0 / 0.6);
+    inset: 50% auto auto 50%;
+    width: min(440px, 100%);
+    max-height: 100%;
+    gap: 10px;
+    padding: 16px 18px;
+    transform: translate(-50%, -50%);
   }
 
   .palpite__titulo {
     font-size: 2rem;
   }
 
+  /* A coluna (vira, rótulos e manilha) ocupa ~1,4 carta + 150px: encolhe junto com a mesa. */
   .feltro__esquerda {
-    --l-carta: 84px;
-    gap: 12px;
+    --l-carta: clamp(44px, calc((100cqh - 150px) / 1.4), 84px);
+    gap: 8px;
   }
 
   .feltro__monte {
@@ -1244,9 +1234,14 @@
   }
 
   .mesa-linhas {
-    --l-carta: 84px;
-    --sobreposicao: 0.55;
+    --visivel: 0.45;
+    --l-carta: clamp(48px, min(var(--l-pela-largura), var(--l-pela-altura)), 84px);
     gap: 14px;
+  }
+
+  .montes--empates {
+    --l-monte: 34px;
+    bottom: 22px;
   }
 
   .baralho {
@@ -1254,17 +1249,13 @@
     --escala-em-cena: 1.45;
   }
 
-  .minha--palpitando .minha__barra {
-    display: flex;
-  }
-
   .palpite__opcao,
   .palpite__grade--pequena .palpite__opcao {
     height: 44px;
   }
 
-  .palpite .botao--primario {
-    min-height: 56px;
+  .palpite__rodape .botao {
+    min-height: 52px;
   }
 
   .palpite__grade--grande .palpite__opcao {
@@ -1278,10 +1269,6 @@
 
   .minha__nome {
     font-size: 2rem;
-  }
-
-  .minha__info {
-    font-size: 0.9rem;
   }
 
   .vez {
@@ -1303,8 +1290,11 @@
 
 @media (max-width: 899px) {
   /* Feltro ocupa o espaço entre as placas e a minha área; o conteúdo fica centrado nele. */
-  .palco {
-    flex: 1;
+  .mesa {
+    gap: 8px;
+    /* Espaço da alça do topo recolhido. */
+    padding-top: 18px;
+    padding-bottom: 10px;
   }
 
   .feltro {
@@ -1315,23 +1305,8 @@
     border-radius: 36px;
   }
 
-  .feltro--palpitando {
-    flex: none;
-  }
-
-  .minha {
-    flex: none;
-    margin-top: auto;
-  }
-
   .feltro__esquerda {
-    --l-carta: 56px;
-    gap: 6px;
-  }
-
-  .feltro__monte {
-    flex-direction: column;
-    align-items: center;
+    --l-carta: clamp(40px, calc((100cqh - 110px) / 1.4), 56px);
     gap: 6px;
   }
 
@@ -1390,10 +1365,6 @@
     padding-right: 46px;
   }
 
-  .placa__placar {
-    align-items: flex-start;
-  }
-
   .simbolos--placa {
     top: 4px;
     right: 5px;
@@ -1409,5 +1380,166 @@
   .simbolos--placa .simbolo svg {
     width: 11px;
     height: 11px;
+  }
+}
+
+/* ---------- Placar (diálogo) ---------- */
+
+.botao--consulta {
+  color: var(--ciano-branco);
+}
+
+.placar__rodada {
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+
+.placar__rodada strong {
+  color: #fff;
+}
+
+.placar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+}
+
+.placar__linha {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: var(--superficie-funda);
+}
+
+.placar__linha--eu {
+  border-color: var(--ciano);
+}
+
+.placar__linha--vez {
+  border-color: var(--rosa);
+  box-shadow: 0 0 12px rgb(255 42 138 / 0.45);
+}
+
+.placar__linha--eliminado {
+  opacity: 0.5;
+}
+
+.placar__posicao {
+  flex: none;
+  width: 18px;
+  font-family: var(--fonte-numeros);
+  font-weight: 700;
+  color: var(--texto-fraco);
+  text-align: center;
+}
+
+.placar__quem {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.placar__nome {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-weight: 700;
+}
+
+.placar__apelido {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.placar__nome .selo {
+  padding: 0 6px;
+  font-size: 0.62rem;
+}
+
+/* No placar os símbolos de mão/pé seguem o nome, em vez de ficarem no canto. */
+.simbolos--placar {
+  position: static;
+}
+
+.simbolos--placar .simbolo {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+}
+
+.simbolos--placar .simbolo svg {
+  width: 11px;
+  height: 11px;
+}
+
+.placar__vidas .coracoes {
+  --l-coracao: 12px;
+}
+
+.placar__vidas {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.placar__vidas-numero {
+  font-family: var(--fonte-numeros);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.placar__situacao {
+  font-size: 0.7rem;
+  color: var(--rosa-claro);
+}
+
+/* Celulares baixos: a coluna da vira e o painel de palpite encolhem para caber no feltro. */
+@media (max-width: 899px) and (max-height: 700px) {
+  .feltro {
+    padding-block: 10px;
+  }
+
+  .feltro__esquerda {
+    gap: 2px;
+  }
+
+  .baralho {
+    --l-baralho: 22px;
+  }
+
+  .feltro__manilha-valor {
+    font-size: 1.5rem;
+  }
+
+  .palpite {
+    gap: 4px;
+    padding: 6px 8px;
+  }
+
+  .palpite__titulo {
+    font-size: 1.2rem;
+  }
+
+  .palpite__opcao,
+  .palpite__grade--media .palpite__opcao,
+  .palpite__grade--pequena .palpite__opcao {
+    height: 32px;
+  }
+
+  .palpite__grade--grande .palpite__opcao {
+    height: 40px;
+  }
+
+  .palpite__rodape .botao {
+    min-height: 36px;
   }
 }

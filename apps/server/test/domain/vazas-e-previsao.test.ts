@@ -41,8 +41,15 @@ describe('Partida — vazasGanhas (montinhos)', () => {
           if (vaza?.vencedorId == null) {
             anuladas += 1;
             expect(contagemDepois).toEqual(contagemAntes);
+            // Vaza toda anulada vira um montinho sem dono, com a carta mais forte por cima.
+            expect(depois.vazasEmpatadas).toHaveLength(antes.vazasEmpatadas.length + 1);
+            expect(depois.vazasEmpatadas.at(-1)).toEqual({
+              cartaDoTopo: vaza?.jogadas[0]?.carta,
+              quantidadeDeCartas: vaza?.jogadas.length,
+            });
             continue;
           }
+          expect(depois.vazasEmpatadas).toEqual(antes.vazasEmpatadas);
           vencidas += 1;
           for (const [id, quantidade] of contagemAntes) {
             expect(contagemDepois.get(id)).toBe(quantidade + (id === vaza.vencedorId ? 1 : 0));
@@ -63,6 +70,7 @@ describe('Partida — vazasGanhas (montinhos)', () => {
         expect(partida.visaoPara(null).jogadores.every((j) => j.vazasGanhas.length === 0)).toBe(
           true,
         );
+        expect(partida.visaoPara(null).vazasEmpatadas).toEqual([]);
       }
     }
     expect(vencidas).toBeGreaterThan(0);

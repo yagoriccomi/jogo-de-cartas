@@ -111,14 +111,89 @@
   margin-top: auto;
 }
 
-.regras {
+/* ---------- Topo da mesa: ações extras e versão recolhível (celular) ---------- */
+
+.cabecalho__acoes {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-  font-size: 0.95rem;
-  color: var(--texto-suave);
+  gap: 8px;
 }
 
-.regras strong {
-  color: var(--texto);
+.alca-topo,
+.cabecalho__fundo {
+  display: none;
+}
+
+@media (max-width: 899px) {
+  /* Escondido acima da tela; abre por cima da mesa, sem empurrar nada. */
+  .cabecalho--recolhivel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 60;
+    padding: calc(8px + env(safe-area-inset-top)) 14px 10px;
+    border-bottom: 2px solid var(--rosa);
+    border-radius: 0 0 22px 22px;
+    background: var(--superficie);
+    box-shadow: 0 10px 30px rgb(255 42 138 / 0.35);
+    transform: translateY(-110%);
+    visibility: hidden;
+    transition:
+      transform 0.22s ease-out,
+      visibility 0s 0.22s;
+  }
+
+  .cabecalho--recolhivel .cabecalho__marca {
+    font-size: 1.6rem;
+  }
+
+  .cabecalho--aberto {
+    transform: none;
+    visibility: visible;
+    transition: transform 0.22s ease-out;
+  }
+
+  .cabecalho__fundo {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 59;
+    border: 0;
+    background: rgb(0 0 0 / 0.35);
+  }
+
+  /* Alça pequena no topo: a única parte do cabeçalho sempre à mostra no celular. */
+  .alca-topo {
+    position: absolute;
+    top: env(safe-area-inset-top);
+    left: 50%;
+    z-index: 20;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    max-width: calc(100% - 32px);
+    padding: 1px 10px 2px;
+    border: 1px solid var(--linha);
+    border-top: 0;
+    border-radius: 0 0 12px 12px;
+    background: var(--superficie);
+    color: var(--texto-suave);
+    font: inherit;
+    font-size: 0.68rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transform: translateX(-50%);
+  }
+
+  .alca-topo__texto {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .alca-topo__seta {
+    width: 14px;
+    height: 14px;
+    color: var(--ciano);
+  }
 }

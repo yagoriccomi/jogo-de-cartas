@@ -213,10 +213,3 @@
   inset: 0;
   pointer-events: none;
 }
-
-/* Valor e naipe no canto direito: é a parte que fica à mostra na fila da mesa. */
-.carta--canto-direito .carta__valor,
-.carta--canto-direito .carta__naipe {
-  left: auto;
-  right: 10.8cqw;
-}

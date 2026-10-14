@@ -9,16 +9,12 @@ const OPCOES_GRANDES = 4;
 const OPCOES_EM_UMA_LINHA = 7;
 const COLUNAS_DA_GRADE_LONGA = 7;
 
-export interface PalpiteDado {
-  readonly apelido: string;
-  readonly palpite: number;
-}
-
 interface Props {
   readonly cartasNaRodada: number;
   readonly palpiteProibido: number | null;
   readonly souOPe: boolean;
-  readonly palpitesDados: readonly PalpiteDado[];
+  /** Palpites já dados pelos outros nesta rodada (para a soma). */
+  readonly palpitesDosOutros: readonly number[];
   readonly prazoFinal: number | null;
   readonly ocupado: boolean;
   readonly onConfirmar: (quantidade: number) => void;
@@ -34,14 +30,14 @@ export function PainelPalpite({
   cartasNaRodada,
   palpiteProibido,
   souOPe,
-  palpitesDados,
+  palpitesDosOutros,
   prazoFinal,
   ocupado,
   onConfirmar,
 }: Props) {
   const [escolhido, definirEscolhido] = useState<number | null>(null);
   const opcoes = Array.from({ length: cartasNaRodada + 1 }, (_, quantidade) => quantidade);
-  const soma = palpitesDados.reduce((total, dado) => total + dado.palpite, 0);
+  const soma = palpitesDosOutros.reduce((total, palpite) => total + palpite, 0);
   const colunas = Math.min(opcoes.length, COLUNAS_DA_GRADE_LONGA);
   const estiloGrade: EstiloComVariaveis = { '--colunas': colunas };
   const cartasTexto = cartasNaRodada === 1 ? '1 carta' : `${cartasNaRodada} cartas`;
@@ -83,17 +79,6 @@ export function PainelPalpite({
         })}
       </div>
 
-      <div className="palpite__resumo">
-        <span>
-          {palpitesDados.length > 0
-            ? `Mesa: ${palpitesDados.map((dado) => `${dado.apelido} ${dado.palpite}`).join(' · ')}`
-            : 'Você abre a rodada'}
-        </span>
-        <span>
-          Soma <strong>{soma}</strong> de {cartasNaRodada}
-        </span>
-      </div>
-
       {palpiteProibido !== null && (
         <p className="palpite__bloqueio" role="note">
           O {palpiteProibido} está bloqueado: a soma fecharia nas {cartasTexto}.
@@ -101,14 +86,21 @@ export function PainelPalpite({
         </p>
       )}
 
-      <button
-        type="button"
-        className="botao botao--primario botao--bloco"
-        disabled={escolhido === null || ocupado}
-        onClick={() => escolhido !== null && onConfirmar(escolhido)}
-      >
-        {escolhido === null ? 'Escolha um palpite' : `Confirmar palpite: ${escolhido}`}
-      </button>
+      <div className="palpite__rodape">
+        <span className="palpite__soma">
+          {palpitesDosOutros.length > 0 ? 'Soma' : 'Você abre'}
+          <br />
+          <strong>{soma}</strong> de {cartasNaRodada}
+        </span>
+        <button
+          type="button"
+          className="botao botao--primario"
+          disabled={escolhido === null || ocupado}
+          onClick={() => escolhido !== null && onConfirmar(escolhido)}
+        >
+          {escolhido === null ? 'Escolha' : `Confirmar ${escolhido}`}
+        </button>
+      </div>
     </div>
   );
 }

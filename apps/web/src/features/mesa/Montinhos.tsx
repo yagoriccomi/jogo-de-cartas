@@ -7,14 +7,14 @@ import { Carta } from './Carta';
 const CAMADAS_MAXIMAS = 3;
 
 interface Props {
+  /** Id do dono (ou `DESTINO_DOS_EMPATES`): marca o montinho mais novo como destino do voo. */
   readonly jogadorId: string;
   readonly vazas: readonly VazaGanha[];
   readonly manilha: Valor | null;
   /** Esconde o montinho mais novo enquanto a animação ainda o leva até aqui. */
   readonly ocultarUltimo: boolean;
   readonly className?: string;
-  /** Celular, na placa de adversário: miniaturas não se leem; vira ícone de monte + contagem. */
-  readonly compacto?: boolean;
+  readonly rotulo?: string;
 }
 
 /**
@@ -22,34 +22,7 @@ interface Props {
  * sugerindo quantas cartas vieram junto. O espaçamento é calculado no CSS a partir de `--n`, de
  * modo que muitas vazas se sobrepõem em vez de estourar a placa.
  */
-export function Montinhos({
-  jogadorId,
-  vazas,
-  manilha,
-  ocultarUltimo,
-  className,
-  compacto = false,
-}: Props) {
-  if (compacto) {
-    // Enquanto o último montinho está a caminho, a contagem espera a animação chegar.
-    const visiveis = vazas.length - (ocultarUltimo && vazas.length > 0 ? 1 : 0);
-    return (
-      <div
-        className={classes('contador-vazas', className)}
-        data-monte-destino={jogadorId}
-        role="img"
-        aria-label={`Vazas ganhas: ${vazas.length}`}
-      >
-        <span className="contador-vazas__monte" aria-hidden="true">
-          <span />
-          <span />
-        </span>
-        <span className="contador-vazas__numero" aria-hidden="true">
-          {visiveis}
-        </span>
-      </div>
-    );
-  }
+export function Montinhos({ jogadorId, vazas, manilha, ocultarUltimo, className, rotulo }: Props) {
   if (vazas.length === 0) return null;
 
   const estilo: EstiloComVariaveis = { '--n': vazas.length };
@@ -57,7 +30,7 @@ export function Montinhos({
     <ul
       className={classes('montes', className)}
       style={estilo}
-      aria-label={`Vazas ganhas: ${vazas.length}`}
+      aria-label={rotulo ?? `Vazas ganhas: ${vazas.length}`}
     >
       {vazas.map((vaza, indice) => {
         const ehUltimo = indice === vazas.length - 1;

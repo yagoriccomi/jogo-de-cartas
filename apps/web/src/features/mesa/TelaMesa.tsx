@@ -1,18 +1,24 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import type { JogadaNaMesa } from '@fodinha/shared';
 import { Coracoes } from '../../componentes/Coracoes';
+import { IconeLivro, IconePlacar } from '../../componentes/Icones';
 import { jogarCarta, palpitar } from '../../estado/acoes';
 import { useApp } from '../../estado/armazem';
 import { classes } from '../../lib/classes';
 import { useAcao } from '../../lib/useAcao';
+import { CONSULTA_COMPUTADOR, useMediaQuery } from '../../lib/useMediaQuery';
 import { CabecalhoApp } from '../menu/CabecalhoApp';
+import { DialogoRegras } from '../menu/DialogoRegras';
+import { DESTINO_DOS_EMPATES } from './animacao-compartilhada';
 import { Baralho } from './Baralho';
 import { Carta } from './Carta';
 import { ContagemRegressiva } from './ContagemRegressiva';
+import { DialogoPlacar } from './DialogoPlacar';
 import { Mao } from './Mao';
 import { MesaLinhas } from './MesaLinhas';
 import { Montinhos } from './Montinhos';
-import { PainelPalpite, type PalpiteDado } from './PainelPalpite';
+import { NumerosDaRodada } from './NumerosDaRodada';
+import { PainelPalpite } from './PainelPalpite';
 import { PainelPausa } from './PainelPausa';
 import { PainelResultado } from './PainelResultado';
 import { SimbolosMaoEPe } from './SimbolosMaoEPe';
@@ -24,12 +30,14 @@ import { useMesaJogadas } from './useMesaJogadas';
 import './mesa.css';
 
 const SEM_CARTAS: readonly JogadaNaMesa[] = [];
-/** Acima de quantos adversários vale a dica "arraste para ver mais". */
-const ADVERSARIOS_VISIVEIS_NO_CELULAR = 2;
+
+type Consulta = 'placar' | 'regras' | null;
 
 export function TelaMesa() {
   const { jogo, sala, sessao, jogoRecebidoEm } = useApp();
   const [ocupado, executar] = useAcao();
+  const [consulta, definirConsulta] = useState<Consulta>(null);
+  const computador = useMediaQuery(CONSULTA_COMPUTADOR);
   // Hook antes dos retornos antecipados: a ordem dos hooks não pode depender do estado do jogo.
   const animacao = useAnimacaoDeVaza(
     jogo?.ultimaVaza ?? null,
@@ -84,8 +92,8 @@ export function TelaMesa() {
       ? jogoRecebidoEm + jogo.prazoDaVezRestanteMs
       : null;
 
-  const palpitesDados: PalpiteDado[] = adversarios.flatMap((j) =>
-    j.palpite === null || j.eliminado ? [] : [{ apelido: j.apelido, palpite: j.palpite }],
+  const palpitesDosOutros = adversarios.flatMap((j) =>
+    j.palpite === null || j.eliminado ? [] : [j.palpite],
   );
 
   let situacao: string;
@@ -100,12 +108,41 @@ export function TelaMesa() {
 
   const vazaEmCena = animacao.vaza;
   // O montinho novo só aparece quando a animação chega; até lá fica reservado (invisível).
-  const donoDoMonteOculto = vazaEmCena?.vencedorId ?? null;
+  const donoDoMonteOculto = vazaEmCena ? (vazaEmCena.vencedorId ?? DESTINO_DOS_EMPATES) : null;
   const cartasTexto = jogo.cartasPorJogador === 1 ? 'carta' : 'cartas';
+  const montinhosDeEmpate = jogo.vazasEmpatadas.map((vaza) => ({
+    cartaVencedora: vaza.cartaDoTopo,
+    quantidadeDeCartas: vaza.quantidadeDeCartas,
+  }));
+  const minhasFeitas = (eu?.vazasFeitas ?? 0) - (eu && eu.id === donoDoMonteOculto ? 1 : 0);
 
   return (
     <div className="mesa">
-      <CabecalhoApp>
+      <CabecalhoApp
+        recolhivel
+        acoes={
+          <>
+            <button
+              type="button"
+              className="botao botao--icone botao--consulta"
+              aria-label="Placar"
+              title="Placar"
+              onClick={() => definirConsulta('placar')}
+            >
+              <IconePlacar />
+            </button>
+            <button
+              type="button"
+              className="botao botao--icone botao--consulta"
+              aria-label="Regras"
+              title="Regras"
+              onClick={() => definirConsulta('regras')}
+            >
+              <IconeLivro />
+            </button>
+          </>
+        }
+      >
         Rodada {jogo.numeroRodada} · {jogo.cartasPorJogador} {cartasTexto}
         {jogo.rodadaCega && <span className="selo selo--alerta mesa__cega">Cega</span>}
       </CabecalhoApp>
@@ -129,18 +166,10 @@ export function TelaMesa() {
             );
           })}
         </ul>
-        {adversarios.length > ADVERSARIOS_VISIVEIS_NO_CELULAR && (
-          <p className="adversarios__dica so-celular">
-            Fez / palpite · arraste para ver mais jogadores
-          </p>
-        )}
       </div>
 
       <div className="palco">
-        <section
-          className={classes('feltro', palpitando && 'feltro--palpitando')}
-          aria-label="Mesa"
-        >
+        <section className="feltro" aria-label="Mesa">
           <div className="feltro__esquerda">
             <div className="feltro__monte">
               <div className="feltro__vira-bloco">
@@ -158,7 +187,7 @@ export function TelaMesa() {
           </div>
 
           <div className="feltro__jogadas">
-            {cartasNaMesa.length === 0 && (
+            {cartasNaMesa.length === 0 && !palpitando && (
               <p className="feltro__vazio">
                 {jogo.fase === 'palpites'
                   ? 'Palpites em andamento…'
@@ -175,27 +204,32 @@ export function TelaMesa() {
               voando={animacao.voando}
               raiz={animacao.raiz}
             />
+            {palpitando && (
+              <PainelPalpite
+                key={jogo.numeroRodada}
+                cartasNaRodada={jogo.cartasPorJogador}
+                palpiteProibido={jogo.palpiteProibido}
+                souOPe={jogo.idDoPe === meuId}
+                palpitesDosOutros={palpitesDosOutros}
+                prazoFinal={prazoFinal}
+                ocupado={ocupado}
+                onConfirmar={(quantidade) => void executar(() => palpitar(quantidade))}
+              />
+            )}
           </div>
-        </section>
 
-        {palpitando && (
-          <PainelPalpite
-            key={jogo.numeroRodada}
-            cartasNaRodada={jogo.cartasPorJogador}
-            palpiteProibido={jogo.palpiteProibido}
-            souOPe={jogo.idDoPe === meuId}
-            palpitesDados={palpitesDados}
-            prazoFinal={prazoFinal}
-            ocupado={ocupado}
-            onConfirmar={(quantidade) => void executar(() => palpitar(quantidade))}
+          <Montinhos
+            jogadorId={DESTINO_DOS_EMPATES}
+            vazas={montinhosDeEmpate}
+            manilha={jogo.manilha}
+            ocultarUltimo={donoDoMonteOculto === DESTINO_DOS_EMPATES}
+            className="montes--empates"
+            rotulo={`Vazas empatadas: ${montinhosDeEmpate.length}`}
           />
-        )}
+        </section>
       </div>
 
-      <section
-        className={classes('minha', palpitando && 'minha--palpitando')}
-        aria-label="Minha área"
-      >
+      <section className="minha" aria-label="Minha área">
         <div className="minha__barra">
           <div className="minha__dados">
             <SimbolosMaoEPe
@@ -212,11 +246,6 @@ export function TelaMesa() {
             >
               {eu?.apelido ?? sala?.participantes.find((p) => p.id === meuId)?.apelido ?? 'Você'}
             </span>
-            {eu && !eu.eliminado && (
-              <span className="minha__info">
-                Palpite {eu.palpite ?? '–'} · Fez {eu.vazasFeitas}
-              </span>
-            )}
             {eu && (
               <Coracoes
                 vidas={eu.vidas}
@@ -225,6 +254,24 @@ export function TelaMesa() {
               />
             )}
           </div>
+          {eu && !eu.eliminado && (
+            <NumerosDaRodada
+              palpite={eu.palpite}
+              feitas={minhasFeitas}
+              destinoDoMonte={computador ? undefined : eu.id}
+              className="numeros--minha"
+            />
+          )}
+          {/* Computador: meus montinhos na própria barra; no celular o "Fez" é o destino. */}
+          {eu && computador && (
+            <Montinhos
+              jogadorId={eu.id}
+              vazas={eu.vazasGanhas}
+              manilha={jogo.manilha}
+              ocultarUltimo={eu.id === donoDoMonteOculto}
+              className="montes--minha"
+            />
+          )}
           <span
             className={classes('vez', souDaVez && 'vez--minha')}
             role="status"
@@ -236,16 +283,6 @@ export function TelaMesa() {
             )}
           </span>
         </div>
-
-        {eu && (
-          <Montinhos
-            jogadorId={eu.id}
-            vazas={eu.vazasGanhas}
-            manilha={jogo.manilha}
-            ocultarUltimo={eu.id === donoDoMonteOculto}
-            className="montes--minha"
-          />
-        )}
 
         {aguardandoProximaRodada && (
           <p className="minha__aviso" role="status">
@@ -282,6 +319,10 @@ export function TelaMesa() {
         <PainelResultado jogo={jogo} meuId={meuId} recebidoEm={jogoRecebidoEm} />
       )}
       {pausado && <PainelPausa jogo={jogo} meuId={meuId} />}
+      {consulta === 'placar' && (
+        <DialogoPlacar jogo={jogo} meuId={meuId} onFechar={() => definirConsulta(null)} />
+      )}
+      {consulta === 'regras' && <DialogoRegras onFechar={() => definirConsulta(null)} />}
     </div>
   );
 }

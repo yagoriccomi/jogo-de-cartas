@@ -6,6 +6,7 @@ import { MARCADORES } from './animacao-compartilhada';
 import { Carta } from './Carta';
 import { ContagemRegressiva } from './ContagemRegressiva';
 import { Montinhos } from './Montinhos';
+import { NumerosDaRodada } from './NumerosDaRodada';
 import { SimbolosMaoEPe } from './SimbolosMaoEPe';
 
 /** Largura da carta "na testa" exibida na placa durante a rodada cega. */
@@ -34,7 +35,10 @@ function descreverPlaca(jogador: JogadorVisivel): string {
   return partes.join(', ');
 }
 
-/** Placa de um adversário: nome, selo de bot, mão/pé, corações de vida, fez/palpite e montinhos. */
+/**
+ * Placa de um adversário: nome, selo de bot, mão/pé, corações de vida, palpite/fez e montinhos.
+ * No celular as miniaturas dos montinhos não se leem: o "Fez" vira o destino do voo da vaza.
+ */
 export function PlacaJogador({
   jogador,
   vidasIniciais,
@@ -47,6 +51,9 @@ export function PlacaJogador({
 }: Props) {
   const offline = !jogador.conectado && !jogador.ehBot;
   const computador = useMediaQuery(CONSULTA_COMPUTADOR);
+  // Enquanto o montinho mais novo voa até aqui, a contagem espera a animação chegar.
+  const feitasVisiveis =
+    jogador.vazasFeitas - (ocultarUltimoMonte && jogador.vazasFeitas > 0 ? 1 : 0);
 
   return (
     <li
@@ -65,13 +72,7 @@ export function PlacaJogador({
         <div className="placa__texto">
           <span className="placa__nome">
             <span className="placa__apelido">{jogador.apelido}</span>
-            {jogador.ehBot && <span className="selo so-computador">Bot</span>}
           </span>
-          {!jogador.eliminado && (
-            <span className="placa__detalhe so-computador">
-              {jogador.cartasNaMao} {jogador.cartasNaMao === 1 ? 'carta' : 'cartas'}
-            </span>
-          )}
           {jogador.eliminado && <span className="placa__nota">Eliminado</span>}
           {!jogador.eliminado && jogador.saiAoFimDaRodada && (
             <span className="placa__nota">bot terminando a rodada</span>
@@ -83,17 +84,6 @@ export function PlacaJogador({
             <ContagemRegressiva prazoFinal={prazoFinal} className="placa__contagem" />
           )}
         </div>
-
-        {!jogador.eliminado && (
-          <div className="placa__placar" aria-hidden="true">
-            <span className="placa__numero">
-              {jogador.vazasFeitas}
-              <span className="placa__barra">/</span>
-              {jogador.palpite ?? '–'}
-            </span>
-            <span className="placa__legenda">fez / palpite</span>
-          </div>
-        )}
 
         {jogador.cartaNaTesta && (
           <div className="placa__testa">
@@ -110,14 +100,24 @@ export function PlacaJogador({
 
       <Coracoes vidas={jogador.vidas} vidasIniciais={vidasIniciais} className="placa__vidas" />
 
-      <Montinhos
-        jogadorId={jogador.id}
-        vazas={jogador.vazasGanhas}
-        manilha={manilha}
-        ocultarUltimo={ocultarUltimoMonte}
-        className="montes--placa"
-        compacto={!computador}
-      />
+      {!jogador.eliminado && (
+        <NumerosDaRodada
+          palpite={jogador.palpite}
+          feitas={feitasVisiveis}
+          destinoDoMonte={computador ? undefined : jogador.id}
+          className="numeros--placa"
+        />
+      )}
+
+      {computador && (
+        <Montinhos
+          jogadorId={jogador.id}
+          vazas={jogador.vazasGanhas}
+          manilha={manilha}
+          ocultarUltimo={ocultarUltimoMonte}
+          className="montes--placa"
+        />
+      )}
 
       <SimbolosMaoEPe ehMao={ehPrimeiro} ehPe={ehPe} className="simbolos--placa" />
     </li>

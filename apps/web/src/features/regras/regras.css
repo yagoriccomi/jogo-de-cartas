@@ -1,0 +1,490 @@
+/*
+ * Guia ilustrado de regras (carrossel de slides). Cabe em 360x640 sem rolar a página: o palco
+ * (ilustração) tem altura fixa para os botões não pularem de um slide para o outro.
+ */
+.dialogo:has(.guia) {
+  gap: 10px;
+  padding: 16px 16px 14px;
+}
+
+.dialogo:has(.guia) .dialogo__titulo {
+  font-size: 1.9rem;
+}
+
+.guia {
+  --alt-palco: 190px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.guia__area {
+  touch-action: pan-y;
+}
+
+.guia__slide {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: guia-slide-entra 0.35s ease-out;
+}
+
+.guia__slide--volta {
+  animation-name: guia-slide-volta;
+}
+
+@keyframes guia-slide-entra {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+}
+
+@keyframes guia-slide-volta {
+  from {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
+}
+
+/* Mini mesa de feltro onde a ilustração acontece. */
+.guia__palco {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--alt-palco);
+  padding: 20px 8px 8px;
+  overflow: hidden;
+  border: 2px solid rgb(45 226 230 / 0.4);
+  border-radius: 16px;
+  background:
+    radial-gradient(ellipse at 50% 40%, rgb(255 255 255 / 0.07), transparent 70%), var(--feltro);
+  box-shadow: inset 0 0 24px rgb(0 0 0 / 0.45);
+}
+
+.guia__titulo {
+  font-size: 2rem;
+  text-align: center;
+}
+
+.guia__texto {
+  min-height: 7.2em;
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: 0.98rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.guia__texto strong {
+  color: var(--rosa-suave);
+}
+
+/* ---------- Peças das ilustrações ---------- */
+
+.guia__coluna {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.guia__linha {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.guia__linha--topo {
+  align-items: flex-start;
+}
+
+.guia__rotulada {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.guia__legenda {
+  color: var(--texto-suave);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.guia__legenda--rosa {
+  color: var(--rosa-claro);
+}
+
+.guia__legenda--ciano {
+  color: var(--ciano-claro);
+}
+
+.guia__legenda--dourado {
+  color: var(--dourado);
+}
+
+.guia__seta {
+  color: var(--rosa-claro);
+  font-family: var(--fonte-numeros);
+  font-size: 1.8rem;
+  line-height: 1;
+  text-shadow: 0 0 8px var(--rosa);
+}
+
+.guia__pilula {
+  padding: 4px 14px;
+  border: 2px solid var(--ciano);
+  border-radius: 999px;
+  background: var(--fundo);
+  color: var(--ciano-palido);
+  font-size: 0.9rem;
+  font-weight: 700;
+  box-shadow: var(--brilho-ciano);
+}
+
+.guia__pilula--alerta {
+  border-color: var(--rosa);
+  color: var(--rosa-palido);
+  box-shadow: var(--brilho-rosa);
+}
+
+.guia__balao {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 2px solid var(--ciano);
+  border-radius: 12px;
+  background: var(--fundo);
+  color: var(--ciano-branco);
+  font-family: var(--fonte-numeros);
+  font-size: 1.6rem;
+  box-shadow: var(--brilho-ciano);
+}
+
+.guia__balao--bloqueado {
+  position: relative;
+  border-color: var(--rosa);
+  color: var(--bloqueado-texto);
+  box-shadow: var(--brilho-rosa);
+}
+
+/* Risco diagonal: o número que o pé não pode escolher. */
+.guia__balao--bloqueado::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  background: linear-gradient(
+    to top right,
+    transparent calc(50% - 2px),
+    var(--rosa) calc(50% - 2px),
+    var(--rosa) calc(50% + 2px),
+    transparent calc(50% + 2px)
+  );
+}
+
+.guia__operador {
+  color: var(--texto-neon);
+  font-family: var(--fonte-numeros);
+  font-size: 1.5rem;
+}
+
+.guia__operador--forte {
+  color: var(--rosa-claro);
+  font-size: 1.9rem;
+}
+
+.guia__reticencias {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 50px;
+  color: var(--ciano-claro);
+  font-family: var(--fonte-numeros);
+  font-size: 2rem;
+}
+
+/* ---------- Vidas ---------- */
+
+.guia__linha-vidas {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: min(300px, 100%);
+}
+
+.guia__vidas {
+  --l-coracao: 26px;
+  flex: none;
+  gap: 4px;
+}
+
+.guia__resultado {
+  color: var(--rosa-claro);
+  font-family: var(--fonte-numeros);
+  font-size: 2.1rem;
+  line-height: 1;
+  text-shadow:
+    0 0 6px var(--rosa),
+    0 0 16px var(--rosa);
+}
+
+/* ---------- Rodadas ---------- */
+
+.guia__leque {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 66px;
+  padding-left: 14px;
+}
+
+.guia__leque-carta {
+  margin-left: -14px;
+  transform: rotate(var(--giro, 0deg));
+  transform-origin: 50% 100%;
+}
+
+/* ---------- Palpite e regra do pé ---------- */
+
+.guia__jogador {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 62px;
+}
+
+.guia__nome {
+  color: var(--texto);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.guia__espaco-simbolo {
+  height: 36px;
+}
+
+/* Os símbolos da mesa são posicionados no canto da placa; aqui ficam no fluxo e maiores. */
+.guia .simbolos {
+  position: static;
+}
+
+.guia .simbolo {
+  width: 36px;
+  height: 36px;
+}
+
+.guia .simbolo svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* ---------- Força e manilha ---------- */
+
+.guia__grade-cartas {
+  display: grid;
+  grid-template-columns: repeat(5, auto);
+  gap: 8px 8px;
+  justify-content: center;
+}
+
+.guia__barra-forca {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  color: var(--ciano-palido);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.guia__barra-forca-linha {
+  position: relative;
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--bloqueado-borda), var(--rosa));
+  box-shadow: 0 0 8px var(--rosa);
+}
+
+.guia__barra-forca-linha::after {
+  content: '';
+  position: absolute;
+  right: -2px;
+  top: -4px;
+  border: 5px solid transparent;
+  border-left: 8px solid var(--rosa);
+}
+
+/* ---------- Anulação ---------- */
+
+.guia__par-anulado {
+  position: relative;
+  display: flex;
+  gap: 6px;
+}
+
+.guia__risco {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--rosa);
+  font-size: 3rem;
+  font-weight: 700;
+  text-shadow:
+    0 0 6px var(--rosa),
+    0 0 16px var(--rosa);
+}
+
+.guia__vencedora .carta {
+  box-shadow:
+    0 0 0 3px var(--dourado),
+    0 0 22px var(--dourado);
+}
+
+/* ---------- Tempo e jogadas ---------- */
+
+.guia__linha--topo .guia__tela {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 108px;
+}
+
+.guia__sobe,
+.guia__toque-duplo,
+.guia__relogio {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 78px;
+}
+
+.guia__sobe {
+  align-items: end;
+  padding-bottom: 6px;
+}
+
+.guia__toque-duplo {
+  width: 64px;
+  height: 64px;
+  margin-top: 8px;
+  border: 3px solid var(--rosa);
+  border-radius: 50%;
+  color: var(--rosa-palido);
+  font-family: var(--fonte-numeros);
+  font-size: 1.5rem;
+  box-shadow: var(--brilho-rosa);
+  animation: guia-pulso 1.2s ease-in-out infinite;
+}
+
+.guia__relogio {
+  align-content: center;
+}
+
+.guia__relogio-barra {
+  display: block;
+  width: 100%;
+  height: 12px;
+  border: 2px solid var(--ciano);
+  border-radius: 6px;
+  background: linear-gradient(var(--ciano), var(--ciano)) left / 100% 100% no-repeat;
+  box-shadow: var(--brilho-ciano);
+  animation: guia-tempo 3s linear infinite;
+}
+
+@keyframes guia-pulso {
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+@keyframes guia-tempo {
+  to {
+    background-size: 0% 100%;
+  }
+}
+
+/* ---------- Entrada escalonada dos elementos de cada slide ---------- */
+
+.guia__entra {
+  animation: guia-entra 0.4s ease-out backwards;
+  animation-delay: calc(var(--ordem, 0) * 90ms + 120ms);
+}
+
+@keyframes guia-entra {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
+  }
+}
+
+/* ---------- Pontos e navegação ---------- */
+
+.guia__pontos {
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+}
+
+/* Alvo de toque de 24px com ponto visual de 10px. */
+.guia__ponto {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.guia__ponto::before {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border: 2px solid var(--bloqueado-borda);
+  border-radius: 50%;
+  transition:
+    background-color 0.2s,
+    box-shadow 0.2s,
+    border-color 0.2s;
+}
+
+.guia__ponto--ativo::before {
+  border-color: var(--rosa);
+  background: var(--rosa);
+  box-shadow: 0 0 8px var(--rosa);
+}
+
+.guia__navegacao {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (max-height: 680px) {
+  .guia {
+    --alt-palco: 168px;
+  }
+
+  .guia__texto {
+    font-size: 0.92rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guia__slide,
+  .guia__entra,
+  .guia__toque-duplo,
+  .guia__relogio-barra {
+    animation: none;
+  }
+}

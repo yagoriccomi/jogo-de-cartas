@@ -26,6 +26,12 @@ export const MARCADORES = {
   cartaNaMesa: 'data-carta-mesa',
 } as const;
 
+/**
+ * Destino do voo de uma vaza toda anulada: o canto da mesa onde ficam os montinhos de empate.
+ * Usa o mesmo `data-monte-destino` dos montinhos dos jogadores, com este id no lugar do jogador.
+ */
+export const DESTINO_DOS_EMPATES = 'empates';
+
 export function seletor(marcador: string, valor?: string): string {
   return valor === undefined ? `[${marcador}]` : `[${marcador}="${CSS.escape(valor)}"]`;
 }
