@@ -10,12 +10,18 @@
   width: var(--carta-l);
   aspect-ratio: 120 / 168;
   padding: 0;
-  /* Contorno escuro e sólido (estilo Balatro) + sombra dura: a carta se destaca do feltro. */
+  /*
+   * Contorno escuro e sólido (estilo Balatro) + aro claro por fora + sombra dura. Só o contorno
+   * escuro sumia no fundo roxo-noite; o aro claro é a "borda branca" da carta e aparece em
+   * qualquer fundo.
+   */
   border: max(3px, calc(var(--carta-l) * 0.03)) solid var(--carta-borda);
   border-radius: calc(var(--carta-l) * 0.1);
   background: var(--carta-fundo);
   color: var(--naipe-preto);
-  box-shadow: 0 calc(var(--carta-l) * 0.05) 0 rgb(0 0 0 / 0.8);
+  box-shadow:
+    0 0 0 max(2px, calc(var(--carta-l) * 0.022)) var(--carta-aro),
+    0 calc(var(--carta-l) * 0.06) 0 rgb(0 0 0 / 0.8);
   font: inherit;
   cursor: default;
   transition:
@@ -47,7 +53,7 @@
 .carta__moldura {
   position: absolute;
   inset: 4.2cqw;
-  border: 2px solid rgb(42 33 64 / 0.28);
+  border: 2px solid rgb(42 33 64 / 0.45);
   border-radius: 6cqw;
 }
 
@@ -178,9 +184,21 @@
   filter: drop-shadow(0 0 4px var(--rosa)) drop-shadow(0 0 8px var(--rosa));
 }
 
-.carta__selo svg {
-  width: 25cqw;
-  height: 35cqw;
+.carta__letra {
+  /* O mesmo "F" cursivo em neon do logo Fodinha. */
+  font-family: var(--fonte-titulo);
+  font-size: 44cqw;
+  line-height: 1;
+  color: #ffe3f1;
+  text-shadow:
+    0 0 1.5cqw var(--rosa),
+    0 0 4cqw var(--rosa),
+    0 0 9cqw var(--rosa);
+  /*
+   * Na Yellowtail o traço do "F" fica bem à direita da caixa da letra (medido: centro do traço
+   * 0,235em à direita do centro da caixa e 0,025em acima). Compensa para o traço ficar no centro.
+   */
+  transform: translate(-0.235em, 0.025em);
 }
 
 @media (prefers-reduced-motion: reduce) {

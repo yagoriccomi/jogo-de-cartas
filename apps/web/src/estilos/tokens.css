@@ -33,6 +33,8 @@
   /* Cartas: pixel art com rosto creme e vermelho/azul-noite nos naipes. */
   --carta-fundo: #f3ede0;
   --carta-borda: #2a2140;
+  /* Aro claro em volta da carta: separa a carta do fundo escuro. */
+  --carta-aro: #fff8fc;
   --naipe-vermelho: #d81b60;
   --naipe-preto: #2a2350;
 
