@@ -1,7 +1,4 @@
-/** Uma carta do monte é reservada para a vira. */
-export function maxCartasPorJogador(totalDeCartas: number, jogadoresVivos: number): number {
-  return Math.floor((totalDeCartas - 1) / jogadoresVivos);
-}
+export { maxCartasPorJogador } from '@fodinha/shared';
 
 /**
  * Rodadas progressivas: 1, 2, 3… até o máximo possível e então voltam para 1.
