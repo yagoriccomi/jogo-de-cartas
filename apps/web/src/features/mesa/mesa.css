@@ -1,557 +1,1097 @@
-/* ---------- Layout da mesa (celular primeiro) ---------- */
 .mesa {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
   display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
   flex: 1;
-}
-
-.mesa__topo {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.25rem 0.75rem;
-  font-size: 0.9375rem;
-}
-
-.mesa__sala {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  color: var(--texto-suave);
-  font-weight: 600;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 14px 16px;
+  min-width: 0;
 }
 
 .mesa__cega {
-  margin-left: 0.5rem;
+  margin-left: 8px;
 }
 
-.mesa__jogadores {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
-  gap: 0.4rem;
-}
+/* ---------- Adversários ---------- */
 
-/* ---------- Chip de jogador ---------- */
-.chip {
+.adversarios-area {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.4rem;
-  padding: 0.4rem 0.55rem;
-  background: var(--superficie);
-  border: 2px solid var(--borda);
-  border-radius: var(--raio-p);
+  flex-direction: column;
+  gap: 4px;
   min-width: 0;
 }
 
-.chip--vez {
-  border-color: var(--destaque);
-  background: var(--destaque-suave);
+/* No celular a faixa rola na horizontal; a página em si nunca rola. */
+.adversarios {
+  display: flex;
+  gap: 8px;
+  padding: 14px 14px 8px;
+  margin: -6px -14px 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
 }
 
-.chip--eu .chip__nome {
-  color: var(--destaque);
+.adversarios__dica {
+  font-size: 0.7rem;
+  color: var(--texto-fraco);
 }
 
-.chip--eliminado {
-  opacity: 0.5;
+.placa {
+  position: relative;
+  flex: 0 0 148px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  min-width: 0;
+  padding: 6px 10px;
+  /* Neon apagado: só a placa de quem está com a vez acende (.placa--vez). */
+  border: 2px solid var(--linha);
+  border-radius: 12px;
+  background: var(--superficie);
+  box-shadow: none;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
-.chip--offline {
+.placa--com-testa {
+  flex-basis: 190px;
+}
+
+.placa--vez {
+  border-color: var(--rosa);
+  box-shadow:
+    0 0 0 1px var(--rosa),
+    0 0 18px rgb(255 42 138 / 0.65);
+}
+
+.placa--eliminada {
+  opacity: 0.45;
   border-style: dashed;
 }
 
-.chip__corpo {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.05rem 0.4rem;
-  min-width: 0;
-  flex: 1;
+.placa--offline {
+  border-style: dashed;
+  border-color: var(--bloqueado-borda);
 }
 
-.chip__nome {
+.placa__linha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+}
+
+.placa__vidas {
+  width: 100%;
+}
+
+.placa__texto {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.placa__nome {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
   font-weight: 700;
-  font-size: 0.875rem;
+  font-size: 0.9rem;
+}
+
+.placa__apelido {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.chip__voce {
-  font-weight: 400;
-  color: var(--texto-suave);
+.placa__nome {
+  flex-wrap: wrap;
 }
 
-.chip__vidas {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
-  font-weight: 800;
-  font-size: 0.875rem;
-  color: var(--vida);
+.placa__nome .selo {
+  padding: 0 6px;
+  font-size: 0.62rem;
 }
 
-.chip__vida-icone {
-  width: 0.9rem;
-  height: 0.9rem;
-}
-
-.chip__placar {
-  grid-column: 1 / -1;
-  font-size: 0.75rem;
-  color: var(--texto-suave);
-}
-
-.chip__selos {
-  grid-column: 1 / -1;
+.placa__detalhe {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 0.25rem;
-  min-height: 1.1rem;
-}
-
-.contagem {
-  font-variant-numeric: tabular-nums;
-  font-weight: 800;
-  font-size: 0.8125rem;
+  gap: 3px;
+  font-size: 0.78rem;
   color: var(--texto-suave);
 }
 
-.contagem--urgente {
-  color: var(--perigo);
-  animation: pulsar 1s ease-in-out infinite;
+/* Também usado na tela de fim de partida. */
+.placa__coracao {
+  width: 12px;
+  height: 12px;
+  color: var(--rosa-claro);
 }
 
-@keyframes pulsar {
-  50% {
-    opacity: 0.45;
-  }
+.placa__nota {
+  font-size: 0.7rem;
+  color: var(--rosa-claro);
 }
 
-/* ---------- Feltro ---------- */
-.feltro {
-  background: var(--mesa);
-  color: var(--mesa-texto);
-  border: 2px solid var(--mesa-borda);
-  border-radius: var(--raio);
-  padding: 0.75rem;
+.placa__contagem {
+  width: fit-content;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--rosa);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.placa__placar {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  box-shadow: var(--sombra);
+  align-items: flex-end;
+  flex: none;
 }
 
-.feltro__cabecalho {
+.placa__numero {
+  font-family: var(--fonte-numeros);
+  font-weight: 700;
+  font-size: 1.3rem;
+  line-height: 1.1;
+  color: #fff;
+}
+
+.placa__barra {
+  margin: 0 1px;
+  color: var(--texto-fraco);
+}
+
+.placa__legenda {
+  display: none;
+  font-size: 0.6rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--texto-fraco);
+}
+
+.placa__testa {
+  flex: none;
+}
+
+.simbolos {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  z-index: 1;
+  display: flex;
+  gap: 4px;
+}
+
+.simbolo {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 0.75rem 1.25rem;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 2px solid currentColor;
+  border-radius: 7px;
+  background: var(--fundo);
+  box-shadow: 0 0 8px currentColor;
 }
 
-.feltro__vira,
+.simbolo svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Mão (abre a rodada) em rosa; pé (último a palpitar) em ciano. */
+.simbolo--mao {
+  color: var(--rosa);
+}
+
+.simbolo--pe {
+  color: var(--ciano);
+}
+
+/* Na placa, o placar fez/palpite fica à direita: abre espaço para os símbolos acima dele. */
+.placa:has(.simbolos--placa) .placa__linha {
+  padding-top: 18px;
+}
+
+/* ---------- Mesa (feltro) ---------- */
+
+.palco {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.feltro {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 256px;
+  padding: 20px 26px;
+  border: 4px solid var(--rosa-palido);
+  border-radius: 64px;
+  background: var(--feltro);
+  box-shadow:
+    0 0 0 2px var(--rosa),
+    0 0 20px 3px var(--rosa),
+    inset 0 0 0 7px var(--feltro-escuro),
+    inset 0 0 0 9px var(--ciano),
+    inset 0 0 70px rgb(0 0 0 / 0.55);
+  text-align: center;
+}
+
+.feltro--palpitando {
+  min-height: 0;
+}
+
+/* Vira, manilha e baralho ficam à esquerda, centralizados na vertical. */
+.feltro__esquerda {
+  --l-carta: 40px;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.feltro__monte {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.feltro__vira-bloco {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.feltro__rotulo {
+  font-size: 0.65rem;
+}
+
 .feltro__manilha {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
-}
-
-.feltro__rotulo {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  opacity: 0.85;
 }
 
 .feltro__manilha-valor {
-  display: grid;
-  place-items: center;
-  min-width: 3rem;
-  height: 3rem;
-  padding: 0 0.5rem;
-  border-radius: 50%;
-  background: var(--manilha);
-  color: #1a1d29;
-  font-size: 1.4rem;
-  font-weight: 800;
+  font-family: var(--fonte-numeros);
+  font-size: 1.7rem;
+  line-height: 1;
+  color: var(--texto-neon);
+  text-shadow: 0 0 10px var(--rosa);
 }
 
-.feltro__situacao {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  margin-left: auto;
-  text-align: right;
+.baralho {
+  --l-baralho: 28px;
+  --escala-em-cena: 2;
+  --l-carta: var(--l-baralho);
+  position: relative;
+  flex: none;
+  width: var(--l-baralho);
+  aspect-ratio: 120 / 168;
+  /* A escala (e não o tamanho) muda: o lugar na mesa não se mexe e o centro do voo é o mesmo. */
+  transition: scale 0.2s;
 }
 
-.feltro__situacao .contagem {
-  color: var(--mesa-texto);
-  font-size: 1.1rem;
+/* Fora da animação: monte pequeno e apagado, para não competir com as cartas jogadas. */
+.baralho:not(.baralho--em-cena) .carta {
+  box-shadow: 0 2px 0 rgb(0 0 0 / 0.8);
 }
 
-.feltro__situacao .contagem--urgente {
-  color: var(--manilha);
+.baralho:not(.baralho--em-cena) .carta__neon {
+  opacity: 0.35;
+  box-shadow: none;
 }
 
-.feltro__vez {
-  font-weight: 700;
+.baralho:not(.baralho--em-cena) .carta__selo {
+  filter: none;
 }
 
-.feltro__vez--eu {
-  background: var(--manilha);
-  color: #1a1d29;
-  padding: 0.15rem 0.6rem;
-  border-radius: 999px;
+.baralho--em-cena {
+  scale: var(--escala-em-cena);
+  z-index: 5;
+}
+
+.baralho__carta {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 100%;
+  translate: calc(var(--i) * 1px) calc(var(--i) * -1.5px);
 }
 
 .feltro__jogadas {
-  min-height: 5.6rem;
+  position: relative;
+  /* Referência de largura (cqw) para as cartas da mesa se ajustarem à fila. */
+  container-type: inline-size;
   display: flex;
-  align-items: center;
+  flex: 1;
   justify-content: center;
-  background: var(--mesa-suave);
-  border-radius: var(--raio-p);
-  padding: 0.5rem;
+  min-width: 0;
+}
+
+.feltro--palpitando .feltro__jogadas {
+  display: none;
 }
 
 .feltro__vazio {
-  opacity: 0.8;
-  font-size: 0.875rem;
-}
-
-.jogadas {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+  position: absolute;
+  inset: 0;
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--ciano-palido);
+  pointer-events: none;
 }
 
-.jogadas__item {
+/* Duas linhas sem divisória; as cartas se sobrepõem e o canto com valor/naipe fica à mostra. */
+.mesa-linhas {
+  /* Celular: a carta encolhe (48-68px) até caber `--n-max` cartas com `--visivel` de cada uma à
+     mostra, que é o canto do valor/naipe; passado do mínimo, só então a sobreposição aumenta. */
+  --visivel: 0.55;
+  --l-carta: clamp(48px, calc(100cqw / (1 + (var(--n-max, 1) - 1) * var(--visivel))), 68px);
+  --sobreposicao: calc(1 - var(--visivel));
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.2rem;
-  max-width: 4.6rem;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
 }
 
-.jogadas__nome {
-  font-size: 0.6875rem;
+.mesa-linha {
+  display: flex;
+  align-items: center;
+  /* A fila começa à esquerda, na carta mais forte, e cresce para a direita. */
+  justify-content: flex-start;
+  width: 100%;
+  min-height: calc(var(--l-carta) * 1.4);
+  list-style: none;
+}
+
+/* Sobrepõe o suficiente para as `--n` cartas caberem na largura da linha (margem negativa). */
+.mesa-linha__carta {
+  position: relative;
+  /* A mais forte por cima: ninguém a cobre; cada seguinte entra por trás da anterior. */
+  z-index: var(--camada);
+  flex: none;
+  margin-left: min(
+    calc(var(--l-carta) * var(--sobreposicao) * -1),
+    calc((100% - var(--n) * var(--l-carta)) / max(var(--n) - 1, 1))
+  );
+  will-change: transform;
+}
+
+.mesa-linha__carta:first-child {
+  margin-left: 0;
+}
+
+.mesa-linha--anuladas .carta {
+  filter: grayscale(0.6) brightness(0.8);
+}
+
+/* ---------- Montinhos de vazas ganhas ---------- */
+
+.montes {
+  --l-monte: 22px;
+  --folga-monte: 3px;
+  --camadas-max: 3;
+  display: flex;
+  align-items: flex-end;
+  min-width: 0;
+  /* Reserva o espaço das folhas que espiam acima/à direita da carta. */
+  padding: calc(var(--camadas-max) * 2px) calc(var(--camadas-max) * 2px) 0 0;
+  list-style: none;
+}
+
+.monte {
+  position: relative;
+  flex: none;
+  width: var(--l-monte);
+  /* Sobrepõe só quando não cabe: o espaço livre dividido entre os montinhos (negativo = sobreposto). */
+  margin-left: min(
+    var(--folga-monte),
+    calc((100% - var(--n) * var(--l-monte)) / max(var(--n) - 1, 1))
+  );
+}
+
+.monte:first-child {
+  margin-left: 0;
+}
+
+.monte .carta {
+  --l-carta: var(--l-monte);
+}
+
+.monte__camada {
+  position: absolute;
+  inset: 0;
+  transform: translate(calc(var(--camada) * 2px), calc(var(--camada) * -2px));
+  border: 1px solid var(--carta-borda);
+  border-radius: calc(var(--l-monte) * 0.1);
+  background: var(--carta-fundo);
+  filter: brightness(calc(1 - var(--camada) * 0.12));
+}
+
+.monte--oculto {
+  visibility: hidden;
+}
+
+.montes--placa {
+  min-height: calc(var(--l-monte) * 1.4);
+}
+
+.montes--minha {
+  --l-monte: 30px;
+  --folga-monte: 4px;
   max-width: 100%;
+  margin-top: 2px;
+}
+
+.minha__vidas {
+  --l-coracao: 15px;
+  margin-top: 2px;
+}
+
+/* Celular: contagem de vazas no lugar das miniaturas (ícone de monte + número). */
+.contador-vazas {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 6px;
+  min-height: 22px;
+}
+
+.contador-vazas__monte {
+  position: relative;
+  width: 14px;
+  height: 19px;
+}
+
+.contador-vazas__monte span {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--carta-borda);
+  border-radius: 2px;
+  background: var(--carta-fundo);
+}
+
+.contador-vazas__monte span:first-child {
+  transform: translate(2px, -2px);
+  filter: brightness(0.75);
+}
+
+.contador-vazas__numero {
+  font-family: var(--fonte-numeros);
+  font-weight: 700;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: #fff;
+}
+
+/* No computador há espaço: o montinho precisa deixar ler a carta vencedora de relance. */
+@media (min-width: 900px) {
+  .montes {
+    --l-monte: 34px;
+    --folga-monte: 5px;
+  }
+
+  .montes--minha {
+    --l-monte: 46px;
+    --folga-monte: 6px;
+  }
+}
+
+/* ---------- Palpite ---------- */
+
+.palpite {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 12px 14px;
+  border: 2px solid var(--rosa);
+  border-radius: 20px;
+  background: var(--superficie);
+  box-shadow: 0 0 24px rgb(255 42 138 / 0.5);
+}
+
+.palpite__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.palpite__titulo {
+  font-size: 1.8rem;
+}
+
+.palpite__pergunta {
+  font-size: 0.9rem;
+  color: var(--texto-suave);
+}
+
+.palpite__grade {
+  display: grid;
+  grid-template-columns: repeat(var(--colunas, 4), minmax(0, 1fr));
+  gap: 8px;
+}
+
+.palpite__opcao {
+  height: 44px;
+  padding: 0;
+  border: 2px solid var(--ciano);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ciano-branco);
+  font-family: var(--fonte-numeros);
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+.palpite__grade--grande .palpite__opcao {
+  height: 56px;
+  border-radius: 14px;
+  font-size: 1.6rem;
+}
+
+.palpite__grade--media .palpite__opcao {
+  height: 48px;
+}
+
+.palpite__grade--pequena {
+  gap: 6px;
+}
+
+.palpite__grade--pequena .palpite__opcao {
+  height: 40px;
+}
+
+.palpite .botao--primario {
+  min-height: 48px;
+}
+
+/* Contexto da mão (nome e vez) já está no próprio painel de palpite no celular. */
+.minha--palpitando .minha__barra {
+  display: none;
+}
+
+.palpite__resumo span:first-child {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.ultima {
+.palpite__resumo span:last-child {
+  flex: none;
+}
+
+.palpite__opcao[aria-pressed='true'] {
+  border-color: var(--rosa-palido);
+  background: var(--rosa);
+  color: #fff;
+  box-shadow: 0 0 16px var(--rosa);
+}
+
+.palpite__opcao--bloqueada {
+  border-style: dashed;
+  border-color: var(--bloqueado-borda);
+  color: var(--bloqueado-texto);
+  text-decoration: line-through;
+}
+
+.palpite__resumo {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+}
+
+.palpite__resumo strong {
+  color: #fff;
+}
+
+.palpite__bloqueio {
+  font-size: 0.8rem;
+  color: var(--rosa-suave);
+}
+
+.pilula {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--rosa);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.pilula--escura {
+  padding: 1px 8px;
+  background: var(--fundo);
+  color: var(--ciano-branco);
+  font-size: 0.8rem;
+}
+
+.contagem--urgente {
+  color: var(--dourado);
+  animation: pulsar 0.8s ease-in-out infinite;
+}
+
+@keyframes pulsar {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* ---------- Minha área ---------- */
+
+.minha {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.minha__barra {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 0.4rem 0.75rem;
+  justify-content: space-between;
+  gap: 8px;
 }
 
-.ultima__cartas {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem;
-}
-
-/* ---------- Minha área (fixa embaixo no celular) ---------- */
-.mesa__minha {
-  position: sticky;
-  bottom: 0;
-  margin: 0 -1rem;
-  padding: 0.75rem 1rem max(0.75rem, env(safe-area-inset-bottom));
-  background: var(--superficie);
-  border-top: 1px solid var(--borda);
-  box-shadow: 0 -4px 16px rgb(0 0 0 / 0.08);
+.minha__dados {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
-  align-items: center;
+  min-width: 0;
 }
 
-.mesa__dica,
-.mesa__eliminado,
-.mao__vazia {
-  font-size: 0.875rem;
+/* Símbolos de mão/pé no canto superior direito do meu status, sem cobrir o nome. */
+.minha__dados:has(.simbolos--minha) {
+  padding-right: 64px;
+}
+
+.simbolos--minha {
+  top: 2px;
+  right: 0;
+}
+
+.minha__nome--apagado {
+  color: var(--texto-suave);
+}
+
+.minha__nome {
+  font-size: 1.7rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.minha__info {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--texto-suave);
+}
+
+.minha__info .selo {
+  padding: 0 6px;
+}
+
+.vez {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--superficie);
+  border: 1px solid var(--linha);
+  font-size: 0.8rem;
   color: var(--texto-suave);
   text-align: center;
 }
 
-.mesa__eliminado {
-  font-weight: 600;
-  color: var(--perigo);
+.vez--minha {
+  border-color: var(--rosa);
+  background: var(--rosa);
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  box-shadow: 0 0 16px var(--rosa);
 }
+
+.minha__aviso,
+.minha__dica-cega {
+  padding: 10px 14px;
+  border: 1px dashed var(--ciano);
+  border-radius: 12px;
+  font-size: 0.9rem;
+  color: var(--ciano-palido);
+  text-align: center;
+}
+
+.minha__dica-cega {
+  border: 0;
+  padding: 0;
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+}
+
+/* ---------- Mão em leque ---------- */
 
 .mao {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.4rem;
-}
-
-.mao__inerte {
-  opacity: 0.85;
-}
-
-/* ---------- Palpite ---------- */
-.palpite {
-  width: 100%;
-  max-width: 28rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.palpite__titulo {
-  font-weight: 700;
-  text-align: center;
-}
-
-.palpite__opcoes {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.4rem;
-}
-
-.palpite__opcao {
-  min-width: 2.75rem;
-  min-height: 2.75rem;
-  border: 2px solid var(--borda);
-  border-radius: var(--raio-p);
-  background: var(--superficie);
-  font-weight: 800;
-  font-size: 1.1rem;
-  cursor: pointer;
-}
-
-.palpite__opcao[aria-checked='true'] {
-  border-color: var(--destaque);
-  background: var(--destaque);
-  color: var(--destaque-texto);
-}
-
-.palpite__opcao:disabled {
-  opacity: 0.35;
-  text-decoration: line-through;
-  cursor: not-allowed;
-}
-
-.palpite__dica {
-  font-size: 0.8125rem;
-  color: var(--alerta);
-  font-weight: 600;
-  text-align: center;
-}
-
-/* ---------- Cartas ---------- */
-.carta {
-  --largura: 3.2rem;
-  position: relative;
-  display: block;
-  flex: none;
-  width: var(--largura);
-  aspect-ratio: 5 / 7;
-  padding: 0;
-  font-size: calc(var(--largura) * 0.3);
-  line-height: 1;
-  background: var(--carta-fundo);
-  border: 1px solid var(--carta-borda);
-  border-radius: calc(var(--largura) * 0.12);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
-  overflow: hidden;
-}
-
-.carta--p {
-  --largura: 2.1rem;
-}
-
-.carta--g {
-  --largura: 4.4rem;
-}
-
-.carta--vermelha {
-  color: var(--naipe-vermelho);
-}
-
-.carta--preta {
-  color: var(--naipe-preto);
-}
-
-.carta--manilha {
-  box-shadow:
-    0 0 0 2px var(--manilha),
-    0 1px 3px rgb(0 0 0 / 0.25);
-}
-
-.carta__canto {
-  position: absolute;
-  top: 0.18em;
-  left: 0.22em;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.05em;
-  font-weight: 800;
-}
-
-.carta__valor {
-  font-size: 1em;
-}
-
-.carta__canto .naipe {
-  width: 0.8em;
-  height: 0.8em;
-}
-
-.carta__centro {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-}
-
-.carta__centro .naipe {
-  width: 1.9em;
-  height: 1.9em;
-  opacity: 0.9;
-}
-
-.carta--p .carta__centro {
-  display: none;
-}
-
-.carta--verso {
-  border-color: var(--verso-b);
-  background: repeating-linear-gradient(
-    45deg,
-    var(--verso-a) 0 0.35rem,
-    var(--verso-b) 0.35rem 0.7rem
-  );
-}
-
-.carta--clicavel {
-  cursor: pointer;
-  transition: transform 0.12s;
-}
-
-.carta--clicavel:hover,
-.carta--clicavel:focus-visible {
-  transform: translateY(-6px);
-}
-
-.carta--ativa {
-  outline: 2px solid var(--destaque);
-  outline-offset: 2px;
-}
-
-/* ---------- Resultado / fim ---------- */
-.sobreposicao {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  display: grid;
-  place-items: center;
-  padding: 1rem;
-  background: var(--sobreposicao);
-}
-
-.folha {
+  gap: 4px;
   width: 100%;
-  max-width: 26rem;
-  max-height: 90dvh;
-  overflow: auto;
-  background: var(--superficie);
-  border: 1px solid var(--borda);
-  border-radius: var(--raio);
-  box-shadow: var(--sombra);
-  padding: 1.1rem;
+  min-width: 0;
+}
+
+.mao__legenda {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  max-width: 1080px;
+  font-size: 0.68rem;
+  letter-spacing: 1px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.mao__forte,
+.mao__fraca {
+  white-space: nowrap;
+}
+
+.mao__forte {
+  color: var(--rosa-claro);
+}
+
+.mao__fraca {
+  color: var(--ciano-claro);
+}
+
+.mao__dica {
+  flex: 1;
+  text-align: center;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--ciano-palido);
+}
+
+.mao__leque {
+  position: relative;
+  max-width: 100%;
+}
+
+.mao__posicao {
+  position: absolute;
+  transform-origin: 50% 140%;
+}
+
+.mao__posicao:hover,
+.mao__posicao:focus-within {
+  z-index: 30;
+}
+
+.mao__posicao--selecionada {
+  z-index: 40;
+}
+
+/* ---------- Resultado (folha) ---------- */
+
+.folha__alca {
+  align-self: center;
+  width: 44px;
+  height: 5px;
+  margin-top: -6px;
+  border-radius: 999px;
+  background: var(--bloqueado-borda);
+}
+
+.folha__cabecalho {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .folha__titulo {
-  font-size: 1.1rem;
-  margin-bottom: 0.75rem;
+  font-size: 2.2rem;
 }
 
-.folha__rodape {
-  margin-top: 0.75rem;
-  font-size: 0.8125rem;
+.folha__cartas {
+  font-size: 0.85rem;
   color: var(--texto-suave);
-  text-align: center;
 }
 
 .resultado {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9375rem;
 }
 
 .resultado th,
 .resultado td {
-  padding: 0.4rem 0.35rem;
-  border-bottom: 1px solid var(--borda);
+  padding: 11px 4px;
+  border-bottom: 1px solid var(--linha-suave);
   text-align: center;
-}
-
-.resultado th:first-child {
-  text-align: left;
-  font-weight: 600;
+  font-size: 1rem;
 }
 
 .resultado thead th {
-  font-size: 0.75rem;
-  color: var(--texto-suave);
+  padding-top: 0;
+  padding-bottom: 8px;
+  font-size: 0.68rem;
+  font-weight: 400;
+  letter-spacing: 1px;
   text-transform: uppercase;
+  color: var(--ciano-palido);
 }
 
-.resultado__eu th {
-  color: var(--destaque);
-}
-
-.resultado__perdeu {
-  color: var(--perigo);
-  font-weight: 800;
-}
-
-.resultado__ok {
-  color: var(--sucesso);
+.resultado tbody th {
+  text-align: left;
   font-weight: 700;
 }
 
-.fim {
-  max-width: 28rem;
-  width: 100%;
-  margin: 1rem auto 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  text-align: center;
+.resultado thead th:first-child {
+  text-align: left;
 }
 
-.fim .cartao__titulo {
-  margin-bottom: 0;
+.resultado th:last-child,
+.resultado td:last-child {
+  text-align: right;
+}
+
+.resultado tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.resultado__eu th {
+  color: var(--ciano-branco);
+}
+
+.resultado__perdeu {
+  font-weight: 700;
+  color: var(--rosa-claro);
+}
+
+.resultado__ok {
+  font-weight: 700;
+  color: var(--ciano-claro);
+}
+
+.folha__proxima {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--superficie-funda);
+}
+
+.folha__proxima-texto {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+
+.folha__segundos {
+  color: var(--ciano-palido);
+}
+
+.barra-progresso {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--linha-suave);
+  overflow: hidden;
+}
+
+.barra-progresso__preenchido {
+  width: var(--progresso, 0%);
+  height: 100%;
+  background: var(--ciano);
+  box-shadow: 0 0 10px var(--ciano);
+  transition: width 0.1s linear;
+}
+
+@media (min-width: 900px) {
+  .folha__alca {
+    display: none;
+  }
+}
+
+/* ---------- Pausa (votação) ---------- */
+
+.pausa__cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pausa__ponto {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--rosa);
+  box-shadow: 0 0 10px var(--rosa);
+  animation: pulsar 1.2s ease-in-out infinite;
+}
+
+.votacao {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.votacao + .votacao {
+  padding-top: 16px;
+  border-top: 1px solid var(--linha);
+}
+
+.votacao__situacao {
+  color: var(--texto-suave);
+}
+
+.votacao__situacao strong {
+  color: #fff;
+}
+
+.votacao__pergunta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--superficie-funda);
+}
+
+.votacao__titulo {
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.votacao__botoes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.votacao__botoes .botao {
+  min-height: 52px;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.votacao__botoes:has(.votacao--escolhido) .botao:not(.votacao--escolhido) {
+  opacity: 0.6;
+}
+
+.votacao__sim.votacao--escolhido {
+  background: var(--ciano);
+  color: var(--fundo);
+  box-shadow:
+    0 0 0 3px var(--texto),
+    0 0 16px rgb(45 226 230 / 0.7);
+}
+
+.votacao__nao.votacao--escolhido {
+  background: var(--rosa);
+  color: #fff;
+  box-shadow:
+    0 0 0 3px var(--texto),
+    var(--brilho-rosa);
+}
+
+.votacao__espera {
+  color: var(--ciano-palido);
+}
+
+.votacao__votos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.votacao__votos li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 3px 0;
+}
+
+.voto {
+  font-weight: 700;
+}
+
+.voto--aguardando {
+  font-weight: 400;
+  color: var(--texto-suave);
+}
+
+.voto--sim {
+  color: var(--ciano-claro);
+}
+
+.voto--nao {
+  color: var(--rosa-claro);
+}
+
+.votacao__regra {
+  padding-top: 12px;
+  border-top: 1px solid var(--linha-suave);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--texto-suave);
+}
+
+.votacao__regra strong {
+  color: #fff;
+}
+
+/* ---------- Fim de partida ---------- */
+
+.mesa--fim {
+  max-width: 560px;
+}
+
+.fim {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px 20px;
 }
 
 .fim__titulo {
-  font-size: 1.75rem;
-  letter-spacing: -0.02em;
+  font-size: 2.6rem;
 }
 
 .fim__texto {
@@ -559,29 +1099,315 @@
 }
 
 .fim__placar {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .fim__placar li {
   display: flex;
   justify-content: space-between;
-  padding: 0.4rem 0;
-  border-bottom: 1px solid var(--borda);
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--superficie-funda);
+}
+
+.fim__vidas {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
 }
 
 .fim__acoes {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 10px;
 }
 
-@media (min-width: 40rem) {
-  .mesa__minha {
+/* ---------- Layout de computador (≥ 900px) ---------- */
+
+@media (min-width: 900px) {
+  .mesa {
+    gap: 16px;
+    padding: 20px 24px 24px;
+  }
+
+  .adversarios {
+    flex-wrap: wrap;
+    gap: 12px;
     margin: 0;
-    border: 1px solid var(--borda);
-    border-radius: var(--raio);
+    padding: 12px 6px 0;
+    overflow: visible;
+  }
+
+  .placa {
+    flex: 1 1 200px;
+    max-width: 280px;
+    padding: 8px 14px;
+  }
+
+  .placa--com-testa {
+    flex-basis: 260px;
+  }
+
+  .placa__nome {
+    font-size: 1rem;
+  }
+
+  .montes--placa {
+    --l-monte: 30px;
+    --folga-monte: 4px;
+  }
+
+  .montes--minha {
+    --l-monte: 38px;
+  }
+
+  .minha__vidas {
+    --l-coracao: 18px;
+  }
+
+  .placa__legenda {
+    display: block;
+  }
+
+  .placa__numero {
+    font-size: 1.6rem;
+  }
+
+  .feltro {
+    min-height: 300px;
+    gap: 28px;
+    padding: 24px 6%;
+    border-width: 6px;
+    border-radius: 999px;
+    box-shadow:
+      0 0 0 3px var(--rosa),
+      0 0 22px 4px var(--rosa),
+      0 0 60px 10px rgb(255 42 138 / 0.4),
+      inset 0 0 0 10px var(--feltro-escuro),
+      inset 0 0 0 12px var(--ciano),
+      inset 0 0 100px rgb(0 0 0 / 0.55);
+  }
+
+  /* O painel de palpite fica encaixado à direita da mesa para não cobrir a mão. */
+  .palco:has(.palpite) {
+    min-height: 360px;
+  }
+
+  .feltro--palpitando {
+    min-height: 300px;
+    align-items: center;
+    justify-content: flex-start;
+    padding-left: 14%;
+    padding-right: 48%;
+  }
+
+  .palpite {
+    position: absolute;
+    right: 2%;
+    top: 50%;
+    width: min(430px, 46%);
+    transform: translateY(-50%);
+    padding: 18px 20px;
+    gap: 12px;
+    box-shadow:
+      0 0 30px rgb(255 42 138 / 0.55),
+      0 20px 40px rgb(0 0 0 / 0.6);
+  }
+
+  .palpite__titulo {
+    font-size: 2rem;
+  }
+
+  .feltro__esquerda {
+    --l-carta: 84px;
+    gap: 12px;
+  }
+
+  .feltro__monte {
+    gap: 14px;
+  }
+
+  .feltro__manilha-valor {
+    font-size: 2.75rem;
+  }
+
+  .feltro__rotulo {
+    font-size: 0.75rem;
+  }
+
+  .feltro__vazio {
+    font-size: 0.95rem;
+  }
+
+  .mesa-linhas {
+    --l-carta: 84px;
+    --sobreposicao: 0.55;
+    gap: 14px;
+  }
+
+  .baralho {
+    --l-baralho: 52px;
+    --escala-em-cena: 1.45;
+  }
+
+  .minha--palpitando .minha__barra {
+    display: flex;
+  }
+
+  .palpite__opcao,
+  .palpite__grade--pequena .palpite__opcao {
+    height: 44px;
+  }
+
+  .palpite .botao--primario {
+    min-height: 56px;
+  }
+
+  .palpite__grade--grande .palpite__opcao {
+    height: 64px;
+    font-size: 1.8rem;
+  }
+
+  .palpite__grade--media .palpite__opcao {
+    height: 52px;
+  }
+
+  .minha__nome {
+    font-size: 2rem;
+  }
+
+  .minha__info {
+    font-size: 0.9rem;
+  }
+
+  .vez {
+    font-size: 0.9rem;
+  }
+
+  .mao__legenda {
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+  }
+}
+
+/* O "s" dos segundos não pode virar maiúsculo dentro da pílula "SUA VEZ". */
+.vez .pilula {
+  text-transform: none;
+}
+
+/* ---------- Celular (< 900px) ---------- */
+
+@media (max-width: 899px) {
+  /* Feltro ocupa o espaço entre as placas e a minha área; o conteúdo fica centrado nele. */
+  .palco {
+    flex: 1;
+  }
+
+  .feltro {
+    flex: 1;
+    min-height: 0;
+    gap: 10px;
+    padding: 14px 16px;
+    border-radius: 36px;
+  }
+
+  .feltro--palpitando {
+    flex: none;
+  }
+
+  .minha {
+    flex: none;
+    margin-top: auto;
+  }
+
+  .feltro__esquerda {
+    --l-carta: 56px;
+    gap: 6px;
+  }
+
+  .feltro__monte {
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .feltro__manilha-valor {
+    font-size: 1.9rem;
+  }
+
+  .feltro__rotulo {
+    font-size: 0.7rem;
+  }
+
+  /* Valor menor nas cartas da mesa: com 55% à mostra, até o "10" cabe no canto. */
+  .mesa-linha__carta .carta__face {
+    --u: 5.5cqw;
+  }
+
+  /* Placas estreitas, rolagem escondida e esmaecida na borda: convite a arrastar. */
+  .adversarios {
+    padding-right: 40px;
+    scrollbar-width: none;
+    mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+  }
+
+  .adversarios::-webkit-scrollbar {
+    display: none;
+  }
+
+  .placa {
+    flex-basis: 112px;
+    padding: 5px 8px;
+  }
+
+  .placa--com-testa {
+    flex-basis: 150px;
+  }
+
+  /* Nome na primeira linha (com folga para os símbolos); placar e testa abaixo. */
+  .placa:has(.simbolos--placa) .placa__linha {
+    padding-top: 0;
+  }
+
+  .placa__linha {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+
+  .placa__texto {
+    flex: 1 1 100%;
+  }
+
+  .placa:has(.simbolos--placa) .placa__nome {
+    padding-right: 24px;
+  }
+
+  .placa:has(.simbolo--mao):has(.simbolo--pe) .placa__nome {
+    padding-right: 46px;
+  }
+
+  .placa__placar {
+    align-items: flex-start;
+  }
+
+  .simbolos--placa {
+    top: 4px;
+    right: 5px;
+    gap: 3px;
+  }
+
+  .simbolos--placa .simbolo {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+  }
+
+  .simbolos--placa .simbolo svg {
+    width: 11px;
+    height: 11px;
   }
 }

@@ -86,13 +86,29 @@ export class GatewayDoJogo {
     socket.on('sala:adicionarBot', (responder) =>
       this.responder(socket, responder, () => nulo(this.servico.adicionarBot(this.ator(socket)))),
     );
-    socket.on('sala:removerParticipante', (dados, responder) =>
-      this.responder(socket, responder, () =>
-        nulo(this.servico.removerParticipante(this.ator(socket), objeto(dados).participanteId)),
-      ),
+    socket.on('sala:expulsar', (dados, responder) =>
+      this.responder(socket, responder, () => {
+        const expulsao = this.servico.expulsar(this.ator(socket), objeto(dados).participanteId);
+        if (expulsao.eraHumano) this.retirarExpulso(expulsao.expulsoId);
+        return null;
+      }),
     );
     socket.on('sala:iniciarPartida', (responder) =>
       this.responder(socket, responder, () => nulo(this.servico.iniciarPartida(this.ator(socket)))),
+    );
+    socket.on('sala:reiniciar', (responder) =>
+      this.responder(socket, responder, () => nulo(this.servico.reiniciar(this.ator(socket)))),
+    );
+    socket.on('sala:pausar', (responder) =>
+      this.responder(socket, responder, () => nulo(this.servico.pausar(this.ator(socket)))),
+    );
+    socket.on('sala:retomar', (responder) =>
+      this.responder(socket, responder, () => nulo(this.servico.retomar(this.ator(socket)))),
+    );
+    socket.on('jogo:votarEspera', (dados, responder) =>
+      this.responder(socket, responder, () =>
+        nulo(this.servico.votarEspera(this.ator(socket), objeto(dados))),
+      ),
     );
     socket.on('sala:sair', (responder) =>
       this.responder(socket, responder, () => {
@@ -173,6 +189,17 @@ export class GatewayDoJogo {
     sockets?.delete(socket.id);
     if (sockets?.size === 0) this.socketsPorJogador.delete(ator.jogadorId);
     return ator;
+  }
+
+  /** Avisa todas as abas do expulso e as desvincula, para que ele não continue agindo na sala. */
+  private retirarExpulso(jogadorId: string): void {
+    this.io.to(canalDoJogador(jogadorId)).emit('sala:expulso', {
+      mensagem: 'O dono da sala removeu você. Você não pode voltar a ela.',
+    });
+    for (const socketId of [...(this.socketsPorJogador.get(jogadorId) ?? [])]) {
+      const socket = this.io.sockets.sockets.get(socketId);
+      if (socket) this.desvincular(socket);
+    }
   }
 
   private ator(socket: SocketDoJogo): Ator {

@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { LIMITES, type ConfiguracaoPartida } from '@fodinha/shared';
 import './configuracao.css';
 
@@ -9,6 +10,8 @@ interface Props {
 
 interface PassoProps {
   readonly rotulo: string;
+  /** Forma curta usada nos rótulos dos botões ("Menos baralhos"). */
+  readonly substantivo: string;
   readonly valor: number;
   readonly minimo: number;
   readonly maximo: number;
@@ -16,29 +19,30 @@ interface PassoProps {
   readonly onChange: (valor: number) => void;
 }
 
-function Passo({ rotulo, valor, minimo, maximo, desabilitado, onChange }: PassoProps) {
+function Passo({ rotulo, substantivo, valor, minimo, maximo, desabilitado, onChange }: PassoProps) {
+  const idRotulo = useId();
   return (
-    <div className="passo">
-      <span className="passo__rotulo" id={`passo-${rotulo}`}>
-        {rotulo}
-      </span>
-      <div className="passo__controle" role="group" aria-labelledby={`passo-${rotulo}`}>
+    <div className="linha-config">
+      <span id={idRotulo}>{rotulo}</span>
+      <div className="passo" role="group" aria-labelledby={idRotulo}>
         <button
           type="button"
-          className="botao passo__botao"
+          className="passo__botao"
           disabled={desabilitado || valor <= minimo}
           onClick={() => onChange(valor - 1)}
-          aria-label={`Diminuir ${rotulo}`}
+          aria-label={`Menos ${substantivo}`}
         >
           −
         </button>
-        <output className="passo__valor">{valor}</output>
+        <output className="passo__valor" aria-live="polite">
+          {valor}
+        </output>
         <button
           type="button"
-          className="botao passo__botao"
+          className="passo__botao"
           disabled={desabilitado || valor >= maximo}
           onClick={() => onChange(valor + 1)}
-          aria-label={`Aumentar ${rotulo}`}
+          aria-label={`Mais ${substantivo}`}
         >
           +
         </button>
@@ -49,10 +53,12 @@ function Passo({ rotulo, valor, minimo, maximo, desabilitado, onChange }: PassoP
 
 /** Controles de configuração reaproveitados pela criação de sala e pelo lobby (DRY). */
 export function ConfiguracaoControles({ valor, onChange, desabilitado = false }: Props) {
+  const idInterruptor = useId();
   return (
     <div className="configuracao">
       <Passo
         rotulo="Baralhos"
+        substantivo="baralhos"
         valor={valor.quantidadeBaralhos}
         minimo={LIMITES.minBaralhos}
         maximo={LIMITES.maxBaralhos}
@@ -61,21 +67,27 @@ export function ConfiguracaoControles({ valor, onChange, desabilitado = false }:
       />
       <Passo
         rotulo="Vidas iniciais"
+        substantivo="vidas"
         valor={valor.vidasIniciais}
         minimo={LIMITES.minVidas}
         maximo={LIMITES.maxVidas}
         desabilitado={desabilitado}
         onChange={(vidasIniciais) => onChange({ ...valor, vidasIniciais })}
       />
-      <label className="configuracao__marcar">
-        <input
-          type="checkbox"
-          checked={valor.incluirOitoNoveDez}
+      <div className="linha-config">
+        <span id={idInterruptor}>Incluir 8, 9 e 10</span>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={valor.incluirOitoNoveDez}
+          aria-labelledby={idInterruptor}
+          className="interruptor"
           disabled={desabilitado}
-          onChange={(e) => onChange({ ...valor, incluirOitoNoveDez: e.target.checked })}
-        />
-        <span>Incluir 8, 9 e 10 no baralho</span>
-      </label>
+          onClick={() => onChange({ ...valor, incluirOitoNoveDez: !valor.incluirOitoNoveDez })}
+        >
+          <span className="interruptor__bola" />
+        </button>
+      </div>
     </div>
   );
 }

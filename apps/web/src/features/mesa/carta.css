@@ -1,0 +1,204 @@
+/*
+ * Carta em pixel art. Tudo dentro da face é medido em `cqw` (1% da largura da carta), então basta
+ * mudar `--carta-l` para ter qualquer tamanho com as mesmas proporções do mockup 120x168.
+ */
+.carta {
+  --carta-l: var(--l-carta, 92px); /* wrappers mudam --l-carta; o componente usa o inline */
+  position: relative;
+  display: block;
+  flex: none;
+  width: var(--carta-l);
+  aspect-ratio: 120 / 168;
+  padding: 0;
+  /* Contorno escuro e sólido (estilo Balatro) + sombra dura: a carta se destaca do feltro. */
+  border: max(3px, calc(var(--carta-l) * 0.03)) solid var(--carta-borda);
+  border-radius: calc(var(--carta-l) * 0.1);
+  background: var(--carta-fundo);
+  color: var(--naipe-preto);
+  box-shadow: 0 calc(var(--carta-l) * 0.05) 0 rgb(0 0 0 / 0.8);
+  font: inherit;
+  cursor: default;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s,
+    opacity 0.15s,
+    filter 0.15s;
+}
+
+.carta--vermelha {
+  color: var(--naipe-vermelho);
+}
+
+.carta--inclinada {
+  transform: rotate(var(--inclinacao, 0deg));
+}
+
+.carta__face {
+  --u: 7.5cqw; /* tamanho de 1 "pixel" do desenho */
+  --espaco-naipe: 12cqw;
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+  border-radius: inherit;
+  container-type: inline-size;
+}
+
+.carta__moldura {
+  position: absolute;
+  inset: 4.2cqw;
+  border: 2px solid rgb(42 33 64 / 0.28);
+  border-radius: 6cqw;
+}
+
+.carta__valor {
+  position: absolute;
+  left: 10.8cqw;
+  top: 11.7cqw;
+  width: calc(var(--u) * 11);
+  height: calc(var(--u) * 7);
+}
+
+/* Cartas comuns: naipe pequeno e suave, porque nelas o naipe não decide nada. */
+.carta__naipe {
+  position: absolute;
+  left: 10.8cqw;
+  top: calc(11.7cqw + var(--u) * 7 + var(--espaco-naipe));
+  width: 22.5cqw;
+  height: 22.5cqw;
+  opacity: 0.85;
+}
+
+.carta--densa .carta__face {
+  --u: 5.5cqw;
+  --espaco-naipe: 5cqw;
+}
+
+/* Manilha: naipe grande, faixas holográficas e contorno rosa (sem selo). */
+.carta--manilha {
+  box-shadow:
+    0 calc(var(--carta-l) * 0.05) 0 rgb(0 0 0 / 0.8),
+    0 0 0 3px var(--rosa),
+    0 0 18px var(--rosa),
+    0 0 30px rgb(45 226 230 / 0.5);
+}
+
+.carta--manilha .carta__naipe {
+  top: calc(11.7cqw + var(--u) * 7 + 8cqw);
+  width: 52.5cqw;
+  height: 52.5cqw;
+  opacity: 1;
+}
+
+.carta--manilha.carta--densa .carta__naipe {
+  top: calc(11.7cqw + var(--u) * 7 + 5cqw);
+  width: 34cqw;
+  height: 34cqw;
+}
+
+.carta__holo {
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    115deg,
+    rgb(255 42 138 / 0.3) 0 7.5cqw,
+    rgb(255 214 90 / 0.24) 7.5cqw 15cqw,
+    rgb(45 226 230 / 0.3) 15cqw 22.5cqw,
+    transparent 22.5cqw 36.7cqw
+  );
+  background-size: 200% 200%;
+  animation: holo 7s linear infinite alternate;
+}
+
+@keyframes holo {
+  to {
+    background-position: 100% 100%;
+  }
+}
+
+/* Estados na mão */
+.carta--clicavel {
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .carta--clicavel:hover:not(.carta--apagada) {
+    transform: translateY(-18px);
+  }
+}
+
+.carta--selecionada,
+.carta--selecionada:hover {
+  transform: translateY(-26px);
+  box-shadow:
+    0 calc(var(--carta-l) * 0.08) 0 rgb(0 0 0 / 0.8),
+    0 0 0 3px var(--ciano),
+    0 0 22px var(--ciano);
+}
+
+.carta--apagada {
+  opacity: 0.5;
+  filter: saturate(0.4);
+}
+
+/* Verso: xadrez pixel rosa, moldura ciano neon e um "F" com brilho. */
+.carta--verso {
+  background-color: var(--superficie);
+  background-image: repeating-conic-gradient(rgb(255 42 138 / 0.5) 0 25%, transparent 0 50%);
+  background-size: calc(var(--carta-l) * 0.133) calc(var(--carta-l) * 0.133);
+  box-shadow:
+    0 calc(var(--carta-l) * 0.05) 0 rgb(0 0 0 / 0.8),
+    0 0 18px rgb(255 42 138 / 0.45);
+}
+
+.carta__neon {
+  position: absolute;
+  inset: 5.8cqw;
+  border: 2px solid var(--ciano);
+  border-radius: 6cqw;
+  box-shadow:
+    0 0 10px var(--ciano),
+    inset 0 0 10px rgb(45 226 230 / 0.5);
+}
+
+.carta__selo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50cqw;
+  height: 58.3cqw;
+  transform: translate(-50%, -50%);
+  border: max(2px, 2.5cqw) solid var(--carta-borda);
+  border-radius: 6.6cqw;
+  background: var(--superficie);
+  color: var(--texto-neon);
+  filter: drop-shadow(0 0 4px var(--rosa)) drop-shadow(0 0 8px var(--rosa));
+}
+
+.carta__selo svg {
+  width: 25cqw;
+  height: 35cqw;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carta__holo {
+    animation: none;
+  }
+}
+
+/* Verso por cima da face enquanto a carta da mão ainda está sendo distribuída/desvirada. */
+.mao__verso {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Valor e naipe no canto direito: é a parte que fica à mostra na fila da mesa. */
+.carta--canto-direito .carta__valor,
+.carta--canto-direito .carta__naipe {
+  left: auto;
+  right: 10.8cqw;
+}

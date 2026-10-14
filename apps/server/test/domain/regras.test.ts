@@ -8,7 +8,7 @@ import {
   proximaQuantidadeDeCartas,
   vidasPerdidas,
 } from '../../src/domain/rodadas';
-import { resolverVaza } from '../../src/domain/vaza';
+import { organizarMesa, resolverVaza } from '../../src/domain/vaza';
 import { carta, geradorComSemente } from '../apoio';
 
 const TRUCO = valoresEmJogo(false);
@@ -143,5 +143,32 @@ describe('rodadas e pontuação', () => {
     expect(vidasPerdidas(3, 1)).toBe(2);
     expect(vidasPerdidas(0, 2)).toBe(2);
     expect(vidasPerdidas(2, 2)).toBe(0);
+  });
+});
+
+describe('cartas anuladas na mesa', () => {
+  it('deveOrdenarPorForcaEMarcarComoAnuladasSoAsQueEmpatam', () => {
+    const jogadas = [
+      { jogadorId: 'a', carta: carta('3', 'ouros') },
+      { jogadorId: 'b', carta: carta('K', 'copas') },
+      { jogadorId: 'c', carta: carta('3', 'paus') },
+      { jogadorId: 'd', carta: carta('5', 'paus') },
+    ];
+    const marcadas = organizarMesa(jogadas, '5', TRUCO);
+    // Ordenadas da mais forte para a mais fraca: manilha (5♣), os dois 3 (empatados), K.
+    expect(marcadas.map((j) => [j.jogadorId, j.anulada])).toEqual([
+      ['d', false],
+      ['a', true],
+      ['c', true],
+      ['b', false],
+    ]);
+  });
+
+  it('naoDeveAnularManilhasDeNaipesDiferentes', () => {
+    const jogadas = [
+      { jogadorId: 'a', carta: carta('5', 'ouros') },
+      { jogadorId: 'b', carta: carta('5', 'paus') },
+    ];
+    expect(organizarMesa(jogadas, '5', TRUCO).some((j) => j.anulada)).toBe(false);
   });
 });

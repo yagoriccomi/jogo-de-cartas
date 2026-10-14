@@ -1,0 +1,75 @@
+/*
+ * Corações de vida. Os corações encolhem (flex-shrink) quando a linha não comporta todos
+ * (10 vidas em uma placa de celular), mantendo a proporção 7:6 do desenho.
+ */
+.coracoes {
+  --l-coracao: 14px;
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 2px;
+  min-width: 0;
+}
+
+.coracao {
+  flex: 0 1 var(--l-coracao);
+  min-width: 5px;
+  aspect-ratio: 7 / 6;
+  height: auto;
+  transition:
+    color 0.25s,
+    filter 0.25s,
+    opacity 0.25s;
+}
+
+.coracao--aceso {
+  color: var(--rosa);
+  filter: drop-shadow(0 0 3px var(--rosa)) drop-shadow(0 0 6px rgb(255 42 138 / 0.6));
+}
+
+/* Perdido: só o vulto escuro, sem brilho. */
+.coracao--apagado {
+  color: var(--bloqueado-borda);
+  opacity: 0.4;
+}
+
+.coracao--apagando {
+  animation: coracao-apagar 0.9s ease-out;
+}
+
+@keyframes coracao-apagar {
+  0% {
+    color: var(--rosa);
+    opacity: 1;
+    filter: drop-shadow(0 0 8px var(--rosa)) drop-shadow(0 0 14px var(--rosa));
+    transform: scale(1.35);
+  }
+  35% {
+    color: #fff;
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  55% {
+    color: var(--rosa);
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  75% {
+    color: var(--rosa);
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  100% {
+    color: var(--bloqueado-borda);
+    opacity: 0.4;
+    filter: none;
+    transform: scale(1);
+  }
+}
+
+@media (min-width: 900px) {
+  .coracoes {
+    --l-coracao: 16px;
+    gap: 3px;
+  }
+}

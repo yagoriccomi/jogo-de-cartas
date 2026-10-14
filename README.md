@@ -13,14 +13,21 @@ Fodinha é um jogo de cartas multiplayer online, jogado direto no navegador. Cri
 - **Vira e manilhas:** uma carta é virada a cada rodada; a partir dela definem-se as manilhas, as cartas mais fortes.
 - **Palpite:** antes de jogar, cada um diz quantas vazas (mãos) vai ganhar. O último a palpitar (o "pé") não pode dizer um número que feche a soma exatamente igual ao total de vazas da rodada, para que alguém sempre erre.
 - **Vazas:** vence a carta mais forte. Cartas iguais se anulam: vale a próxima maior; se todas se anularem, ninguém leva a vaza.
-- **Rodada cega:** na rodada de 1 carta, você não vê a sua, mas vê a dos outros jogadores (na testa).
+- **Rodada cega:** na rodada de 1 carta, você não vê a sua, mas vê a dos outros jogadores (na testa). Assim que todos palpitam, as cartas vão sozinhas para a mesa, o resultado sai e o jogo segue.
 - **Vidas:** ao fim da rodada, cada jogador perde 1 vida por vaza de diferença entre o palpite e o que ganhou. Quem zera vidas é eliminado; vence o último de pé.
 - **Mesa:** até 10 participantes, com até 4 bots.
 - **Tempo da vez:** se o jogador não agir dentro do prazo, o servidor joga por ele automaticamente.
+- **Queda de conexão:** se alguém fica mais de 10 segundos desconectado, a partida pausa e os jogadores votam "Deseja esperar o retorno de [apelido]?". Basta um SIM para continuar esperando; se todos votarem NÃO, um bot termina a rodada dele e ele é eliminado.
+- **Entrar no meio:** dá para entrar com a partida em andamento. Quem chega assiste até a próxima rodada e senta com a mesma quantidade de vidas do jogador vivo com mais vidas.
+- **Dono da sala:** quem criou a sala pode pausar e retomar a partida quando quiser, reiniciá-la (volta à rodada 1 com vidas cheias para todos) e expulsar pessoas. Quem é expulso não consegue voltar àquela sala pelo mesmo navegador. Se o dono sair, o posto passa para quem está há mais tempo na sala, e volta para o criador se ele retornar.
+- **Saída no meio da rodada:** quem sai (ou é expulso) tem a rodada terminada por um bot e só então deixa a mesa.
+- **Mão organizada:** suas cartas aparecem sempre da mais forte (à esquerda) para a mais fraca (à direita), considerando a manilha da rodada.
 
 ## Features
 
 - Salas por código, sem cadastro: entre como convidado com um apelido.
+- Site responsivo e instalável no celular (abre em tela cheia, com ícone na tela inicial).
+- Visual "Vice City": mesa de feltro com neon e cartas em pixel art; manilhas com brilho holográfico.
 - Anfitrião configura a partida (baralhos, vidas, 8-9-10), adiciona bots e inicia.
 - Bots com estratégia simples para completar a mesa.
 - Servidor autoritativo: o cliente só recebe a própria mão, a vira, as cartas jogadas e, na rodada cega, a carta dos outros.
@@ -143,7 +150,8 @@ Também há um `Dockerfile` de produção em `apps/server/Dockerfile` (build mul
 
 ## Roadmap (fase 2)
 
-- Aplicativo Android reutilizando o pacote `@fodinha/shared`
+- Publicar na Play Store empacotando o site instalável (TWA/Capacitor), sem reescrever o jogo
+- Banimento à prova de aba anônima (depende de login)
 - Login e contas de jogador
 - Persistência de histórico e ranking
 - Redis para estado das salas e escala horizontal (o repositório de salas já fica atrás de uma interface para essa troca)

@@ -1,6 +1,6 @@
 import {
   NAIPES,
-  VALORES,
+  valoresEmJogo,
   type Carta,
   type ConfiguracaoPartida,
   type Naipe,
@@ -8,21 +8,8 @@ import {
 } from '@fodinha/shared';
 import { embaralhar, type GeradorAleatorio } from './aleatoriedade';
 
-const VALORES_OPCIONAIS: readonly Valor[] = ['8', '9', '10'];
-
-/** Valores em jogo, do mais fraco ao mais forte (ordem do truco). */
-export function valoresEmJogo(incluirOitoNoveDez: boolean): readonly Valor[] {
-  if (incluirOitoNoveDez) return VALORES;
-  return VALORES.filter((valor) => !VALORES_OPCIONAIS.includes(valor));
-}
-
-export function totalDeCartas(configuracao: ConfiguracaoPartida): number {
-  return (
-    valoresEmJogo(configuracao.incluirOitoNoveDez).length *
-    NAIPES.length *
-    configuracao.quantidadeBaralhos
-  );
-}
+// O cálculo do baralho vive no pacote compartilhado porque o lobby também o exibe.
+export { totalDeCartas, valoresEmJogo } from '@fodinha/shared';
 
 /**
  * Monta e embaralha o(s) baralho(s). Os ids são atribuídos DEPOIS de embaralhar,

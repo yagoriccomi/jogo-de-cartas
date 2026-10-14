@@ -1,13 +1,27 @@
 import { useState, type FormEvent } from 'react';
 import { CONFIGURACAO_PADRAO, LIMITES, type ConfiguracaoPartida } from '@fodinha/shared';
+import { BotaoInstalar } from '../../componentes/BotaoInstalar';
 import { ConfiguracaoControles } from '../../componentes/ConfiguracaoControles';
-import { criarSala, entrarNaSala } from '../../estado/acoes';
+import { IconeFechar } from '../../componentes/Icones';
+import { criarSala, dispensarAvisoDeEntrada, entrarNaSala } from '../../estado/acoes';
 import { useApp } from '../../estado/armazem';
+import { classes } from '../../lib/classes';
 import { lerApelido, salvarApelido } from '../../lib/sessao';
 import { useAcao } from '../../lib/useAcao';
+import { Carta } from '../mesa/Carta';
 import './entrada.css';
 
 type Modo = 'criar' | 'entrar';
+
+/** Quantidade máxima de caracteres do código de sala digitado. */
+const MAX_CODIGO = 12;
+
+/** Passos exibidos ao lado do formulário no computador. */
+const PASSOS: readonly string[] = [
+  'Palpite quantas vazas vai fazer.',
+  'Errou? Perde uma vida por vaza de diferença.',
+  'Último com vida vence a partida.',
+];
 
 /** Lê o convite `/?sala=CODIGO` uma única vez, na abertura. */
 function lerCodigoDoConvite(): string {
@@ -19,7 +33,7 @@ function limparConviteDaUrl(): void {
 }
 
 export function TelaEntrada() {
-  const { conexao } = useApp();
+  const { conexao, avisoEntrada } = useApp();
   const [codigoConvite] = useState(lerCodigoDoConvite);
   const [modo, definirModo] = useState<Modo>(codigoConvite ? 'entrar' : 'criar');
   const [apelido, definirApelido] = useState(lerApelido);
@@ -52,12 +66,50 @@ export function TelaEntrada() {
 
   return (
     <div className="entrada">
-      <div className="entrada__titulo">
-        <h1>Fodinha</h1>
-        <p>Dê seu palpite, jogue suas cartas e sobreviva às vidas.</p>
+      <div className="entrada__apresentacao">
+        <div className="entrada__leque" aria-hidden="true">
+          <div className="entrada__carta entrada__carta--esquerda">
+            <Carta carta={{ id: 'a', valor: 'A', naipe: 'espadas' }} manilha="K" />
+          </div>
+          <div className="entrada__carta entrada__carta--centro">
+            <Carta carta={{ id: 'b', valor: 'K', naipe: 'copas' }} manilha="K" />
+          </div>
+          <div className="entrada__carta entrada__carta--direita">
+            <Carta carta={{ id: 'c', valor: '3', naipe: 'ouros' }} manilha="K" />
+          </div>
+        </div>
+        <h1 className="neon entrada__logo">Fodinha</h1>
+        <p className="entrada__slogan">
+          <span className="so-celular">Dê seu palpite. Sobreviva às vidas.</span>
+          <span className="so-computador">
+            O carteado de palpite com os amigos — online, no celular ou no computador.
+          </span>
+        </p>
+        <ol className="entrada__passos">
+          {PASSOS.map((passo, indice) => (
+            <li key={passo}>
+              <span className="entrada__passo-numero">{indice + 1}</span>
+              <span>{passo}</span>
+            </li>
+          ))}
+        </ol>
       </div>
 
-      <form className="cartao entrada__form" onSubmit={enviar} noValidate>
+      <form className="entrada__form" onSubmit={enviar} noValidate>
+        {avisoEntrada && (
+          <div className="entrada__aviso" role="alert">
+            <span>{avisoEntrada}</span>
+            <button
+              type="button"
+              className="botao botao--texto botao--icone"
+              aria-label="Fechar aviso"
+              onClick={dispensarAvisoDeEntrada}
+            >
+              <IconeFechar />
+            </button>
+          </div>
+        )}
+
         <div className="campo">
           <label className="campo__rotulo" htmlFor="apelido">
             Seu apelido
@@ -79,21 +131,19 @@ export function TelaEntrada() {
           )}
         </div>
 
-        <div className="abas" role="tablist" aria-label="O que deseja fazer">
+        <div className="abas" role="group" aria-label="O que deseja fazer">
           <button
             type="button"
-            role="tab"
-            aria-selected={modo === 'criar'}
-            className="aba"
+            aria-pressed={modo === 'criar'}
+            className={classes('aba', modo === 'criar' && 'aba--ativa')}
             onClick={() => definirModo('criar')}
           >
             Criar sala
           </button>
           <button
             type="button"
-            role="tab"
-            aria-selected={modo === 'entrar'}
-            className="aba"
+            aria-pressed={modo === 'entrar'}
+            className={classes('aba', modo === 'entrar' && 'aba--ativa')}
             onClick={() => definirModo('entrar')}
           >
             Entrar com código
@@ -111,17 +161,21 @@ export function TelaEntrada() {
               id="codigo"
               className="campo__entrada entrada__codigo"
               value={codigo}
-              maxLength={12}
+              maxLength={MAX_CODIGO}
               autoCapitalize="characters"
               autoComplete="off"
               spellCheck={false}
               aria-invalid={tentou && erroCodigo !== null}
-              aria-describedby={tentou && erroCodigo ? 'erro-codigo' : undefined}
+              aria-describedby={tentou && erroCodigo ? 'erro-codigo' : 'ajuda-codigo'}
               onChange={(e) => definirCodigo(e.target.value.toUpperCase())}
             />
-            {tentou && erroCodigo && (
+            {tentou && erroCodigo ? (
               <span id="erro-codigo" className="campo__erro">
                 {erroCodigo}
+              </span>
+            ) : (
+              <span id="ajuda-codigo" className="entrada__ajuda">
+                Recebeu um link de convite? O código já vem preenchido.
               </span>
             )}
           </div>
@@ -132,11 +186,17 @@ export function TelaEntrada() {
           className="botao botao--primario botao--bloco"
           disabled={ocupado || semServidor}
         >
-          {ocupado ? 'Aguarde…' : modo === 'criar' ? 'Criar sala' : 'Entrar na sala'}
+          {ocupado ? 'Aguarde…' : modo === 'criar' ? 'Criar sala' : 'Entrar na mesa'}
         </button>
         {semServidor && (
-          <p className="entrada__ajuda">Aguardando conexão com o servidor para continuar.</p>
+          <p className="entrada__ajuda" role="status">
+            Aguardando conexão com o servidor para continuar.
+          </p>
         )}
+
+        <div className="entrada__instalar">
+          <BotaoInstalar />
+        </div>
       </form>
     </div>
   );

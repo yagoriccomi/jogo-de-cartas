@@ -1,8 +1,8 @@
 import type { SessaoJogador } from '@fodinha/shared';
 import type { GeradorAleatorio } from '../domain/aleatoriedade';
 import { ErroDeRegra } from '../domain/erros';
-import { Sala, type Participante } from '../domain/sala';
-import { normalizarApelido, normalizarCodigoSala } from './apelido';
+import { Sala, type Expulsao, type Participante } from '../domain/sala';
+import { normalizarApelido, normalizarCodigoSala, normalizarDispositivo } from './apelido';
 import type { CondutorDePartidas } from './condutor-de-partidas';
 import type {
   Cancelamento,
@@ -37,30 +37,51 @@ export class ServicoDeSalas {
 
   constructor(private readonly deps: DependenciasDoServico) {}
 
-  criarSala(dados: { apelido?: unknown; configuracao?: unknown }): SessaoJogador {
-    const anfitriao = this.novoHumano(normalizarApelido(dados.apelido));
-    const sala = new Sala(this.codigoLivre(), anfitriao, dados.configuracao);
+  criarSala(dados: {
+    apelido?: unknown;
+    configuracao?: unknown;
+    dispositivoId?: unknown;
+  }): SessaoJogador {
+    const criador = this.novoHumano(
+      normalizarApelido(dados.apelido),
+      normalizarDispositivo(dados.dispositivoId),
+    );
+    const sala = new Sala(this.codigoLivre(), criador, dados.configuracao);
     this.deps.repositorio.salvar(sala);
     this.deps.registrador.info({ sala: sala.codigo }, 'Sala criada');
     this.deps.condutor.aposMudanca(sala);
-    return this.sessao(sala, anfitriao);
+    return this.sessao(sala, criador);
   }
 
-  entrarSala(dados: { codigoSala?: unknown; apelido?: unknown }): SessaoJogador {
+  /** Funciona também com partida em andamento: quem entra senta na próxima rodada. */
+  entrarSala(dados: {
+    codigoSala?: unknown;
+    apelido?: unknown;
+    dispositivoId?: unknown;
+  }): SessaoJogador {
     const sala = this.salaExistente(normalizarCodigoSala(dados.codigoSala));
-    const participante = this.novoHumano(normalizarApelido(dados.apelido));
+    const participante = this.novoHumano(
+      normalizarApelido(dados.apelido),
+      normalizarDispositivo(dados.dispositivoId),
+    );
     sala.adicionarHumano(participante);
+    this.cancelarLimpeza(sala.codigo);
     this.deps.condutor.aposMudanca(sala);
     return this.sessao(sala, participante);
   }
 
-  reconectar(dados: { codigoSala?: unknown; tokenSessao?: unknown }): SessaoJogador {
+  reconectar(dados: {
+    codigoSala?: unknown;
+    tokenSessao?: unknown;
+    dispositivoId?: unknown;
+  }): SessaoJogador {
+    normalizarDispositivo(dados.dispositivoId);
     const sala = this.salaExistente(normalizarCodigoSala(dados.codigoSala));
     const participante =
       typeof dados.tokenSessao === 'string'
         ? sala.participantePorToken(dados.tokenSessao)
         : undefined;
-    if (!participante || participante.assumidoPorBot) {
+    if (!participante) {
       throw new ErroDeRegra('SEM_PERMISSAO', 'Sessão expirada. Entre na sala novamente.');
     }
     sala.marcarConexao(participante.id, true);
@@ -75,6 +96,7 @@ export class ServicoDeSalas {
     if (sala) this.deps.condutor.publicar(sala);
   }
 
+  /** A pausa (e a votação) só começa se a queda durar mais que a carência; o condutor a arma. */
   desconectar(ator: Ator): void {
     const sala = this.deps.repositorio.buscar(ator.codigoSala);
     if (!sala?.participante(ator.jogadorId)) return;
@@ -91,11 +113,16 @@ export class ServicoDeSalas {
     this.alterar(ator, (sala) => sala.adicionarBot(ator.jogadorId, this.novoBot(sala)));
   }
 
-  removerParticipante(ator: Ator, participanteId: unknown): void {
+  expulsar(ator: Ator, participanteId: unknown): Expulsao {
     if (typeof participanteId !== 'string') {
       throw new ErroDeRegra('ENTRADA_INVALIDA', 'Participante inválido.');
     }
-    this.alterar(ator, (sala) => sala.removerParticipante(ator.jogadorId, participanteId));
+    return this.alterar(ator, (sala) => {
+      const expulsao = sala.expulsar(ator.jogadorId, participanteId);
+      this.resolverVotacoes(sala);
+      this.deps.registrador.info({ sala: sala.codigo }, 'Participante expulso');
+      return expulsao;
+    });
   }
 
   iniciarPartida(ator: Ator): void {
@@ -108,44 +135,93 @@ export class ServicoDeSalas {
     });
   }
 
+  reiniciar(ator: Ator): void {
+    this.alterar(ator, (sala) => {
+      sala.reiniciar(ator.jogadorId, this.deps.gerarAleatorio);
+      this.deps.registrador.info({ sala: sala.codigo }, 'Sala reiniciada');
+    });
+  }
+
+  pausar(ator: Ator): void {
+    this.alterar(ator, (sala) => {
+      sala.pausar(ator.jogadorId);
+      this.deps.registrador.info({ sala: sala.codigo }, 'Partida pausada pelo dono');
+    });
+  }
+
+  retomar(ator: Ator): void {
+    this.alterar(ator, (sala) => {
+      sala.retomar(ator.jogadorId);
+      this.deps.registrador.info({ sala: sala.codigo }, 'Partida retomada pelo dono');
+    });
+  }
+
   sair(ator: Ator): void {
     const sala = this.salaExistente(ator.codigoSala);
     sala.sair(ator.jogadorId);
     if (sala.humanosPresentes === 0) {
-      this.removerSala(sala.codigo);
+      this.removerSala(sala);
       return;
     }
+    // Sobrou gente na sala, mas talvez ninguém conectado: a sala não pode ficar para sempre.
+    if (sala.humanosConectados === 0) this.agendarLimpeza(sala);
+    this.resolverVotacoes(sala);
     this.deps.condutor.aposMudanca(sala);
+  }
+
+  votarEspera(ator: Ator, dados: { ausenteId?: unknown; esperar?: unknown }): void {
+    if (typeof dados.ausenteId !== 'string' || typeof dados.esperar !== 'boolean') {
+      throw new ErroDeRegra('ENTRADA_INVALIDA', 'Voto inválido.');
+    }
+    const { ausenteId, esperar } = dados;
+    this.alterar(ator, (sala) => {
+      sala.votar(ator.jogadorId, ausenteId, esperar);
+      this.resolverVotacoes(sala);
+    });
   }
 
   palpitar(ator: Ator, quantidade: unknown): void {
     if (typeof quantidade !== 'number') {
       throw new ErroDeRegra('PALPITE_INVALIDO', 'Palpite inválido.');
     }
-    this.alterar(ator, (sala) => this.partidaDe(sala).palpitar(ator.jogadorId, quantidade));
+    this.alterar(ator, (sala) => this.partidaEmJogo(sala).palpitar(ator.jogadorId, quantidade));
   }
 
   jogarCarta(ator: Ator, cartaId: unknown): void {
     if (typeof cartaId !== 'string') {
       throw new ErroDeRegra('JOGADA_INVALIDA', 'Carta inválida.');
     }
-    this.alterar(ator, (sala) => this.partidaDe(sala).jogarCarta(ator.jogadorId, cartaId));
+    this.alterar(ator, (sala) => this.partidaEmJogo(sala).jogarCarta(ator.jogadorId, cartaId));
   }
 
-  private alterar(ator: Ator, mudanca: (sala: Sala) => void): void {
+  private alterar<T>(ator: Ator, mudanca: (sala: Sala) => T): T {
     const sala = this.salaExistente(ator.codigoSala);
-    if (!sala.participante(ator.jogadorId)) {
+    const participante = sala.participante(ator.jogadorId);
+    if (!participante || participante.saindo) {
       throw new ErroDeRegra('SEM_PERMISSAO', 'Você não está nesta sala.');
     }
-    mudanca(sala);
+    const resultado = mudanca(sala);
     this.deps.condutor.aposMudanca(sala);
+    return resultado;
   }
 
-  private partidaDe(sala: Sala) {
+  private partidaEmJogo(sala: Sala) {
     if (!sala.emPartida || !sala.partida) {
       throw new ErroDeRegra('JOGADA_INVALIDA', 'Não há partida em andamento.');
     }
+    if (sala.pausada) {
+      throw new ErroDeRegra('JOGO_PAUSADO', 'A partida está pausada.');
+    }
     return sala.partida;
+  }
+
+  private resolverVotacoes(sala: Sala): void {
+    const eliminados = sala.resolverVotacoes();
+    if (eliminados.length === 0) return;
+    this.deps.registrador.info(
+      { sala: sala.codigo, quantidade: eliminados.length },
+      'Ausente eliminado por votação',
+    );
   }
 
   private salaExistente(codigo: string): Sala {
@@ -158,7 +234,7 @@ export class ServicoDeSalas {
     this.cancelarLimpeza(sala.codigo);
     const cancelar = this.deps.relogio.agendar(this.deps.tempoDeAbandonoMs, () => {
       this.limpezasAgendadas.delete(sala.codigo);
-      if (sala.humanosConectados === 0) this.removerSala(sala.codigo);
+      if (sala.humanosConectados === 0) this.removerSala(sala);
     });
     this.limpezasAgendadas.set(sala.codigo, cancelar);
   }
@@ -168,11 +244,11 @@ export class ServicoDeSalas {
     this.limpezasAgendadas.delete(codigo);
   }
 
-  private removerSala(codigo: string): void {
-    this.cancelarLimpeza(codigo);
-    this.deps.condutor.encerrar(codigo);
-    this.deps.repositorio.remover(codigo);
-    this.deps.registrador.info({ sala: codigo }, 'Sala removida');
+  private removerSala(sala: Sala): void {
+    this.cancelarLimpeza(sala.codigo);
+    this.deps.condutor.encerrar(sala.codigo);
+    this.deps.repositorio.remover(sala.codigo);
+    this.deps.registrador.info({ sala: sala.codigo }, 'Sala removida');
   }
 
   private codigoLivre(): string {
@@ -182,13 +258,15 @@ export class ServicoDeSalas {
     return codigo;
   }
 
-  private novoHumano(apelido: string): Participante {
+  private novoHumano(apelido: string, dispositivoId: string): Participante {
     return {
       id: this.deps.identificadores.novoId(),
       apelido,
       ehBot: false,
       conectado: true,
+      saindo: false,
       tokenSessao: this.deps.identificadores.novoToken(),
+      dispositivoId,
     };
   }
 
@@ -200,7 +278,9 @@ export class ServicoDeSalas {
       apelido: `Bot ${nome}`,
       ehBot: true,
       conectado: true,
+      saindo: false,
       tokenSessao: null,
+      dispositivoId: null,
     };
   }
 

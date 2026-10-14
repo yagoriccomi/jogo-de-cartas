@@ -4,23 +4,25 @@ import type {
   ConfiguracaoPartida,
   FasePartida,
   Jogada,
+  JogadaNaMesa,
   ResultadoJogadorNaRodada,
   Valor,
+  VazaGanha,
   VazaResolvida,
 } from '@fodinha/shared';
-import { LIMITES } from '@fodinha/shared';
+import { LIMITES, NAIPES } from '@fodinha/shared';
 import type { GeradorAleatorio } from './aleatoriedade';
 import { montarBaralhoEmbaralhado, totalDeCartas, valoresEmJogo } from './baralho';
 import { validarConfiguracao } from './configuracao';
 import { ErroDeRegra } from './erros';
-import { valorDaManilha } from './forca';
+import { forcaDaCarta, valorDaManilha } from './forca';
 import {
   maxCartasPorJogador,
   palpiteProibidoDoPe,
   proximaQuantidadeDeCartas,
   vidasPerdidas,
 } from './rodadas';
-import { resolverVaza } from './vaza';
+import { organizarMesa, resolverVaza } from './vaza';
 
 interface JogadorNaPartida {
   readonly id: string;
@@ -28,8 +30,14 @@ interface JogadorNaPartida {
   eliminado: boolean;
   mao: Carta[];
   palpite: number | null;
-  vazasFeitas: number;
+  vazasGanhas: VazaGanha[];
 }
+
+/**
+ * `eliminar`: votado para fora — continua na mesa como espectador (volta num reinício).
+ * `remover`: saiu ou foi expulso — o assento some entre as rodadas.
+ */
+export type DestinoDaSaida = 'eliminar' | 'remover';
 
 /** Projeção do jogador para quem observa; dados de sala (apelido, bot, conexão) vêm da aplicação. */
 export interface JogadorNaVisao {
@@ -38,8 +46,10 @@ export interface JogadorNaVisao {
   readonly eliminado: boolean;
   readonly palpite: number | null;
   readonly vazasFeitas: number;
+  readonly vazasGanhas: readonly VazaGanha[];
   readonly cartasNaMao: number;
   readonly cartaNaTesta: Carta | null;
+  readonly saiAoFimDaRodada: boolean;
 }
 
 export interface VisaoDaPartida {
@@ -52,13 +62,19 @@ export interface VisaoDaPartida {
   readonly manilha: Valor | null;
   readonly jogadores: readonly JogadorNaVisao[];
   readonly idDoPe: string | null;
+  readonly idDoPrimeiro: string | null;
   readonly idDaVez: string | null;
   readonly minhaMao: readonly CartaNaMao[];
-  readonly mesa: readonly Jogada[];
+  readonly mesa: readonly JogadaNaMesa[];
   readonly ultimaVaza: VazaResolvida | null;
   readonly palpiteProibido: number | null;
   readonly resultadoRodada: readonly ResultadoJogadorNaRodada[] | null;
   readonly vencedores: readonly string[];
+}
+
+export interface PrevisaoDaRodada {
+  readonly cartasPorJogador: number;
+  readonly idDoPrimeiro: string;
 }
 
 export interface NovaPartida {
@@ -75,6 +91,8 @@ export interface NovaPartida {
 export class Partida {
   private readonly jogadores: JogadorNaPartida[];
   private readonly valores: readonly Valor[];
+  private readonly saidasPendentes = new Map<string, DestinoDaSaida>();
+  private entrantes: string[] = [];
   private fase: FasePartida = 'palpites';
   private numeroRodada = 0;
   private cartasPorJogador = 0;
@@ -94,14 +112,7 @@ export class Partida {
     private readonly gerarAleatorio: GeradorAleatorio,
   ) {
     this.valores = valoresEmJogo(configuracao.incluirOitoNoveDez);
-    this.jogadores = jogadorIds.map((id) => ({
-      id,
-      vidas: configuracao.vidasIniciais,
-      eliminado: false,
-      mao: [],
-      palpite: null,
-      vazasFeitas: 0,
-    }));
+    this.jogadores = jogadorIds.map((id) => this.novoJogador(id, configuracao.vidasIniciais));
     this.indiceDoPe = Math.floor(gerarAleatorio() * jogadorIds.length);
   }
 
@@ -133,8 +144,51 @@ export class Partida {
     return this.cartasPorJogador === 1;
   }
 
+  /** Tem assento à mesa (eliminado ou não). Quem aguarda a próxima rodada ainda não participa. */
   participa(jogadorId: string): boolean {
     return this.jogadores.some((jogador) => jogador.id === jogadorId);
+  }
+
+  /** Está sentado, não foi eliminado e não tem saída marcada: é quem pode votar e ser esperado. */
+  estaJogando(jogadorId: string): boolean {
+    const jogador = this.jogadores.find((j) => j.id === jogadorId);
+    return !!jogador && !jogador.eliminado && !this.saidasPendentes.has(jogadorId);
+  }
+
+  aguardandoEntrada(jogadorId: string): boolean {
+    return this.entrantes.includes(jogadorId);
+  }
+
+  /** Quem tem saída marcada é conduzido por um bot até a rodada terminar. */
+  saiAoFimDaRodada(jogadorId: string): boolean {
+    return this.saidasPendentes.has(jogadorId);
+  }
+
+  adicionarJogador(jogadorId: string): void {
+    if (this.fase === 'encerrada') {
+      throw new ErroDeRegra('PARTIDA_EM_ANDAMENTO', 'A partida já terminou.');
+    }
+    if (this.participa(jogadorId) || this.aguardandoEntrada(jogadorId)) {
+      throw new ErroDeRegra('ENTRADA_INVALIDA', 'Esse jogador já está na partida.');
+    }
+    this.entrantes.push(jogadorId);
+  }
+
+  /**
+   * Marca a saída de um jogador. Ela só se efetiva entre rodadas, para não desfazer palpites
+   * e vazas já em jogo (premissa R2: um bot termina a rodada por ele).
+   */
+  agendarSaida(jogadorId: string, destino: DestinoDaSaida): void {
+    if (this.aguardandoEntrada(jogadorId)) {
+      this.entrantes = this.entrantes.filter((id) => id !== jogadorId);
+      return;
+    }
+    if (this.fase === 'encerrada' || !this.participa(jogadorId)) return;
+    const atual = this.saidasPendentes.get(jogadorId);
+    // "Remover" vence "eliminar": quem foi votado para fora e depois saiu deve sumir da mesa.
+    if (atual === 'remover') return;
+    this.saidasPendentes.set(jogadorId, destino);
+    if (this.fase === 'fim_de_rodada') this.efetivarSaidas();
   }
 
   palpitar(jogadorId: string, quantidade: number): void {
@@ -157,6 +211,19 @@ export class Partida {
     this.fase = 'jogando';
     this.indiceQueAbriuVaza = this.proximoVivo(this.indiceDoPe);
     this.indiceDaVez = this.indiceQueAbriuVaza;
+    if (this.rodadaCega) this.revelarRodadaCega();
+  }
+
+  /**
+   * Na rodada cega não há o que decidir na hora de jogar (ninguém vê a própria carta): assim que
+   * os palpites terminam, todas as cartas vão à mesa em ordem e a vaza é resolvida.
+   */
+  private revelarRodadaCega(): void {
+    while (this.fase === 'jogando') {
+      const idDaVez = this.idDaVez as string;
+      const [carta] = this.cartasNaMaoDe(idDaVez);
+      this.jogarCarta(idDaVez, (carta as Carta).id);
+    }
   }
 
   jogarCarta(jogadorId: string, cartaId: string): void {
@@ -185,8 +252,56 @@ export class Partida {
     if (this.fase !== 'fim_de_rodada') {
       throw new ErroDeRegra('JOGADA_INVALIDA', 'A rodada atual ainda não terminou.');
     }
-    this.indiceDoPe = this.proximoVivo(this.indiceDoPe);
+    const idDoProximoPe = this.jogador(this.proximoVivo(this.indiceDoPe)).id;
+    this.retirarAssentosRemovidos();
+    this.sentarEntrantes();
+
+    if (this.vivos().length < LIMITES.minJogadores) {
+      this.encerrar(this.vivos());
+      return;
+    }
+    const indiceDoProximoPe = this.jogadores.findIndex((j) => j.id === idDoProximoPe);
+    // O pé escolhido pode ter acabado de sair; nesse caso o pé passa a quem estava à esquerda dele.
+    this.indiceDoPe =
+      indiceDoProximoPe === -1 || this.jogador(indiceDoProximoPe).eliminado
+        ? this.proximoVivo(Math.max(indiceDoProximoPe, 0) - 1)
+        : indiceDoProximoPe;
     this.distribuirRodada();
+  }
+
+  /**
+   * No intervalo entre rodadas: quantas cartas a próxima terá e quem a abre, já considerando
+   * quem sai e quem senta. Espelha `iniciarProximaRodada` sem alterar o estado.
+   */
+  previsaoDaProximaRodada(): PrevisaoDaRodada | null {
+    if (this.fase !== 'fim_de_rodada') return null;
+    const removidos = new Set(
+      [...this.saidasPendentes].filter(([, destino]) => destino === 'remover').map(([id]) => id),
+    );
+    const assentos = [
+      ...this.jogadores
+        .filter((jogador) => !removidos.has(jogador.id))
+        .map((jogador) => ({ id: jogador.id, vivo: !jogador.eliminado })),
+      ...this.entrantes.map((id) => ({ id, vivo: true })),
+    ];
+    const vivos = assentos.filter((assento) => assento.vivo).length;
+    if (vivos < LIMITES.minJogadores) return null;
+
+    const idDoProximoPe = this.jogador(this.proximoVivo(this.indiceDoPe)).id;
+    const indiceDoPe = Math.max(
+      0,
+      assentos.findIndex((assento) => assento.id === idDoProximoPe),
+    );
+    let indiceDoPrimeiro = indiceDoPe;
+    do {
+      indiceDoPrimeiro = (indiceDoPrimeiro + 1) % assentos.length;
+    } while (!assentos[indiceDoPrimeiro]?.vivo && indiceDoPrimeiro !== indiceDoPe);
+
+    const maximo = maxCartasPorJogador(totalDeCartas(this.configuracao), vivos);
+    return {
+      cartasPorJogador: proximaQuantidadeDeCartas(this.cartasPorJogador, maximo),
+      idDoPrimeiro: (assentos[indiceDoPrimeiro] as { id: string }).id,
+    };
   }
 
   palpitesPermitidos(jogadorId: string): number[] {
@@ -205,7 +320,7 @@ export class Partida {
   visaoPara(jogadorId: string | null): VisaoDaPartida {
     const indiceObservador = jogadorId === null ? null : this.indiceDe(jogadorId);
     const observador = indiceObservador === null ? null : this.jogador(indiceObservador);
-    const idDoPe = this.fase === 'encerrada' ? null : this.jogador(this.indiceDoPe).id;
+    const rodadaEmJogo = this.fase === 'palpites' || this.fase === 'jogando';
 
     return {
       configuracao: this.configuracao,
@@ -220,14 +335,17 @@ export class Partida {
         vidas: jogador.vidas,
         eliminado: jogador.eliminado,
         palpite: jogador.palpite,
-        vazasFeitas: jogador.vazasFeitas,
+        vazasFeitas: jogador.vazasGanhas.length,
+        vazasGanhas: [...jogador.vazasGanhas],
         cartasNaMao: jogador.mao.length,
         cartaNaTesta: this.cartaNaTestaVistaPor(jogador, observador),
+        saiAoFimDaRodada: this.saidasPendentes.has(jogador.id),
       })),
-      idDoPe,
+      idDoPe: this.fase === 'encerrada' ? null : this.jogador(this.indiceDoPe).id,
+      idDoPrimeiro: rodadaEmJogo ? this.jogador(this.proximoVivo(this.indiceDoPe)).id : null,
       idDaVez: this.idDaVez,
       minhaMao: observador ? this.maoVistaPeloDono(observador) : [],
-      mesa: [...this.mesa],
+      mesa: organizarMesa(this.mesa, this.manilha as Valor, this.valores),
       ultimaVaza: this.ultimaVaza,
       palpiteProibido:
         observador && indiceObservador === this.indiceDoPe && this.fase === 'palpites'
@@ -236,6 +354,10 @@ export class Partida {
       resultadoRodada: this.resultadoRodada,
       vencedores: [...this.vencedores],
     };
+  }
+
+  private novoJogador(id: string, vidas: number): JogadorNaPartida {
+    return { id, vidas, eliminado: false, mao: [], palpite: null, vazasGanhas: [] };
   }
 
   private distribuirRodada(): void {
@@ -249,7 +371,7 @@ export class Partida {
     for (const jogador of this.jogadores) {
       jogador.mao = [];
       jogador.palpite = null;
-      jogador.vazasFeitas = 0;
+      jogador.vazasGanhas = [];
     }
     // Distribui uma carta por vez a partir da esquerda do pé, como numa mesa real.
     let indice = this.indiceDoPe;
@@ -272,12 +394,21 @@ export class Partida {
   private fecharVaza(): void {
     const jogadas = this.mesa;
     const vencedorId = resolverVaza(jogadas, this.manilha as Valor, this.valores);
-    this.ultimaVaza = { jogadas, vencedorId };
+    this.ultimaVaza = {
+      jogadas: organizarMesa(jogadas, this.manilha as Valor, this.valores),
+      vencedorId,
+    };
     this.mesa = [];
 
     // Vaza anulada: quem abriu continua abrindo (premissa P4 do plano).
     const indiceQueAbre = vencedorId === null ? this.indiceQueAbriuVaza : this.indiceDe(vencedorId);
-    if (vencedorId !== null) this.jogador(indiceQueAbre).vazasFeitas += 1;
+    if (vencedorId !== null) {
+      const vencedora = jogadas.find((jogada) => jogada.jogadorId === vencedorId) as Jogada;
+      this.jogador(indiceQueAbre).vazasGanhas.push({
+        cartaVencedora: vencedora.carta,
+        quantidadeDeCartas: jogadas.length,
+      });
+    }
 
     if (this.jogador(indiceQueAbre).mao.length > 0) {
       this.indiceQueAbriuVaza = indiceQueAbre;
@@ -291,34 +422,67 @@ export class Partida {
     const participantes = this.vivos();
     this.resultadoRodada = participantes.map((jogador) => {
       const palpite = jogador.palpite as number;
-      const perdidas = vidasPerdidas(palpite, jogador.vazasFeitas);
+      const perdidas = vidasPerdidas(palpite, jogador.vazasGanhas.length);
       jogador.vidas -= perdidas;
       jogador.eliminado = jogador.vidas <= 0;
       return {
         jogadorId: jogador.id,
         palpite,
-        vazasFeitas: jogador.vazasFeitas,
+        vazasFeitas: jogador.vazasGanhas.length,
         vidasPerdidas: perdidas,
       };
     });
     this.indiceDaVez = null;
-
-    const sobreviventes = this.vivos();
-    if (sobreviventes.length > 1) {
-      this.fase = 'fim_de_rodada';
-      return;
-    }
-    this.fase = 'encerrada';
-    this.vencedores =
-      sobreviventes.length === 1
-        ? [(sobreviventes[0] as JogadorNaPartida).id]
-        : this.maisVidasEntre(participantes).map((jogador) => jogador.id);
+    this.fase = 'fim_de_rodada';
+    this.efetivarSaidas(participantes);
   }
 
-  /** Todos zeraram na mesma rodada: vence quem ficou menos negativo (premissa P8). */
-  private maisVidasEntre(jogadores: readonly JogadorNaPartida[]): JogadorNaPartida[] {
-    const maximo = Math.max(...jogadores.map((jogador) => jogador.vidas));
-    return jogadores.filter((jogador) => jogador.vidas === maximo);
+  /**
+   * Quem tinha saída marcada deixa o jogo agora. Se sobrar no máximo um jogador e ninguém
+   * estiver esperando para sentar, a partida termina.
+   */
+  private efetivarSaidas(participantesDaRodada: readonly JogadorNaPartida[] = this.vivos()): void {
+    const quemSaiu = new Set(this.saidasPendentes.keys());
+    for (const [id, destino] of this.saidasPendentes) {
+      this.jogador(this.indiceDe(id)).eliminado = true;
+      if (destino === 'eliminar') this.saidasPendentes.delete(id);
+    }
+    if (this.vivos().length + this.entrantes.length > 1) return;
+
+    // Quem saiu não vence — a menos que todos tenham saído, aí vale quem ficou com mais vidas.
+    const quemFicou = participantesDaRodada.filter((j) => !quemSaiu.has(j.id));
+    const candidatos = quemFicou.length > 0 ? quemFicou : participantesDaRodada;
+    this.encerrar(this.vivos().length > 0 ? this.vivos() : candidatos);
+  }
+
+  /** Um sobrevivente vence; se todos zeraram juntos, vence quem ficou menos negativo (P8). */
+  private encerrar(candidatos: readonly JogadorNaPartida[]): void {
+    this.fase = 'encerrada';
+    this.indiceDaVez = null;
+    if (candidatos.length === 0) {
+      this.vencedores = [];
+      return;
+    }
+    const maximo = Math.max(...candidatos.map((jogador) => jogador.vidas));
+    this.vencedores = candidatos.filter((j) => j.vidas === maximo).map((j) => j.id);
+  }
+
+  private retirarAssentosRemovidos(): void {
+    for (const [id, destino] of this.saidasPendentes) {
+      if (destino !== 'remover') continue;
+      this.jogadores.splice(this.indiceDe(id), 1);
+      this.saidasPendentes.delete(id);
+    }
+  }
+
+  /** Quem entra no meio recebe a vida do jogador vivo com mais vidas e senta no fim da mesa. */
+  private sentarEntrantes(): void {
+    if (this.entrantes.length === 0) return;
+    const vidasDosVivos = this.vivos().map((jogador) => jogador.vidas);
+    const maisVidas =
+      vidasDosVivos.length > 0 ? Math.max(...vidasDosVivos) : this.configuracao.vidasIniciais;
+    for (const id of this.entrantes) this.jogadores.push(this.novoJogador(id, maisVidas));
+    this.entrantes = [];
   }
 
   private palpiteProibidoAtual(): number | null {
@@ -346,9 +510,13 @@ export class Partida {
     return jogador.mao[0] ?? null;
   }
 
+  /** Mão ordenada da mais forte para a mais fraca; empate de valor desempata pelo naipe. */
   private maoVistaPeloDono(dono: JogadorNaPartida): CartaNaMao[] {
-    if (!this.rodadaCega) return [...dono.mao];
-    return dono.mao.map((carta) => ({ id: carta.id, oculta: true as const }));
+    if (this.rodadaCega) return dono.mao.map((carta) => ({ id: carta.id, oculta: true as const }));
+    const forca = (carta: Carta) =>
+      forcaDaCarta(carta, this.manilha as Valor, this.valores) * NAIPES.length +
+      NAIPES.indexOf(carta.naipe);
+    return [...dono.mao].sort((a, b) => forca(b) - forca(a));
   }
 
   private exigirVez(jogadorId: string): number {
@@ -378,7 +546,8 @@ export class Partida {
   /** Próximo assento (sentido horário) ocupado por jogador não eliminado. */
   private proximoVivo(indice: number): number {
     for (let passo = 1; passo <= this.jogadores.length; passo++) {
-      const candidato = (indice + passo) % this.jogadores.length;
+      const total = this.jogadores.length;
+      const candidato = (((indice + passo) % total) + total) % total;
       if (!this.jogador(candidato).eliminado) return candidato;
     }
     return indice;

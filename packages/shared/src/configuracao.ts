@@ -7,6 +7,7 @@ export const LIMITES = {
   minVidas: 5,
   maxVidas: 10,
   maxApelido: 20,
+  maxIdentificador: 100,
 } as const;
 
 export interface ConfiguracaoPartida {

@@ -14,9 +14,13 @@ import {
 import { lerAmbiente } from './infrastructure/ambiente';
 import { GatewayDoJogo, NotificadorSocketIo } from './infrastructure/socket/gateway';
 
-const ATRASO_DO_BOT_MS = 900;
-const PAUSA_FIM_DE_RODADA_MS = 4_000;
+// Ritmo de mesa real: dá tempo de os humanos acompanharem cada jogada do bot.
+const ATRASO_DO_BOT_MS = 3_000;
+// Inclui ~2 s da animação da última vaza indo para o montinho antes de o resultado aparecer.
+const PAUSA_FIM_DE_RODADA_MS = 6_000;
 const TEMPO_DE_ABANDONO_MS = 10 * 60_000;
+// Recarregar a página ou piscar a rede não deve pausar a mesa.
+const CARENCIA_DE_DESCONEXAO_MS = 10_000;
 // Os eventos do jogo são minúsculos; qualquer coisa maior que isso é abuso.
 const TAMANHO_MAXIMO_DE_MENSAGEM = 10_000;
 
@@ -46,6 +50,7 @@ async function iniciar(): Promise<void> {
       prazoDaVezMs: ambiente.prazoDaVezMs,
       atrasoDoBotMs: ATRASO_DO_BOT_MS,
       pausaFimDeRodadaMs: PAUSA_FIM_DE_RODADA_MS,
+      carenciaDeDesconexaoMs: CARENCIA_DE_DESCONEXAO_MS,
     },
   });
   const servico = new ServicoDeSalas({

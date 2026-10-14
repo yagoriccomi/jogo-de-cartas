@@ -1,6 +1,13 @@
-import { CONFIGURACAO_PADRAO, ehCartaOculta } from '@fodinha/shared';
+import {
+  CONFIGURACAO_PADRAO,
+  ehCartaOculta,
+  valoresEmJogo,
+  type Carta,
+  type Valor,
+} from '@fodinha/shared';
 import { describe, expect, it } from 'vitest';
 import { EstrategiaSimples } from '../../src/domain/estrategia-bot';
+import { forcaDaCarta } from '../../src/domain/forca';
 import { Partida } from '../../src/domain/partida';
 import { geradorComSemente } from '../apoio';
 
@@ -136,5 +143,99 @@ describe('Partida', () => {
     expect(visao.fase).toBe('encerrada');
     expect(visao.vencedores.length).toBeGreaterThanOrEqual(1);
     expect(visao.idDaVez).toBeNull();
+  });
+});
+
+describe('Partida — mão, saídas e entradas', () => {
+  it('deveEntregarAMaoOrdenadaDaMaisForteParaAMaisFraca', () => {
+    const partida = novaPartida(3, 11);
+    jogarAteFimDaRodada(partida);
+    partida.iniciarProximaRodada();
+
+    const visao = partida.visaoPara('j0');
+    const valores = valoresEmJogo(false);
+    const forca = (c: Carta) => forcaDaCarta(c, visao.manilha as Valor, valores);
+    const mao = visao.minhaMao as Carta[];
+    expect(mao.length).toBe(2);
+    for (let i = 1; i < mao.length; i++) {
+      expect(forca(mao[i - 1] as Carta)).toBeGreaterThanOrEqual(forca(mao[i] as Carta));
+    }
+  });
+
+  it('deveMarcarQuemAbreARodadaAEsquerdaDoPe', () => {
+    const partida = novaPartida(4, 5);
+    const visao = partida.visaoPara(null);
+    const indiceDoPe = visao.jogadores.findIndex((j) => j.id === visao.idDoPe);
+    expect(visao.idDoPrimeiro).toBe(visao.jogadores[(indiceDoPe + 1) % 4]?.id);
+    expect(visao.idDaVez).toBe(visao.idDoPrimeiro);
+  });
+
+  it('deveDeixarQuemSaiJogarAteOFimDaRodadaEEntaoEliminarOuRemover', () => {
+    const partida = novaPartida(4, 9);
+    partida.agendarSaida('j1', 'eliminar');
+    partida.agendarSaida('j2', 'remover');
+    expect(partida.saiAoFimDaRodada('j1')).toBe(true);
+    expect(partida.estaJogando('j1')).toBe(false);
+
+    jogarAteFimDaRodada(partida);
+    const fim = partida.visaoPara(null);
+    expect(fim.jogadores.find((j) => j.id === 'j1')?.eliminado).toBe(true);
+    expect(fim.resultadoRodada?.some((r) => r.jogadorId === 'j2')).toBe(true);
+
+    partida.iniciarProximaRodada();
+    const seguinte = partida.visaoPara(null);
+    expect(seguinte.jogadores.map((j) => j.id)).toEqual(['j0', 'j1', 'j3']);
+    expect(seguinte.cartasPorJogador).toBe(2);
+  });
+
+  it('deveEncerrarQuandoAsSaidasDeixamUmUnicoJogador', () => {
+    const partida = novaPartida(2, 4);
+    partida.agendarSaida('j1', 'remover');
+    jogarAteFimDaRodada(partida);
+    const visao = partida.visaoPara(null);
+    expect(visao.fase).toBe('encerrada');
+    expect(visao.vencedores).toEqual(['j0']);
+  });
+
+  it('deveSentarQuemEntraNaProximaRodadaComAMaiorVida', () => {
+    const partida = novaPartida(3, 21);
+    partida.adicionarJogador('novo');
+    expect(partida.aguardandoEntrada('novo')).toBe(true);
+    expect(partida.participa('novo')).toBe(false);
+
+    jogarAteFimDaRodada(partida);
+    const maiorVida = Math.max(
+      ...partida
+        .visaoPara(null)
+        .jogadores.filter((j) => !j.eliminado)
+        .map((j) => j.vidas),
+    );
+    partida.iniciarProximaRodada();
+    const visao = partida.visaoPara('novo');
+    expect(visao.jogadores.find((j) => j.id === 'novo')?.vidas).toBe(maiorVida);
+    expect(visao.minhaMao).toHaveLength(visao.cartasPorJogador);
+  });
+
+  it('deveCancelarAEntradaDeQuemDesisteAntesDeSentar', () => {
+    const partida = novaPartida(2, 8);
+    partida.adicionarJogador('novo');
+    partida.agendarSaida('novo', 'remover');
+    jogarAteFimDaRodada(partida);
+    if (partida.faseAtual === 'fim_de_rodada') partida.iniciarProximaRodada();
+    expect(partida.participa('novo')).toBe(false);
+  });
+});
+
+describe('Partida — rodada cega', () => {
+  it('deveRevelarTodasAsCartasEResolverAVazaAssimQueOsPalpitesTerminam', () => {
+    const partida = novaPartida(3, 17);
+    expect(partida.visaoPara('j0').minhaMao.every(ehCartaOculta)).toBe(true);
+
+    palpitarTodos(partida);
+    const visao = partida.visaoPara('j0');
+    expect(visao.fase).toBe('fim_de_rodada');
+    expect(visao.ultimaVaza?.jogadas).toHaveLength(3);
+    expect(visao.jogadores.every((j) => j.cartasNaMao === 0)).toBe(true);
+    expect(visao.resultadoRodada).toHaveLength(3);
   });
 });

@@ -1,4 +1,4 @@
-import type { SessaoJogador } from '@fodinha/shared';
+import { LIMITES, type SessaoJogador } from '@fodinha/shared';
 import { registrar, descreverErro } from './log';
 
 const CHAVE_SESSAO = 'fodinha:sessao';
@@ -60,4 +60,31 @@ export function lerApelido(): string {
 
 export function salvarApelido(apelido: string): void {
   gravar(CHAVE_APELIDO, apelido);
+}
+
+const CHAVE_DISPOSITIVO = 'fodinha:dispositivo';
+const BYTES_DO_IDENTIFICADOR = 16;
+const BASE_HEXADECIMAL = 16;
+
+function gerarIdentificador(): string {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  // `randomUUID` só existe em contexto seguro (HTTPS/localhost); em http na rede local cai aqui.
+  const bytes = crypto.getRandomValues(new Uint8Array(BYTES_DO_IDENTIFICADOR));
+  return Array.from(bytes, (byte) => byte.toString(BASE_HEXADECIMAL).padStart(2, '0')).join('');
+}
+
+let dispositivoEmMemoria: string | null = null;
+
+/**
+ * Identificador estável deste navegador: o servidor o usa para barrar quem foi expulso.
+ * Se o armazenamento falhar, vale o da memória (estável até recarregar a página).
+ */
+export function obterDispositivoId(): string {
+  if (dispositivoEmMemoria !== null) return dispositivoEmMemoria;
+  const salvo = ler(CHAVE_DISPOSITIVO);
+  const valido = salvo !== null && salvo.length > 0 && salvo.length <= LIMITES.maxIdentificador;
+  const identificador = valido ? salvo : gerarIdentificador();
+  if (!valido) gravar(CHAVE_DISPOSITIVO, identificador);
+  dispositivoEmMemoria = identificador;
+  return identificador;
 }

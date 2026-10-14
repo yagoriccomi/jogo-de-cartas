@@ -1,50 +1,93 @@
 .configuracao {
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
+  padding: 6px 16px;
+  border: 1px solid var(--linha);
+  border-radius: 16px;
+  background: var(--superficie);
+}
+
+.linha-config {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 56px;
+  gap: 12px;
+  border-bottom: 1px solid var(--linha-suave);
+}
+
+.linha-config:last-child {
+  border-bottom: 0;
 }
 
 .passo {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.passo__rotulo {
-  font-weight: 600;
-}
-
-.passo__controle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  gap: 14px;
 }
 
 .passo__botao {
-  width: 2.75rem;
-  padding: 0;
-  font-size: 1.25rem;
+  width: var(--alvo-minimo);
+  height: var(--alvo-minimo);
+  border: 1px solid var(--ciano);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ciano-palido);
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.passo__botao:disabled {
+  opacity: 0.35;
 }
 
 .passo__valor {
-  min-width: 2rem;
+  min-width: 24px;
   text-align: center;
   font-weight: 800;
-  font-size: 1.1rem;
-  font-variant-numeric: tabular-nums;
+  font-size: 1.25rem;
 }
 
-.configuracao__marcar {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  min-height: 2.75rem;
-  cursor: pointer;
+/* Alvo de toque de 44px com a aparência enxuta de 52x30 do mockup. */
+.interruptor {
+  position: relative;
+  width: 52px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--bloqueado-borda);
+  border-radius: 999px;
+  background: var(--linha-suave);
+  transition: background-color 0.15s;
 }
 
-.configuracao__marcar input {
-  width: 1.25rem;
-  height: 1.25rem;
-  accent-color: var(--destaque);
+.interruptor::after {
+  content: '';
+  position: absolute;
+  inset: -7px -2px;
+}
+
+.interruptor__bola {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--texto-suave);
+  transition: transform 0.15s;
+}
+
+.interruptor[aria-checked='true'] {
+  border-color: var(--rosa);
+  background: var(--rosa);
+  box-shadow: 0 0 10px var(--rosa);
+}
+
+.interruptor[aria-checked='true'] .interruptor__bola {
+  background: #fff;
+  transform: translateX(22px);
+}
+
+.interruptor:disabled {
+  opacity: 0.5;
 }
