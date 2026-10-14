@@ -16,6 +16,8 @@ body {
   color: var(--texto);
   font-family: var(--fonte);
   font-size: 16px;
+  /* As fontes pixel têm um peso só: negrito sintético borraria os pixels dos números. */
+  font-synthesis-weight: none;
   line-height: 1.4;
   /* A página nunca rola na horizontal; só a faixa de adversários rola dentro dela. */
   overflow-x: hidden;

@@ -6,6 +6,7 @@ import { MARCADORES } from './animacao-compartilhada';
 import { Carta } from './Carta';
 import { ContagemRegressiva } from './ContagemRegressiva';
 import { Montinhos } from './Montinhos';
+import { SeloBot } from './SeloBot';
 import { NumerosDaRodada } from './NumerosDaRodada';
 import { SimbolosMaoEPe } from './SimbolosMaoEPe';
 
@@ -71,6 +72,7 @@ export function PlacaJogador({
       <div className="placa__linha">
         <div className="placa__texto">
           <span className="placa__nome">
+            {jogador.ehBot && <SeloBot />}
             <span className="placa__apelido">{jogador.apelido}</span>
           </span>
           {jogador.eliminado && <span className="placa__nota">Eliminado</span>}

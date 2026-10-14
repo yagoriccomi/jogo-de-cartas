@@ -166,6 +166,17 @@ describe('ServicoDeSalas — lobby', () => {
     expect(convidado.codigoSala).toBe(dono.codigoSala);
   });
 
+  it('deveSortearUmApelidoDeBotDiferenteACadaBotAteAcabarem', () => {
+    const dono = criarSala();
+    for (let i = 0; i < 4; i++) servico.adicionarBot(ator(dono));
+    const apelidos = (salaDe(dono)?.participantes ?? [])
+      .filter((p) => p.ehBot)
+      .map((p) => p.apelido);
+    expect([...apelidos].sort()).toEqual(
+      ['Jacinto Leite', 'Paula Tejano', 'Simas Turbo', 'Toko Kunavara'].sort(),
+    );
+  });
+
   it('deveLimitarA4BotsE10Participantes', () => {
     const dono = criarSala();
     for (let i = 0; i < 4; i++) servico.adicionarBot(ator(dono));
@@ -289,7 +300,8 @@ describe('ServicoDeSalas — partida', () => {
     servico.iniciarPartida(ator(dono));
     const estado = partidaDe(dono);
     expect(estado?.fase).toBe('palpites');
-    expect(estado?.jogadores.map((j) => j.apelido)).toEqual(['Ana', 'Bot Zé']);
+    expect(estado?.jogadores[0]?.apelido).toBe('Ana');
+    expect(estado?.jogadores[1]?.ehBot).toBe(true);
     expect(estado?.idDoPrimeiro).not.toBeNull();
     // Rodada cega: o humano vê a carta do bot, mas não a própria.
     expect(estado?.jogadores[1]?.cartaNaTesta).not.toBeNull();

@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import type { Carta as DadosDaCarta, Valor } from '@fodinha/shared';
 import { classes } from '../../lib/classes';
 import type { EstiloComVariaveis } from '../../lib/estiloComVariaveis';
+import { Carta } from './Carta';
 import { ContagemRegressiva } from './ContagemRegressiva';
 
 /** Até esta quantidade de opções os botões são grandes e ocupam uma linha. */
@@ -13,6 +15,8 @@ interface Props {
   readonly cartasNaRodada: number;
   readonly palpiteProibido: number | null;
   readonly souOPe: boolean;
+  readonly vira: DadosDaCarta | null;
+  readonly manilha: Valor | null;
   /** Palpites já dados pelos outros nesta rodada (para a soma). */
   readonly palpitesDosOutros: readonly number[];
   readonly prazoFinal: number | null;
@@ -30,6 +34,8 @@ export function PainelPalpite({
   cartasNaRodada,
   palpiteProibido,
   souOPe,
+  vira,
+  manilha,
   palpitesDosOutros,
   prazoFinal,
   ocupado,
@@ -45,15 +51,23 @@ export function PainelPalpite({
   return (
     <div className="palpite" role="dialog" aria-labelledby="titulo-palpite">
       <div className="palpite__topo">
-        <h2 id="titulo-palpite" className="neon palpite__titulo">
-          Seu palpite
-        </h2>
-        {souOPe && <span className="selo selo--pe">Você é o pé</span>}
+        {/* No celular o painel cobre a coluna da vira: ela vem junto, em miniatura. */}
+        <div className="palpite__vira so-celular">
+          <Carta carta={vira} manilha={manilha} densa rotulo="Vira" />
+        </div>
+        <div className="palpite__cabeca">
+          <h2 id="titulo-palpite" className="neon palpite__titulo">
+            Seu palpite
+          </h2>
+          <span className="palpite__contexto">
+            <span className="so-celular">
+              Manilha <strong>{manilha ?? '–'}</strong>
+            </span>
+            {souOPe && <span className="selo selo--pe">Você é o pé</span>}
+          </span>
+        </div>
         {prazoFinal !== null && <ContagemRegressiva prazoFinal={prazoFinal} className="pilula" />}
       </div>
-      <p className="palpite__pergunta so-computador">
-        Quantas vazas você vai fazer com {cartasTexto}?
-      </p>
 
       <div
         className={classes('palpite__grade', `palpite__grade--${tamanhoDaGrade(opcoes.length)}`)}

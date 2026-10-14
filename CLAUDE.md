@@ -29,7 +29,7 @@
 
 **Mobile:** em vez de app nativo, o web é responsivo e instalável (PWA). Publicar na Play Store, se necessário, será empacotar esse mesmo site (TWA/Capacitor) [#7][#26].
 
-**Identidade visual aprovada:** "Feltro + neon Vice City" (fundo #120720, feltro #0d3a3c, neon rosa #ff2a8a e ciano #2de2e6, `Yellowtail` + `Kanit`) com cartas em pixel art (valor grande; naipe pequeno nas comuns, grande e holográfico só na manilha). Símbolos pixel de "mão" (abre a rodada) e "pé" (último a palpitar) no canto do status.
+**Identidade visual aprovada:** "Feltro + neon Vice City" (fundo #120720, feltro #0d3a3c, neon rosa #ff2a8a e ciano #2de2e6, `Yellowtail` + `Kanit`; números em `Jersey 15`, escolhida por distinguir bem 2, 3 e 8 em tamanho pequeno) com cartas em pixel art (valor grande; naipe pequeno nas comuns, grande e holográfico só na manilha). Símbolos pixel de "mão" (abre a rodada) e "pé" (último a palpitar) no canto do status.
 
 **Mesa (decisões de layout):** a partida nunca rola a página (`.app` com `100dvh`; as áreas internas encolhem, cartas da mesa medidas por `cqw/cqh`). Linha de cima: a carta que está ganhando sozinha à esquerda e a pilha das demais válidas (forte → fraca, cada uma por cima da anterior). Linha de baixo: as anuladas. Vaza ganha vira montinho no jogador (no celular o destino é a caixinha "Fez"); vaza toda empatada vira montinho no canto inferior direito do feltro (`vazasEmpatadas`). Palpite dentro do feltro; placar e regras ilustradas no topo, que no celular fica recolhido atrás de uma alça.
 

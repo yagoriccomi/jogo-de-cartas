@@ -12,7 +12,10 @@ import type {
   Relogio,
 } from './portas';
 
-const APELIDOS_DE_BOT = ['Zé', 'Dona Cida', 'Tião', 'Lurdinha', 'Juca', 'Neide', 'Bastião', 'Fia'];
+/** Um por sala, sorteado entre os que ainda não estão na mesa (o selo "Bot" vem de `ehBot`). */
+const APELIDOS_DE_BOT = ['Paula Tejano', 'Simas Turbo', 'Toko Kunavara', 'Jacinto Leite'];
+/** Só o cenário de teste passa de 4 bots: depois dos sorteados, estes, em ordem. */
+const APELIDOS_RESERVA_DE_BOT = ['Zé', 'Dona Cida', 'Tião', 'Lurdinha', 'Juca'];
 
 // Quatro baralhos sem 8-9-10 e vidas cheias: o maior palco possível para testar mesas lotadas.
 const CONFIGURACAO_DE_CENARIO: ConfiguracaoPartida = {
@@ -318,10 +321,15 @@ export class ServicoDeSalas {
 
   private novoBot(sala: Sala): Participante {
     const emUso = new Set(sala.todos.map((p) => p.apelido));
-    const nome = APELIDOS_DE_BOT.find((n) => !emUso.has(`Bot ${n}`)) ?? String(sala.todos.length);
+    const livres = APELIDOS_DE_BOT.filter((nome) => !emUso.has(nome));
+    const sorteado = livres[Math.floor(this.deps.gerarAleatorio() * livres.length)];
+    const apelido =
+      sorteado ??
+      APELIDOS_RESERVA_DE_BOT.find((nome) => !emUso.has(nome)) ??
+      `Bot ${sala.todos.length}`;
     return {
       id: this.deps.identificadores.novoId(),
-      apelido: `Bot ${nome}`,
+      apelido,
       ehBot: true,
       conectado: true,
       saindo: false,
