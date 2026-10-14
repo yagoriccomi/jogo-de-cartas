@@ -205,3 +205,8 @@
     margin-top: 0;
   }
 }
+
+.entrada__tutorial {
+  border-color: var(--ciano);
+  color: var(--ciano-branco);
+}

@@ -2,7 +2,8 @@ import { useState, type FormEvent } from 'react';
 import { CONFIGURACAO_PADRAO, LIMITES, type ConfiguracaoPartida } from '@fodinha/shared';
 import { BotaoInstalar } from '../../componentes/BotaoInstalar';
 import { ConfiguracaoControles } from '../../componentes/ConfiguracaoControles';
-import { IconeFechar } from '../../componentes/Icones';
+import { IconeFechar, IconeLivro } from '../../componentes/Icones';
+import { iniciarTutorial } from '../tutorial/motor';
 import { criarSala, dispensarAvisoDeEntrada, entrarNaSala } from '../../estado/acoes';
 import { useApp } from '../../estado/armazem';
 import { classes } from '../../lib/classes';
@@ -193,6 +194,16 @@ export function TelaEntrada() {
             Aguardando conexão com o servidor para continuar.
           </p>
         )}
+
+        {/* Não depende do servidor: dá para aprender enquanto ele acorda. */}
+        <button
+          type="button"
+          className="botao botao--bloco entrada__tutorial"
+          onClick={iniciarTutorial}
+        >
+          <IconeLivro className="icone" />
+          Aprender a jogar (tutorial)
+        </button>
 
         <div className="entrada__instalar">
           <BotaoInstalar />

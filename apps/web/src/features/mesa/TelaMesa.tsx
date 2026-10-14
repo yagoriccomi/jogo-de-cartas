@@ -103,7 +103,8 @@ export function TelaMesa() {
   else if (souDaVez)
     situacao = jogo.fase === 'palpites' ? 'Sua vez de palpitar' : 'Sua vez de jogar';
   else if (jogo.idDaVez !== null)
-    situacao = `Vez de ${nomeDe(jogo.idDaVez)} ${jogo.fase === 'palpites' ? 'palpitar' : 'jogar'}`;
+    // Só o primeiro nome: "Paula Tejano" inteiro espremeria o meu status na barra.
+    situacao = `Vez de ${nomeDe(jogo.idDaVez)?.split(' ')[0]} ${jogo.fase === 'palpites' ? 'palpitar' : 'jogar'}`;
   else situacao = 'Aguardando…';
 
   const vazaEmCena = animacao.vaza;

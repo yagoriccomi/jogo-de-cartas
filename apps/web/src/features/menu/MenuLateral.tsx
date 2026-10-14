@@ -39,7 +39,7 @@ type Confirmacao =
 
 /** Gaveta lateral: convite, regras e, só para o dono, pausar, reiniciar e expulsar jogadores. */
 export function MenuLateral({ onFechar }: Props) {
-  const { sala, sessao, jogo } = useApp();
+  const { sala, sessao, jogo, tutorial } = useApp();
   const [regrasAbertas, definirRegrasAbertas] = useState(false);
   const [listaAberta, definirListaAberta] = useState(false);
   const [confirmacao, definirConfirmacao] = useState<Confirmacao | null>(null);
@@ -93,16 +93,19 @@ export function MenuLateral({ onFechar }: Props) {
         </div>
 
         <nav className="menu" aria-label="Menu da partida">
-          <div className="menu__sala">
-            <div>
-              <span className="rotulo-pequeno">Sala</span>
-              <strong className="menu__codigo">{sala.codigo}</strong>
+          {/* No tutorial não há sala de verdade para convidar ninguém. */}
+          {!tutorial && (
+            <div className="menu__sala">
+              <div>
+                <span className="rotulo-pequeno">Sala</span>
+                <strong className="menu__codigo">{sala.codigo}</strong>
+              </div>
+              <button type="button" className="botao" onClick={() => void convidar(sala.codigo)}>
+                <IconeLink className="icone" />
+                Convidar
+              </button>
             </div>
-            <button type="button" className="botao" onClick={() => void convidar(sala.codigo)}>
-              <IconeLink className="icone" />
-              Convidar
-            </button>
-          </div>
+          )}
 
           <button type="button" className="menu__item" onClick={() => definirRegrasAbertas(true)}>
             <IconeLivro />
