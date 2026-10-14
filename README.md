@@ -22,6 +22,7 @@ Fodinha é um jogo de cartas multiplayer online, jogado direto no navegador. Cri
 - **Dono da sala:** quem criou a sala pode pausar e retomar a partida quando quiser, reiniciá-la (volta à rodada 1 com vidas cheias para todos) e expulsar pessoas. Quem é expulso não consegue voltar àquela sala pelo mesmo navegador. Se o dono sair, o posto passa para quem está há mais tempo na sala, e volta para o criador se ele retornar.
 - **Saída no meio da rodada:** quem sai (ou é expulso) tem a rodada terminada por um bot e só então deixa a mesa.
 - **Mão organizada:** suas cartas aparecem sempre da mais forte (à esquerda) para a mais fraca (à direita), considerando a manilha da rodada.
+- **Mesa:** a carta que está ganhando fica sozinha à esquerda; as demais que valem formam uma pilha ao lado, da mais forte para a mais fraca. As que empataram e se anularam ficam na linha de baixo. Cada vaza ganha vira um montinho na frente de quem ganhou; vaza toda empatada vira um montinho no canto inferior direito da mesa.
 
 ## Features
 
@@ -33,6 +34,8 @@ Fodinha é um jogo de cartas multiplayer online, jogado direto no navegador. Cri
 - Servidor autoritativo: o cliente só recebe a própria mão, a vira, as cartas jogadas e, na rodada cega, a carta dos outros.
 - Reconexão por token após recarregar a página.
 - Prazo da vez com jogada automática, para a mesa nunca travar.
+- Placar a qualquer momento (vidas, palpite e vazas feitas de todos) e guia de regras ilustrado, passo a passo.
+- Partida sem rolar a tela: no celular o topo fica recolhido (toque na alça ou deslize para baixo a partir do topo para abrir) e o palpite aparece dentro da mesa, sem cobrir a mão nem as suas vidas.
 
 ## Tecnologias Utilizadas
 
@@ -119,14 +122,19 @@ A cada push e pull request, o GitHub Actions executa lint, typecheck, testes e b
 
 Copie o `.env.example` para `.env`. Nada neste projeto exige segredos.
 
-| Variável               | Onde     | Para que serve                                                                                         |
-| ---------------------- | -------- | ------------------------------------------------------------------------------------------------------ |
-| `PORT`                 | servidor | Porta HTTP/WebSocket do servidor de jogo (padrão `3001`).                                              |
-| `CORS_ORIGINS`         | servidor | Origens autorizadas a conectar, separadas por vírgula (padrão `http://localhost:5173`).                |
-| `LOG_LEVEL`            | servidor | Nível de log: `debug`, `info`, `warn` ou `error`.                                                      |
-| `TURN_TIMEOUT_SECONDS` | servidor | Segundos que o jogador tem para agir antes da jogada automática (padrão `30`).                         |
-| `VITE_SERVER_URL`      | web      | URL pública do servidor de jogo. Fica exposta no navegador: nunca coloque nada sensível.               |
-| `WEB_PORT`             | Docker   | Opcional. Porta do frontend no host (padrão `5173`). Se mudar, inclua a nova origem em `CORS_ORIGINS`. |
+| Variável               | Onde     | Para que serve                                                                                                                      |
+| ---------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`                 | servidor | Porta HTTP/WebSocket do servidor de jogo (padrão `3001`).                                                                           |
+| `CORS_ORIGINS`         | servidor | Origens autorizadas a conectar, separadas por vírgula (padrão `http://localhost:5173`).                                             |
+| `LOG_LEVEL`            | servidor | Nível de log: `debug`, `info`, `warn` ou `error`.                                                                                   |
+| `TURN_TIMEOUT_SECONDS` | servidor | Segundos que o jogador tem para agir antes da jogada automática (padrão `30`).                                                      |
+| `CENARIOS_DE_TESTE`    | servidor | Só desenvolvimento (padrão `false`; o Docker de dev liga). Libera a criação de salas de teste com bots. Nunca habilite em produção. |
+| `VITE_SERVER_URL`      | web      | URL pública do servidor de jogo. Fica exposta no navegador: nunca coloque nada sensível.                                            |
+| `WEB_PORT`             | Docker   | Opcional. Porta do frontend no host (padrão `5173`). Se mudar, inclua a nova origem em `CORS_ORIGINS`.                              |
+
+### Testar com 10 jogadores
+
+Com o servidor de desenvolvimento (`CENARIOS_DE_TESTE=true`, já ligado no Docker de dev; no modo nativo, defina a variável) e o web em `npm run dev`, abra `http://localhost:5173/?cenario=10x13`: você entra sozinho numa partida com 10 jogadores (você + 9 bots), 4 baralhos sem 8, 9 e 10, e 13 cartas na primeira rodada (`?cenario=JOGADORESxCARTAS`; só `?cenario` equivale a `10x13`). Com 10 jogadores o máximo é 15 cartas. Se o servidor reiniciar com a alteração do código, o cliente recria o cenário sozinho; se só o web recarregar, você volta à mesma partida. O parâmetro é ignorado no build de produção.
 
 ## Deploy
 

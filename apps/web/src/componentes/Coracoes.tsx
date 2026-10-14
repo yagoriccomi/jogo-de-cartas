@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { classes } from '../lib/classes';
+import type { EstiloComVariaveis } from '../lib/estiloComVariaveis';
 import './coracoes.css';
 
 /** Desenho em pixel art, no mesmo estilo das cartas ('#' = pixel aceso). */
@@ -51,9 +52,15 @@ export function Coracoes({ vidas, vidasIniciais, className }: Props) {
   }
 
   const descricao = `${acesos} de ${total} ${total === 1 ? 'vida' : 'vidas'}`;
+  const estilo: EstiloComVariaveis = { '--total': total };
 
   return (
-    <span className={classes('coracoes', className)} role="img" aria-label={descricao}>
+    <span
+      className={classes('coracoes', className)}
+      style={estilo}
+      role="img"
+      aria-label={descricao}
+    >
       {Array.from({ length: total }, (_, indice) => {
         const aceso = indice < acesos;
         const apagando =

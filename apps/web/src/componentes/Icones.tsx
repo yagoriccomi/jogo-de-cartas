@@ -92,3 +92,15 @@ export const IconeCoracao = ({ className = 'icone' }: Props) => (
     <path d="M12 21s-8-5.5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.5-8 11-8 11z" />
   </svg>
 );
+
+export const IconePlacar = (p: Props) => (
+  <Icone {...p}>
+    <path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3" />
+  </Icone>
+);
+
+export const IconeAbaixo = (p: Props) => (
+  <Icone {...p}>
+    <path d="M6 9l6 6 6-6" />
+  </Icone>
+);

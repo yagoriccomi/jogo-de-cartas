@@ -62,7 +62,7 @@ async function iniciar(): Promise<void> {
     registrador,
     tempoDeAbandonoMs: TEMPO_DE_ABANDONO_MS,
   });
-  new GatewayDoJogo(io, servico, registrador).iniciar();
+  new GatewayDoJogo(io, servico, registrador, ambiente.cenariosDeTeste).iniciar();
 
   // Sondado a cada poucos segundos pelos orquestradores: fora do log de nível info.
   http.get('/health', { logLevel: 'warn' }, async () => ({

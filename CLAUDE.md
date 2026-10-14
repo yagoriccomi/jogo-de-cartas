@@ -29,7 +29,9 @@
 
 **Mobile:** em vez de app nativo, o web é responsivo e instalável (PWA). Publicar na Play Store, se necessário, será empacotar esse mesmo site (TWA/Capacitor) [#7][#26].
 
-**Identidade visual aprovada:** "Feltro + neon Vice City" (fundo #120720, feltro #0d3a3c, neon rosa #ff2a8a e ciano #2de2e6, `Yellowtail` + `Kanit`) com cartas em pixel art (valor grande; naipe pequeno nas comuns, grande e holográfico só na manilha). Ficha "1º" marca quem abre a rodada.
+**Identidade visual aprovada:** "Feltro + neon Vice City" (fundo #120720, feltro #0d3a3c, neon rosa #ff2a8a e ciano #2de2e6, `Yellowtail` + `Kanit`) com cartas em pixel art (valor grande; naipe pequeno nas comuns, grande e holográfico só na manilha). Símbolos pixel de "mão" (abre a rodada) e "pé" (último a palpitar) no canto do status.
+
+**Mesa (decisões de layout):** a partida nunca rola a página (`.app` com `100dvh`; as áreas internas encolhem, cartas da mesa medidas por `cqw/cqh`). Linha de cima: a carta que está ganhando sozinha à esquerda e a pilha das demais válidas (forte → fraca, cada uma por cima da anterior). Linha de baixo: as anuladas. Vaza ganha vira montinho no jogador (no celular o destino é a caixinha "Fez"); vaza toda empatada vira montinho no canto inferior direito do feltro (`vazasEmpatadas`). Palpite dentro do feltro; placar e regras ilustradas no topo, que no celular fica recolhido atrás de uma alça.
 
 ## Stack Tecnológica e Ferramentas
 
@@ -117,6 +119,7 @@ Serviços do compose: **`deps`** (one-shot, instala dependências dentro do cont
 - **Hot reload:** `CHOKIDAR_USEPOLLING=true` (bind mount no Windows não propaga eventos de arquivo).
 - **Healthchecks:** `server` expõe `GET /health`; `web` só sobe depois dele saudável. [#82]
 - **Portas:** `PORT` (servidor, padrão 3001) e `WEB_PORT` (web, padrão 5173) vêm do `.env`.
+- **Cenário de teste (só dev):** `http://localhost:5173/?cenario=10x13` cria uma partida sua com 9 bots já na rodada de 13 cartas (`CENARIOS_DE_TESTE=true` no servidor; ligado no compose de dev). Sobrevive a hot reload do web e a reinício do servidor (recria sozinho). Nunca ligar em produção.
 - **Nativo (sem Docker):** `npm install` e `npm run dev` na raiz (concurrently sobe server e web). Útil para depurar.
 - **Produção:** imagem do servidor em `apps/server/Dockerfile` (multi-stage, usuário não-root, `HEALTHCHECK`) [#85]; a Render pode usar o Blueprint `render.yaml` (build nativo Node) ou a imagem.
 

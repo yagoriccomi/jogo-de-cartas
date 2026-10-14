@@ -34,6 +34,11 @@ export interface Expulsao {
   readonly eraHumano: boolean;
 }
 
+export interface OpcoesDaSala {
+  /** Cenários de teste ultrapassam o limite normal de bots. */
+  readonly maxBots?: number;
+}
+
 /** Sala de espera + partida corrente. Concentra as regras de quem pode fazer o quê. */
 export class Sala {
   private readonly participantes: Participante[] = [];
@@ -45,12 +50,15 @@ export class Sala {
   private configuracao: ConfiguracaoPartida;
   private partidaAtual: Partida | null = null;
   private pausaDoDono = false;
+  private readonly maxBots: number;
 
   constructor(
     readonly codigo: string,
     criador: Participante,
     configuracao: unknown,
+    opcoes: OpcoesDaSala = {},
   ) {
+    this.maxBots = opcoes.maxBots ?? LIMITES.maxBots;
     this.configuracao = validarConfiguracao(configuracao);
     this.participantes.push(criador);
     this.anfitriaoId = criador.id;
@@ -119,8 +127,8 @@ export class Sala {
     this.exigirAnfitriao(solicitanteId);
     this.exigirLobby();
     this.exigirVaga();
-    if (this.ativos().filter((p) => p.ehBot).length >= LIMITES.maxBots) {
-      throw new ErroDeRegra('SALA_CHEIA', `A sala já tem o máximo de ${LIMITES.maxBots} bots.`);
+    if (this.ativos().filter((p) => p.ehBot).length >= this.maxBots) {
+      throw new ErroDeRegra('SALA_CHEIA', `A sala já tem o máximo de ${this.maxBots} bots.`);
     }
     this.participantes.push(bot);
   }
@@ -144,10 +152,14 @@ export class Sala {
     this.configuracao = validarConfiguracao(configuracao);
   }
 
-  iniciarPartida(solicitanteId: string, gerarAleatorio: GeradorAleatorio): Partida {
+  iniciarPartida(
+    solicitanteId: string,
+    gerarAleatorio: GeradorAleatorio,
+    cartasNaPrimeiraRodada?: number,
+  ): Partida {
     this.exigirAnfitriao(solicitanteId);
     this.exigirLobby();
-    return this.comecarPartida(gerarAleatorio);
+    return this.comecarPartida(gerarAleatorio, cartasNaPrimeiraRodada);
   }
 
   /** Volta à rodada 1 com vidas cheias para todos — inclusive eliminados e quem esperava sentar. */
@@ -270,7 +282,10 @@ export class Sala {
     };
   }
 
-  private comecarPartida(gerarAleatorio: GeradorAleatorio): Partida {
+  private comecarPartida(
+    gerarAleatorio: GeradorAleatorio,
+    cartasNaPrimeiraRodada?: number,
+  ): Partida {
     const ativos = this.ativos();
     // Valida antes de mexer no estado: um erro aqui não pode apagar quem está saindo nem votações.
     if (ativos.length < LIMITES.minJogadores) {
@@ -283,6 +298,7 @@ export class Sala {
       configuracao: this.configuracao,
       jogadorIds: ativos.map((p) => p.id),
       gerarAleatorio,
+      cartasNaPrimeiraRodada,
     });
     this.participantes.splice(0, this.participantes.length, ...ativos);
     this.votacoes.clear();

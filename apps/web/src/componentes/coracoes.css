@@ -4,6 +4,9 @@
  */
 .coracoes {
   --l-coracao: 14px;
+  /* Largura própria (os SVGs não têm): sem ela, um pai que se ajusta ao conteúdo os esmaga. */
+  width: calc(var(--total, 1) * (var(--l-coracao) + 2px));
+  max-width: 100%;
   display: flex;
   align-items: center;
   flex-wrap: nowrap;

@@ -3,6 +3,7 @@ import { descreverErro, registrar } from '../lib/log';
 import { limparSessao, lerSessao, obterDispositivoId, salvarSessao } from '../lib/sessao';
 import { ErroDeRequisicao, requisitar, socket, type Envio } from '../lib/socket';
 import { atualizar, avisar, obterEstado } from './armazem';
+import { lerCenarioDaUrl, type CenarioDeTeste } from './cenario';
 
 const MENSAGEM_GENERICA = 'Algo deu errado. Tente novamente.';
 
@@ -58,6 +59,20 @@ export function entrarNaSala(codigoSala: string, apelido: string): Promise<boole
   );
 }
 
+const APELIDO_DO_CENARIO = 'Você';
+
+/** Só dev: o servidor recusa (`SEM_PERMISSAO`) se `CENARIOS_DE_TESTE` não estiver ligado. */
+export function entrarNoCenario({ jogadores, cartas }: CenarioDeTeste): Promise<boolean> {
+  const dispositivoId = obterDispositivoId();
+  return obterSessao('dev:cenario', (r) =>
+    socket.emit(
+      'dev:cenario',
+      { apelido: APELIDO_DO_CENARIO, jogadores, cartas, dispositivoId },
+      r,
+    ),
+  );
+}
+
 function esquecerSessao(): void {
   limparSessao();
   atualizar({ sessao: null, sala: null, jogo: null, retomando: false, voltouAoLobby: false });
@@ -66,8 +81,11 @@ function esquecerSessao(): void {
 /** Tenta reentrar no assento guardado; qualquer falha devolve o usuário à tela inicial. */
 export async function retomarSessao(): Promise<void> {
   const salva = lerSessao();
+  // A checagem aqui (e não só dentro de `lerCenarioDaUrl`) deixa o build de produção sem o cenário.
+  const cenario = import.meta.env.DEV ? lerCenarioDaUrl() : null;
   if (!salva) {
-    atualizar({ retomando: false });
+    if (cenario) await abrirCenario(cenario);
+    else atualizar({ retomando: false });
     return;
   }
   if (!obterEstado().sessao) atualizar({ retomando: true });
@@ -86,9 +104,19 @@ export async function retomarSessao(): Promise<void> {
     salvarSessao(sessao);
     atualizar({ sessao, retomando: false });
   } catch (erro) {
+    // Em cenário de teste, sala perdida (servidor reiniciou pelo hot reload) é esperada: recria.
+    if (cenario) {
+      await abrirCenario(cenario);
+      return;
+    }
     tratarErro('sala:reconectar', erro);
     esquecerSessao();
   }
+}
+
+async function abrirCenario(cenario: CenarioDeTeste): Promise<void> {
+  if (!obterEstado().sessao) atualizar({ retomando: true });
+  if (!(await entrarNoCenario(cenario))) esquecerSessao();
 }
 
 export function cancelarRetomada(): void {

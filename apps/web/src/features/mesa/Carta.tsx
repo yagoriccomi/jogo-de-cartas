@@ -2,7 +2,7 @@ import type { MouseEvent } from 'react';
 import { ehCartaOculta, type CartaNaMao, type Naipe, type Valor } from '@fodinha/shared';
 import { classes } from '../../lib/classes';
 import type { EstiloComVariaveis } from '../../lib/estiloComVariaveis';
-import { caminhoDoNaipe, caminhoDoTexto, colunasDoTexto } from './pixel';
+import { caminhoDoNaipe, caminhoDoTexto } from './pixel';
 import './carta.css';
 
 export type EstadoCarta = 'normal' | 'selecionada' | 'apagada';
@@ -59,11 +59,6 @@ interface Props {
   readonly atributosDeDados?: Readonly<Record<`data-${string}`, string>>;
   /** Prefixo do rótulo acessível (ex.: "Vira", "Testa de Bia"). */
   readonly rotulo?: string;
-  /**
-   * Canto do valor e do naipe. Na mesa a fila cresce por trás da carta mais forte, então o lado
-   * esquerdo de cada carta fica coberto e o valor precisa ir para a direita.
-   */
-  readonly canto?: 'esquerdo' | 'direito';
 }
 
 export function Carta({
@@ -77,7 +72,6 @@ export function Carta({
   pressionada,
   atributosDeDados,
   rotulo,
-  canto = 'esquerdo',
 }: Props) {
   const virada = carta === null || ehCartaOculta(carta);
   const ehManilha = !virada && manilha !== null && carta.valor === manilha;
@@ -99,9 +93,7 @@ export function Carta({
     estado === 'selecionada' && 'carta--selecionada',
     estado === 'apagada' && 'carta--apagada',
     onClick && 'carta--clicavel',
-    canto === 'direito' && 'carta--canto-direito',
   );
-  const colunasDoValor = virada ? 0 : colunasDoTexto(carta.valor);
 
   const face = virada ? (
     <span className="carta__face" aria-hidden="true">
@@ -114,13 +106,7 @@ export function Carta({
     <span className="carta__face" aria-hidden="true">
       {ehManilha && <span className="carta__holo" />}
       <span className="carta__moldura" />
-      <svg
-        className="carta__valor"
-        // Alinhado à direita, o viewBox acompanha a largura real do texto ("10" é mais largo).
-        viewBox={canto === 'direito' ? `0 0 ${colunasDoValor} 7` : VIEWBOX_VALOR}
-        style={canto === 'direito' ? { width: `calc(var(--u) * ${colunasDoValor})` } : undefined}
-        shapeRendering="crispEdges"
-      >
+      <svg className="carta__valor" viewBox={VIEWBOX_VALOR} shapeRendering="crispEdges">
         <path fill="currentColor" d={caminhoDoTexto(carta.valor)} />
       </svg>
       <svg className="carta__naipe" viewBox={VIEWBOX_NAIPE} shapeRendering="crispEdges">

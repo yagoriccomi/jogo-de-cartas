@@ -21,31 +21,30 @@ interface LinhaProps {
 }
 
 /**
- * Fila de cartas sobrepostas, já ordenada pelo servidor da mais forte para a mais fraca: a mais
- * forte fica à esquerda e por cima de todas; cada seguinte entra por trás da anterior. O nome do
- * dono fica só no `title`/rótulo para não atrapalhar.
+ * Fila já ordenada pelo servidor da mais forte para a mais fraca. Na linha que vale, a primeira
+ * (a que está ganhando) fica sozinha, afastada; as demais formam uma pilha ao lado, cada uma por
+ * cima da anterior, deixando à mostra o canto com o valor das mais fortes.
  */
 function LinhaDeCartas({ cartas, manilha, nomeDe, anuladas }: LinhaProps) {
   const estilo: EstiloComVariaveis = { '--n': Math.max(cartas.length, 1) };
   return (
     <ul
-      className={classes('mesa-linha', anuladas && 'mesa-linha--anuladas')}
+      className={classes('mesa-linha', anuladas ? 'mesa-linha--anuladas' : 'mesa-linha--valendo')}
       style={estilo}
       aria-label={anuladas ? 'Cartas empatadas, anuladas' : 'Cartas valendo'}
       aria-hidden={cartas.length === 0 ? true : undefined}
     >
       {cartas.map((jogada, posicao) => {
         const nome = nomeDe(jogada.jogadorId);
-        const camada: EstiloComVariaveis = { '--camada': cartas.length - posicao };
+        const lider = !anuladas && posicao === 0;
         return (
           <li
             key={jogada.carta.id}
-            className="mesa-linha__carta"
-            style={camada}
+            className={classes('mesa-linha__carta', lider && 'mesa-linha__carta--lider')}
             {...{ [MARCADORES.cartaNaMesa]: jogada.carta.id }}
-            title={anuladas ? `${nome} (empatou)` : nome}
+            title={anuladas ? `${nome} (empatou)` : lider ? `${nome} (ganhando)` : nome}
           >
-            <Carta carta={jogada.carta} manilha={manilha} rotulo={nome} canto="direito" />
+            <Carta carta={jogada.carta} manilha={manilha} rotulo={nome} />
           </li>
         );
       })}

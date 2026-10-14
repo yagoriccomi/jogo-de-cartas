@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import type { VazaResolvida } from '@fodinha/shared';
-import { MARCADORES, prefereMenosMovimento, TEMPOS_DA_ANIMACAO } from './animacao-compartilhada';
+import {
+  DESTINO_DOS_EMPATES,
+  MARCADORES,
+  prefereMenosMovimento,
+  TEMPOS_DA_ANIMACAO,
+} from './animacao-compartilhada';
 import { centroDe, ESCALONAMENTO_DA_REVELACAO_MS } from './mesa-voos';
 
 /** O servidor limpa a mesa no mesmo estado que fecha a vaza: seguramos as cartas para serem vistas. */
@@ -13,7 +18,7 @@ const FRACAO_JUNTANDO = 0.38;
 /** Pequeno desalinhamento entre as cartas do montinho, para parecer uma pilha e não uma só carta. */
 const DESVIO_DA_PILHA_PX = 2;
 const ESCALA_AO_JUNTAR = 0.94;
-/** Sem destino (todas se anularam): o montinho encolhe e some. */
+/** Sem destino na tela (não deveria acontecer): o montinho encolhe e some. */
 const ESCALA_AO_SUMIR = 0.4;
 const Z_CARTA_NA_CENA = 45;
 
@@ -39,15 +44,16 @@ function chaveDaVaza(vaza: VazaResolvida | null): string | null {
   return `${vaza.vencedorId ?? '-'}:${vaza.jogadas.map((jogada) => jogada.carta.id).join(',')}`;
 }
 
+/** Vaza vencida vai para o montinho de quem ganhou; vaza toda anulada, para o canto dos empates. */
 function buscarDestino(vencedorId: string | null): HTMLElement | null {
-  if (vencedorId === null) return null;
-  return document.querySelector<HTMLElement>(`[data-monte-destino="${CSS.escape(vencedorId)}"]`);
+  const destino = vencedorId ?? DESTINO_DOS_EMPATES;
+  return document.querySelector<HTMLElement>(`[data-monte-destino="${CSS.escape(destino)}"]`);
 }
 
 /**
  * Animação da vaza fechada (FLIP, sem biblioteca): as cartas ficam um instante na mesa, juntam-se
  * num montinho com a vencedora por cima e o montinho voa até o montinho recém-criado de quem
- * ganhou. Detecta a vaza nova comparando os ids das cartas; a primeira vaza vista ao montar a tela
+ * ganhou (ou, se todas se anularam, até o canto dos empates na mesa). Detecta a vaza nova comparando os ids das cartas; a primeira vaza vista ao montar a tela
  * (reconexão) não anima.
  */
 export function useAnimacaoDeVaza(

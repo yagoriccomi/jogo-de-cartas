@@ -38,6 +38,12 @@ export interface VazaGanha {
   readonly quantidadeDeCartas: number;
 }
 
+/** Vaza em que todas as cartas se anularam: vira um montinho sem dono, com a mais forte por cima. */
+export interface VazaEmpatada {
+  readonly cartaDoTopo: Carta;
+  readonly quantidadeDeCartas: number;
+}
+
 export interface JogadorVisivel {
   readonly id: string;
   readonly apelido: string;
@@ -112,6 +118,8 @@ export interface EstadoPartidaVisivel {
   /** Ordenada da mais forte para a mais fraca (a mais forte fica à frente da fila). */
   readonly mesa: readonly JogadaNaMesa[];
   readonly ultimaVaza: VazaResolvida | null;
+  /** Montinhos das vazas totalmente anuladas nesta rodada, na ordem em que aconteceram. */
+  readonly vazasEmpatadas: readonly VazaEmpatada[];
   /** Palpite que o jogador não pode dar por ser o pé (null se não houver restrição). */
   readonly palpiteProibido: number | null;
   /** Preenchido ao fim de cada rodada (e mantido até a próxima distribuição). */

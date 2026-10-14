@@ -56,6 +56,7 @@ export class GatewayDoJogo {
     private readonly io: ServidorDoJogo,
     private readonly servico: ServicoDeSalas,
     private readonly registrador: Registrador,
+    private readonly cenariosDeTeste = false,
   ) {}
 
   iniciar(): void {
@@ -67,6 +68,14 @@ export class GatewayDoJogo {
       this.responder(socket, responder, () =>
         this.entrarComSessao(socket, this.servico.criarSala(objeto(dados))),
       ),
+    );
+    socket.on('dev:cenario', (dados, responder) =>
+      this.responder(socket, responder, () => {
+        if (!this.cenariosDeTeste) {
+          throw new ErroDeRegra('SEM_PERMISSAO', 'Cenários de teste desativados neste servidor.');
+        }
+        return this.entrarComSessao(socket, this.servico.criarCenario(objeto(dados)));
+      }),
     );
     socket.on('sala:entrar', (dados, responder) =>
       this.responder(socket, responder, () =>

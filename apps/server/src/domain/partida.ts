@@ -7,6 +7,7 @@ import type {
   JogadaNaMesa,
   ResultadoJogadorNaRodada,
   Valor,
+  VazaEmpatada,
   VazaGanha,
   VazaResolvida,
 } from '@fodinha/shared';
@@ -67,6 +68,7 @@ export interface VisaoDaPartida {
   readonly minhaMao: readonly CartaNaMao[];
   readonly mesa: readonly JogadaNaMesa[];
   readonly ultimaVaza: VazaResolvida | null;
+  readonly vazasEmpatadas: readonly VazaEmpatada[];
   readonly palpiteProibido: number | null;
   readonly resultadoRodada: readonly ResultadoJogadorNaRodada[] | null;
   readonly vencedores: readonly string[];
@@ -82,6 +84,8 @@ export interface NovaPartida {
   /** Ordem dos assentos à mesa (sentido horário). */
   readonly jogadorIds: readonly string[];
   readonly gerarAleatorio: GeradorAleatorio;
+  /** Só para cenários de teste: a primeira rodada já começa com várias cartas (limitado ao máximo). */
+  readonly cartasNaPrimeiraRodada?: number;
 }
 
 /**
@@ -103,6 +107,7 @@ export class Partida {
   private indiceQueAbriuVaza = 0;
   private mesa: Jogada[] = [];
   private ultimaVaza: VazaResolvida | null = null;
+  private vazasEmpatadas: VazaEmpatada[] = [];
   private resultadoRodada: ResultadoJogadorNaRodada[] | null = null;
   private vencedores: string[] = [];
 
@@ -110,13 +115,19 @@ export class Partida {
     private readonly configuracao: ConfiguracaoPartida,
     jogadorIds: readonly string[],
     private readonly gerarAleatorio: GeradorAleatorio,
+    private readonly cartasNaPrimeiraRodada: number | null,
   ) {
     this.valores = valoresEmJogo(configuracao.incluirOitoNoveDez);
     this.jogadores = jogadorIds.map((id) => this.novoJogador(id, configuracao.vidasIniciais));
     this.indiceDoPe = Math.floor(gerarAleatorio() * jogadorIds.length);
   }
 
-  static iniciar({ configuracao, jogadorIds, gerarAleatorio }: NovaPartida): Partida {
+  static iniciar({
+    configuracao,
+    jogadorIds,
+    gerarAleatorio,
+    cartasNaPrimeiraRodada,
+  }: NovaPartida): Partida {
     const configuracaoValida = validarConfiguracao(configuracao);
     if (jogadorIds.length < LIMITES.minJogadores || jogadorIds.length > LIMITES.maxJogadores) {
       throw new ErroDeRegra(
@@ -127,7 +138,12 @@ export class Partida {
     if (new Set(jogadorIds).size !== jogadorIds.length) {
       throw new ErroDeRegra('ENTRADA_INVALIDA', 'Jogadores repetidos na partida.');
     }
-    const partida = new Partida(configuracaoValida, jogadorIds, gerarAleatorio);
+    const partida = new Partida(
+      configuracaoValida,
+      jogadorIds,
+      gerarAleatorio,
+      cartasNaPrimeiraRodada ?? null,
+    );
     partida.distribuirRodada();
     return partida;
   }
@@ -347,6 +363,7 @@ export class Partida {
       minhaMao: observador ? this.maoVistaPeloDono(observador) : [],
       mesa: organizarMesa(this.mesa, this.manilha as Valor, this.valores),
       ultimaVaza: this.ultimaVaza,
+      vazasEmpatadas: [...this.vazasEmpatadas],
       palpiteProibido:
         observador && indiceObservador === this.indiceDoPe && this.fase === 'palpites'
           ? this.palpiteProibidoAtual()
@@ -364,7 +381,10 @@ export class Partida {
     const vivos = this.vivos();
     const maximo = maxCartasPorJogador(totalDeCartas(this.configuracao), vivos.length);
     const anterior = this.numeroRodada === 0 ? null : this.cartasPorJogador;
-    this.cartasPorJogador = proximaQuantidadeDeCartas(anterior, maximo);
+    const abreComVarias = anterior === null && this.cartasNaPrimeiraRodada !== null;
+    this.cartasPorJogador = abreComVarias
+      ? Math.min(this.cartasNaPrimeiraRodada ?? 1, maximo)
+      : proximaQuantidadeDeCartas(anterior, maximo);
     this.numeroRodada += 1;
 
     const monte = montarBaralhoEmbaralhado(this.configuracao, this.gerarAleatorio);
@@ -387,6 +407,7 @@ export class Partida {
     this.manilha = valorDaManilha(this.vira.valor, this.valores);
 
     this.mesa = [];
+    this.vazasEmpatadas = [];
     this.fase = 'palpites';
     this.indiceDaVez = this.proximoVivo(this.indiceDoPe);
   }
@@ -394,11 +415,17 @@ export class Partida {
   private fecharVaza(): void {
     const jogadas = this.mesa;
     const vencedorId = resolverVaza(jogadas, this.manilha as Valor, this.valores);
-    this.ultimaVaza = {
-      jogadas: organizarMesa(jogadas, this.manilha as Valor, this.valores),
-      vencedorId,
-    };
+    const organizadas = organizarMesa(jogadas, this.manilha as Valor, this.valores);
+    this.ultimaVaza = { jogadas: organizadas, vencedorId };
     this.mesa = [];
+    if (vencedorId === null) {
+      // A mais forte por cima: é a que se lê de relance no montinho.
+      const [maisForte] = organizadas;
+      this.vazasEmpatadas.push({
+        cartaDoTopo: (maisForte as JogadaNaMesa).carta,
+        quantidadeDeCartas: jogadas.length,
+      });
+    }
 
     // Vaza anulada: quem abriu continua abrindo (premissa P4 do plano).
     const indiceQueAbre = vencedorId === null ? this.indiceQueAbriuVaza : this.indiceDe(vencedorId);

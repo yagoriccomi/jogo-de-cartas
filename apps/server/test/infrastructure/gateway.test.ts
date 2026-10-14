@@ -329,3 +329,19 @@ describe('GatewayDoJogo (integração com Socket.IO real)', () => {
     expect(io.engine.clientsCount).toBe(1);
   });
 });
+
+describe('GatewayDoJogo — cenários de teste', () => {
+  it('deveRecusarDevCenarioComSemPermissaoQuandoAFlagEstaDesligada', async () => {
+    const cliente = await conectar();
+
+    const resposta = await cliente.emitir<SessaoJogador>((r) =>
+      cliente.socket.emit(
+        'dev:cenario',
+        { apelido: 'Ana', jogadores: 10, cartas: 13, dispositivoId: 'disp-ana' },
+        r,
+      ),
+    );
+
+    expect(resposta).toMatchObject({ ok: false, erro: { codigo: 'SEM_PERMISSAO' } });
+  });
+});
