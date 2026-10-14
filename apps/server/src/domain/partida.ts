@@ -22,7 +22,7 @@ import {
   proximaQuantidadeDeCartas,
   vidasPerdidas,
 } from './rodadas';
-import { marcarAnuladas, resolverVaza } from './vaza';
+import { organizarMesa, resolverVaza } from './vaza';
 
 interface JogadorNaPartida {
   readonly id: string;
@@ -345,7 +345,7 @@ export class Partida {
       idDoPrimeiro: rodadaEmJogo ? this.jogador(this.proximoVivo(this.indiceDoPe)).id : null,
       idDaVez: this.idDaVez,
       minhaMao: observador ? this.maoVistaPeloDono(observador) : [],
-      mesa: marcarAnuladas(this.mesa, this.manilha as Valor, this.valores),
+      mesa: organizarMesa(this.mesa, this.manilha as Valor, this.valores),
       ultimaVaza: this.ultimaVaza,
       palpiteProibido:
         observador && indiceObservador === this.indiceDoPe && this.fase === 'palpites'
@@ -395,7 +395,7 @@ export class Partida {
     const jogadas = this.mesa;
     const vencedorId = resolverVaza(jogadas, this.manilha as Valor, this.valores);
     this.ultimaVaza = {
-      jogadas: marcarAnuladas(jogadas, this.manilha as Valor, this.valores),
+      jogadas: organizarMesa(jogadas, this.manilha as Valor, this.valores),
       vencedorId,
     };
     this.mesa = [];

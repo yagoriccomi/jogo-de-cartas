@@ -38,15 +38,19 @@ export function resolverVaza(
   return maisForte?.jogadorId ?? null;
 }
 
-/** Marca, já durante a vaza, quais cartas empataram com outra e por isso não valem mais. */
-export function marcarAnuladas(
+/**
+ * Prepara a mesa para exibição: marca quais cartas empataram com outra (não valem mais) e ordena
+ * da mais forte para a mais fraca — a mais forte fica à frente da fila na mesa. Empates de força
+ * mantêm a ordem em que foram jogadas.
+ */
+export function organizarMesa(
   jogadas: readonly Jogada[],
   manilha: Valor,
   valores: readonly Valor[],
 ): JogadaNaMesa[] {
   const quantidade = contarPorForca(jogadas, manilha, valores);
-  return jogadas.map((jogada) => ({
-    ...jogada,
-    anulada: (quantidade.get(forcaDaCarta(jogada.carta, manilha, valores)) ?? 0) > 1,
-  }));
+  const forca = (jogada: Jogada) => forcaDaCarta(jogada.carta, manilha, valores);
+  return [...jogadas]
+    .sort((a, b) => forca(b) - forca(a))
+    .map((jogada) => ({ ...jogada, anulada: (quantidade.get(forca(jogada)) ?? 0) > 1 }));
 }

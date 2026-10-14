@@ -107,6 +107,7 @@ export interface EstadoPartidaVisivel {
   readonly prazoDaVezRestanteMs: number | null;
   /** Ordenada da carta mais forte para a mais fraca (considerando a manilha da rodada). */
   readonly minhaMao: readonly CartaNaMao[];
+  /** Ordenada da mais forte para a mais fraca (a mais forte fica à frente da fila). */
   readonly mesa: readonly JogadaNaMesa[];
   readonly ultimaVaza: VazaResolvida | null;
   /** Palpite que o jogador não pode dar por ser o pé (null se não houver restrição). */

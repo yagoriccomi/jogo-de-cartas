@@ -8,7 +8,7 @@ import {
   proximaQuantidadeDeCartas,
   vidasPerdidas,
 } from '../../src/domain/rodadas';
-import { marcarAnuladas, resolverVaza } from '../../src/domain/vaza';
+import { organizarMesa, resolverVaza } from '../../src/domain/vaza';
 import { carta, geradorComSemente } from '../apoio';
 
 const TRUCO = valoresEmJogo(false);
@@ -147,19 +147,20 @@ describe('rodadas e pontuação', () => {
 });
 
 describe('cartas anuladas na mesa', () => {
-  it('deveMarcarComoAnuladasSoAsCartasQueEmpatamEmForca', () => {
+  it('deveOrdenarPorForcaEMarcarComoAnuladasSoAsQueEmpatam', () => {
     const jogadas = [
       { jogadorId: 'a', carta: carta('3', 'ouros') },
       { jogadorId: 'b', carta: carta('K', 'copas') },
       { jogadorId: 'c', carta: carta('3', 'paus') },
       { jogadorId: 'd', carta: carta('5', 'paus') },
     ];
-    const marcadas = marcarAnuladas(jogadas, '5', TRUCO);
+    const marcadas = organizarMesa(jogadas, '5', TRUCO);
+    // Ordenadas da mais forte para a mais fraca: manilha (5♣), os dois 3 (empatados), K.
     expect(marcadas.map((j) => [j.jogadorId, j.anulada])).toEqual([
-      ['a', true],
-      ['b', false],
-      ['c', true],
       ['d', false],
+      ['a', true],
+      ['c', true],
+      ['b', false],
     ]);
   });
 
@@ -168,6 +169,6 @@ describe('cartas anuladas na mesa', () => {
       { jogadorId: 'a', carta: carta('5', 'ouros') },
       { jogadorId: 'b', carta: carta('5', 'paus') },
     ];
-    expect(marcarAnuladas(jogadas, '5', TRUCO).some((j) => j.anulada)).toBe(false);
+    expect(organizarMesa(jogadas, '5', TRUCO).some((j) => j.anulada)).toBe(false);
   });
 });
