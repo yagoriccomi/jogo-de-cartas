@@ -1,114 +1,49 @@
-/* Todas as cores vivem aqui. Componentes só usam var(--token): trocar de tema = trocar este bloco. */
+/* Identidade "Vice City": tema único escuro. Todas as cores vivem aqui; componentes só usam var(--token). */
 :root {
-  color-scheme: light;
-
-  --fundo: #f3f4f8;
-  --superficie: #ffffff;
-  --superficie-2: #eceef4;
-  --borda: #d6d9e4;
-  --texto: #161a26;
-  --texto-suave: #5a6176;
-
-  --destaque: #4f46e5;
-  --destaque-hover: #4338ca;
-  --destaque-texto: #ffffff;
-  --destaque-suave: #e7e6fd;
-
-  --perigo: #c62839;
-  --perigo-suave: #fde8ea;
-  --sucesso: #16794c;
-  --sucesso-suave: #dcf4e8;
-  --alerta: #8f6200;
-  --alerta-suave: #fff1cc;
-
-  --vida: #e0344a;
-
-  --mesa: #1f6b52;
-  --mesa-borda: #175441;
-  --mesa-texto: #eaf7f1;
-  --mesa-suave: rgb(255 255 255 / 0.12);
-
-  /* Cartas mantêm rosto claro nos dois temas: naipes pretos precisam de fundo claro para ler. */
-  --carta-fundo: #ffffff;
-  --carta-borda: #c5c9d6;
-  --naipe-vermelho: #d62839;
-  --naipe-preto: #1a1d29;
-  --manilha: #f2b01e;
-  --verso-a: #4f46e5;
-  --verso-b: #3730a3;
-
-  --sombra: 0 1px 2px rgb(16 24 40 / 0.08), 0 6px 20px rgb(16 24 40 / 0.07);
-  --sobreposicao: rgb(10 12 20 / 0.55);
-
-  --raio: 14px;
-  --raio-p: 8px;
-  --espaco: 1rem;
-  --fonte:
-    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-tema='claro']) {
-    color-scheme: dark;
-
-    --fundo: #0f1118;
-    --superficie: #181b25;
-    --superficie-2: #232734;
-    --borda: #31364a;
-    --texto: #eceef6;
-    --texto-suave: #9aa1b8;
-
-    --destaque: #7c83ff;
-    --destaque-hover: #9298ff;
-    --destaque-texto: #0f1118;
-    --destaque-suave: #26284a;
-
-    --perigo: #ff7385;
-    --perigo-suave: #3a1c23;
-    --sucesso: #5fd49b;
-    --sucesso-suave: #143023;
-    --alerta: #f2c04d;
-    --alerta-suave: #3a2f10;
-
-    --vida: #ff5b72;
-
-    --mesa: #15493a;
-    --mesa-borda: #0f3a2d;
-    --mesa-texto: #e2f4ec;
-
-    --sombra: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 20px rgb(0 0 0 / 0.35);
-    --sobreposicao: rgb(0 0 0 / 0.65);
-  }
-}
-
-:root[data-tema='escuro'] {
   color-scheme: dark;
 
-  --fundo: #0f1118;
-  --superficie: #181b25;
-  --superficie-2: #232734;
-  --borda: #31364a;
-  --texto: #eceef6;
-  --texto-suave: #9aa1b8;
+  --fundo: #120720;
+  --superficie: #1a0b2e;
+  --superficie-funda: #120720;
+  --linha: #3a2257;
+  --linha-suave: #2a1745;
 
-  --destaque: #7c83ff;
-  --destaque-hover: #9298ff;
-  --destaque-texto: #0f1118;
-  --destaque-suave: #26284a;
+  --texto: #f6ecff;
+  --texto-suave: #d7c6ea;
+  --texto-fraco: #a993c4;
+  --texto-neon: #ffe3f1;
 
-  --perigo: #ff7385;
-  --perigo-suave: #3a1c23;
-  --sucesso: #5fd49b;
-  --sucesso-suave: #143023;
-  --alerta: #f2c04d;
-  --alerta-suave: #3a2f10;
+  --rosa: #ff2a8a;
+  --rosa-claro: #ff8fc4;
+  --rosa-suave: #ffb8d8;
+  --rosa-palido: #ffd6ec;
+  --ciano: #2de2e6;
+  --ciano-claro: #7ff3f5;
+  --ciano-palido: #bff8f9;
+  --ciano-branco: #e6fdfd;
+  --dourado: #ffd65a;
+  --verde: #3dff9e;
 
-  --vida: #ff5b72;
+  --bloqueado-borda: #5b4777;
+  --bloqueado-texto: #8a77a6;
 
-  --mesa: #15493a;
-  --mesa-borda: #0f3a2d;
-  --mesa-texto: #e2f4ec;
+  --feltro: #0d3a3c;
+  --feltro-escuro: #0a2c2e;
 
-  --sombra: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 20px rgb(0 0 0 / 0.35);
-  --sobreposicao: rgb(0 0 0 / 0.65);
+  /* Cartas: pixel art com rosto creme e vermelho/azul-noite nos naipes. */
+  --carta-fundo: #f3ede0;
+  --carta-borda: #2a2140;
+  --naipe-vermelho: #d81b60;
+  --naipe-preto: #2a2350;
+
+  --brilho-rosa: 0 0 18px rgb(255 42 138 / 0.55);
+  --brilho-ciano: 0 0 14px rgb(45 226 230 / 0.5);
+  --sobreposicao: rgb(18 7 32 / 0.62);
+
+  --fonte-titulo: 'Yellowtail', cursive;
+  --fonte: 'Kanit', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --fonte-numeros: 'Pixelify Sans', 'Kanit', system-ui, sans-serif;
+
+  --alvo-minimo: 44px;
+  --largura-computador: 900px;
 }

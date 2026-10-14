@@ -1,67 +1,207 @@
 .entrada {
-  width: 100%;
-  max-width: 26rem;
-  margin: 1rem auto 0;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 18px;
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 28px 20px 20px;
 }
 
-.entrada__titulo {
+.entrada__apresentacao {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
   text-align: center;
 }
 
-.entrada__titulo h1 {
-  font-size: 2.25rem;
-  font-weight: 800;
-  letter-spacing: -0.03em;
+.entrada__leque {
+  --l-carta: 64px;
+  display: flex;
+  justify-content: center;
+  height: 110px;
+  margin-bottom: -8px;
 }
 
-.entrada__titulo p {
-  margin-top: 0.25rem;
+.entrada__carta {
+  position: relative;
+}
+
+.entrada__carta--esquerda {
+  transform: rotate(-16deg) translateX(14px);
+}
+
+.entrada__carta--centro {
+  z-index: 1;
+  transform: translateY(-8px);
+}
+
+.entrada__carta--direita {
+  transform: rotate(16deg) translateX(-14px);
+}
+
+.entrada__logo {
+  font-size: 4.5rem;
+}
+
+.entrada__slogan {
+  font-size: 0.9rem;
   color: var(--texto-suave);
+}
+
+.entrada__passos {
+  display: none;
 }
 
 .entrada__form {
   display: flex;
+  flex: 1;
   flex-direction: column;
-  gap: 1.1rem;
+  gap: 18px;
 }
 
-.entrada__codigo {
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  font-weight: 700;
-  text-align: center;
-}
-
-.entrada__ajuda {
-  text-align: center;
-  font-size: 0.8125rem;
-  color: var(--texto-suave);
+.entrada__aviso {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 6px 10px 14px;
+  border: 2px solid var(--rosa);
+  border-radius: 14px;
+  background: var(--superficie);
+  box-shadow: var(--brilho-rosa);
 }
 
 .abas {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.25rem;
-  padding: 0.25rem;
-  background: var(--superficie-2);
-  border-radius: var(--raio-p);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 4px;
+  border: 1px solid var(--linha);
+  border-radius: 14px;
+  background: var(--superficie);
 }
 
 .aba {
-  min-height: 2.5rem;
+  min-height: var(--alvo-minimo);
   border: 0;
-  border-radius: 6px;
+  border-radius: 11px;
   background: transparent;
-  font-weight: 600;
   color: var(--texto-suave);
-  cursor: pointer;
+  font-weight: 500;
 }
 
-.aba[aria-selected='true'] {
-  background: var(--superficie);
-  color: var(--texto);
-  box-shadow: var(--sombra);
+.aba--ativa {
+  background: var(--rosa);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 0 12px var(--rosa);
+}
+
+.entrada__codigo {
+  height: 64px;
+  color: var(--texto-neon);
+  font-weight: 800;
+  font-size: 2rem;
+  letter-spacing: 12px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.entrada__ajuda {
+  font-size: 0.88rem;
+  color: var(--texto-suave);
+}
+
+.entrada__instalar {
+  margin-top: auto;
+}
+
+@media (min-width: 900px) {
+  .entrada {
+    flex-direction: row;
+    align-items: center;
+    gap: 56px;
+    padding: 48px 32px;
+  }
+
+  .entrada__apresentacao {
+    flex: 1 1 420px;
+    align-items: flex-start;
+    gap: 24px;
+    text-align: left;
+  }
+
+  .entrada__leque {
+    --l-carta: 96px;
+    height: 150px;
+    margin-bottom: 0;
+  }
+
+  .entrada__carta--esquerda {
+    transform: rotate(-14deg) translate(20px, 10px);
+  }
+
+  .entrada__carta--centro {
+    transform: none;
+  }
+
+  .entrada__carta--direita {
+    transform: rotate(14deg) translate(-20px, 10px);
+  }
+
+  .entrada__logo {
+    font-size: 7.5rem;
+    line-height: 0.9;
+  }
+
+  .entrada__slogan {
+    max-width: 460px;
+    font-size: 1.35rem;
+  }
+
+  .entrada__passos {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    max-width: 560px;
+  }
+
+  .entrada__passos li {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.95rem;
+  }
+
+  .entrada__passo-numero {
+    font-weight: 800;
+    font-size: 1.9rem;
+    color: var(--ciano-claro);
+    text-shadow: 0 0 10px var(--ciano);
+  }
+
+  .entrada__form {
+    flex: 1 1 360px;
+    max-width: 440px;
+    padding: 28px;
+    border: 2px solid var(--rosa);
+    border-radius: 24px;
+    background: var(--superficie);
+    box-shadow: 0 0 34px rgb(255 42 138 / 0.45);
+  }
+
+  .entrada__form .campo__entrada,
+  .entrada__form .abas {
+    background: var(--superficie-funda);
+  }
+
+  .entrada__form .configuracao {
+    background: var(--superficie-funda);
+  }
+
+  .entrada__instalar {
+    margin-top: 0;
+  }
 }

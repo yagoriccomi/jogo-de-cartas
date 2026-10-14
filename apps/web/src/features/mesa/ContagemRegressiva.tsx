@@ -1,21 +1,23 @@
 import { useAgora } from '../../lib/useAgora';
 
 const SEGUNDOS_URGENTE = 5;
+const MS_POR_SEGUNDO = 1000;
 
 interface Props {
-  /** Epoch ms em que o servidor joga pelo jogador da vez. */
-  readonly prazoEm: number;
+  /** Instante local (epoch ms) em que o prazo acaba: recebimento do estado + tempo restante do servidor. */
+  readonly prazoFinal: number;
+  readonly className?: string;
 }
 
-export function ContagemRegressiva({ prazoEm }: Props) {
+export function ContagemRegressiva({ prazoFinal, className = 'contagem' }: Props) {
   const agora = useAgora();
   // O servidor é a autoridade do prazo; aqui só exibimos, nunca decidimos nada.
-  const segundos = Math.max(0, Math.ceil((prazoEm - agora) / 1000));
+  const segundos = Math.max(0, Math.ceil((prazoFinal - agora) / MS_POR_SEGUNDO));
   const urgente = segundos <= SEGUNDOS_URGENTE;
 
   return (
     <span
-      className={`contagem${urgente ? ' contagem--urgente' : ''}`}
+      className={`${className}${urgente ? ' contagem--urgente' : ''}`}
       role="timer"
       aria-label={`${segundos} segundos restantes`}
     >

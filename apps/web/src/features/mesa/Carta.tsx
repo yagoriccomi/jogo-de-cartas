@@ -1,94 +1,137 @@
-import type { ReactNode } from 'react';
 import { ehCartaOculta, type CartaNaMao, type Naipe, type Valor } from '@fodinha/shared';
+import { classes } from '../../lib/classes';
+import type { EstiloComVariaveis } from '../../lib/estiloComVariaveis';
+import { caminhoDoNaipe, caminhoDoTexto } from './pixel';
+import './carta.css';
 
-export type TamanhoCarta = 'p' | 'm' | 'g';
+export type EstadoCarta = 'normal' | 'selecionada' | 'apagada';
 
-const NAIPE_VERMELHO: Record<Naipe, boolean> = {
+const NOME_DO_VALOR: Readonly<Record<Valor, string>> = {
+  '4': 'Quatro',
+  '5': 'Cinco',
+  '6': 'Seis',
+  '7': 'Sete',
+  '8': 'Oito',
+  '9': 'Nove',
+  '10': 'Dez',
+  Q: 'Dama',
+  J: 'Valete',
+  K: 'Rei',
+  A: 'Ás',
+  '2': 'Dois',
+  '3': 'Três',
+};
+
+const NAIPE_VERMELHO: Readonly<Record<Naipe, boolean>> = {
   ouros: true,
   copas: true,
   espadas: false,
   paus: false,
 };
 
-// Naipes desenhados em SVG para ficarem nítidos em qualquer tamanho, sem imagens externas.
-const CAMINHOS: Record<Naipe, string> = {
-  copas:
-    'M12 21s-8-5.500-8-11a4.500 4.500 0 0 1 8-2.800A4.500 4.500 0 0 1 20 10c0 5.500-8 11-8 11z',
-  ouros: 'M12 2l7 10-7 10-7-10z',
-  espadas:
-    'M12 2c3 4 8 7 8 12a4.500 4.500 0 0 1-7.200 3.600c.2 1.800.9 3 2.200 4.400H9c1.300-1.400 2-2.600 2.200-4.400A4.500 4.500 0 0 1 4 14c0-5 5-8 8-12z',
-  paus: 'M12 3a4.300 4.300 0 0 1 2.600 7.700A4.300 4.300 0 1 1 16.700 18a4.300 4.300 0 0 1-3.200-1.500c.1 1.800.7 3.200 1.700 4.500H8.800c1-1.300 1.600-2.700 1.700-4.500A4.300 4.300 0 1 1 7.300 10.700 4.300 4.300 0 0 1 12 3z',
-};
-
-export function IconeNaipe({ naipe }: { readonly naipe: Naipe }) {
-  return (
-    <svg className="naipe" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
-      <path d={CAMINHOS[naipe]} />
-    </svg>
-  );
+/** Texto lido por leitores de tela, ex.: "Rei de paus, manilha". */
+export function descreverCarta(carta: CartaNaMao | null, manilha: Valor | null): string {
+  if (carta === null || ehCartaOculta(carta)) return 'Carta virada';
+  const base = `${NOME_DO_VALOR[carta.valor]} de ${carta.naipe}`;
+  return manilha !== null && carta.valor === manilha ? `${base}, manilha` : base;
 }
 
+const VIEWBOX_VALOR = '0 0 11 7';
+const VIEWBOX_NAIPE = '0 0 9 9';
+const VIEWBOX_F = '0 0 5 7';
+
 interface Props {
+  /** `null` ou carta oculta desenham o verso (carta virada). */
   readonly carta: CartaNaMao | null;
-  readonly tamanho?: TamanhoCarta;
-  /** Valor da manilha da rodada: destaca visualmente as cartas que a têm. */
+  /** Valor da manilha da rodada: cartas com ele ganham o efeito holográfico. */
   readonly manilha?: Valor | null;
-  readonly selecionavel?: boolean;
+  /** Largura em px; a altura segue a proporção do baralho e tudo dentro escala junto. */
+  readonly largura?: number;
+  /** Valor menor, para cartas muito sobrepostas (o naipe continua visível no canto). */
+  readonly densa?: boolean;
+  readonly estado?: EstadoCarta;
+  /** Inclinação (graus) das cartas jogadas na mesa. */
+  readonly inclinacao?: number;
+  /** Com `onClick` a carta vira um botão; sem ele, uma imagem com rótulo. */
   readonly onClick?: () => void;
+  readonly pressionada?: boolean;
+  /** Prefixo do rótulo acessível (ex.: "Vira", "Testa de Bia"). */
   readonly rotulo?: string;
 }
 
 export function Carta({
   carta,
-  tamanho = 'm',
   manilha = null,
-  selecionavel = false,
+  largura,
+  densa = false,
+  estado = 'normal',
+  inclinacao,
   onClick,
+  pressionada,
   rotulo,
 }: Props) {
-  const classes = ['carta', `carta--${tamanho}`];
-  let conteudo: ReactNode;
-  let descricao: string;
-
-  if (carta === null || ehCartaOculta(carta)) {
-    classes.push('carta--verso');
-    conteudo = null;
-    descricao = 'Carta virada';
-  } else {
-    classes.push(NAIPE_VERMELHO[carta.naipe] ? 'carta--vermelha' : 'carta--preta');
-    if (manilha !== null && carta.valor === manilha) classes.push('carta--manilha');
-    descricao = `${carta.valor} de ${carta.naipe}`;
-    conteudo = (
-      <>
-        <span className="carta__canto">
-          <span className="carta__valor">{carta.valor}</span>
-          <IconeNaipe naipe={carta.naipe} />
-        </span>
-        <span className="carta__centro">
-          <IconeNaipe naipe={carta.naipe} />
-        </span>
-      </>
-    );
-  }
-
+  const virada = carta === null || ehCartaOculta(carta);
+  const ehManilha = !virada && manilha !== null && carta.valor === manilha;
+  const descricao = descreverCarta(carta, manilha);
   const textoAcessivel = rotulo ? `${rotulo}: ${descricao}` : descricao;
+
+  const estilo: EstiloComVariaveis = {
+    '--l-carta': largura !== undefined ? `${largura}px` : undefined,
+    '--inclinacao': inclinacao !== undefined ? `${inclinacao}deg` : undefined,
+  };
+
+  const nomeDaClasse = classes(
+    'carta',
+    virada && 'carta--verso',
+    !virada && NAIPE_VERMELHO[carta.naipe] && 'carta--vermelha',
+    ehManilha && 'carta--manilha',
+    densa && 'carta--densa',
+    inclinacao !== undefined && 'carta--inclinada',
+    estado === 'selecionada' && 'carta--selecionada',
+    estado === 'apagada' && 'carta--apagada',
+    onClick && 'carta--clicavel',
+  );
+
+  const face = virada ? (
+    <span className="carta__face" aria-hidden="true">
+      <span className="carta__neon" />
+      <span className="carta__selo">
+        <svg viewBox={VIEWBOX_F} shapeRendering="crispEdges">
+          <path fill="currentColor" d={caminhoDoTexto('F')} />
+        </svg>
+      </span>
+    </span>
+  ) : (
+    <span className="carta__face" aria-hidden="true">
+      {ehManilha && <span className="carta__holo" />}
+      <span className="carta__moldura" />
+      <svg className="carta__valor" viewBox={VIEWBOX_VALOR} shapeRendering="crispEdges">
+        <path fill="currentColor" d={caminhoDoTexto(carta.valor)} />
+      </svg>
+      <svg className="carta__naipe" viewBox={VIEWBOX_NAIPE} shapeRendering="crispEdges">
+        <path fill="currentColor" d={caminhoDoNaipe(carta.naipe)} />
+      </svg>
+    </span>
+  );
 
   if (onClick) {
     return (
       <button
         type="button"
-        className={`${classes.join(' ')} carta--clicavel${selecionavel ? ' carta--ativa' : ''}`}
-        onClick={onClick}
+        className={nomeDaClasse}
+        style={estilo}
         aria-label={textoAcessivel}
+        aria-pressed={pressionada}
+        onClick={onClick}
       >
-        {conteudo}
+        {face}
       </button>
     );
   }
 
   return (
-    <div className={classes.join(' ')} role="img" aria-label={textoAcessivel}>
-      {conteudo}
+    <div className={nomeDaClasse} style={estilo} role="img" aria-label={textoAcessivel}>
+      {face}
     </div>
   );
 }

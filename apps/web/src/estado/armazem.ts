@@ -18,8 +18,15 @@ export interface EstadoApp {
   readonly sessao: SessaoJogador | null;
   readonly sala: EstadoSala | null;
   readonly jogo: EstadoPartidaVisivel | null;
+  /**
+   * Instante local (epoch ms) em que o último `jogo:estado` chegou. As contagens regressivas
+   * partem dele + o "tempo restante" do servidor, ficando imunes a relógio desajustado.
+   */
+  readonly jogoRecebidoEm: number;
   /** Escolha local de rever o lobby depois que a partida encerrou. */
   readonly voltouAoLobby: boolean;
+  /** Mensagem fixa exibida na tela inicial (ex.: "você foi expulso"). */
+  readonly avisoEntrada: string | null;
   readonly avisos: readonly Aviso[];
 }
 
@@ -31,7 +38,9 @@ let estado: EstadoApp = {
   sessao: null,
   sala: null,
   jogo: null,
+  jogoRecebidoEm: Date.now(),
   voltouAoLobby: false,
+  avisoEntrada: null,
   avisos: [],
 };
 let proximoIdAviso = 1;
