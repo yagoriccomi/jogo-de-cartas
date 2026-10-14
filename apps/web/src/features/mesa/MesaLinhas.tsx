@@ -20,7 +20,11 @@ interface LinhaProps {
   readonly anuladas: boolean;
 }
 
-/** Cartas sobrepostas em uma linha; o nome do dono fica só no `title`/rótulo para não atrapalhar. */
+/**
+ * Fila de cartas sobrepostas, já ordenada pelo servidor da mais forte para a mais fraca: a mais
+ * forte fica à esquerda e por cima de todas; cada seguinte entra por trás da anterior. O nome do
+ * dono fica só no `title`/rótulo para não atrapalhar.
+ */
 function LinhaDeCartas({ cartas, manilha, nomeDe, anuladas }: LinhaProps) {
   const estilo: EstiloComVariaveis = { '--n': Math.max(cartas.length, 1) };
   return (
@@ -30,16 +34,18 @@ function LinhaDeCartas({ cartas, manilha, nomeDe, anuladas }: LinhaProps) {
       aria-label={anuladas ? 'Cartas empatadas, anuladas' : 'Cartas valendo'}
       aria-hidden={cartas.length === 0 ? true : undefined}
     >
-      {cartas.map((jogada) => {
+      {cartas.map((jogada, posicao) => {
         const nome = nomeDe(jogada.jogadorId);
+        const camada: EstiloComVariaveis = { '--camada': cartas.length - posicao };
         return (
           <li
             key={jogada.carta.id}
             className="mesa-linha__carta"
+            style={camada}
             {...{ [MARCADORES.cartaNaMesa]: jogada.carta.id }}
             title={anuladas ? `${nome} (empatou)` : nome}
           >
-            <Carta carta={jogada.carta} manilha={manilha} rotulo={nome} />
+            <Carta carta={jogada.carta} manilha={manilha} rotulo={nome} canto="direito" />
           </li>
         );
       })}

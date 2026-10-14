@@ -196,7 +196,13 @@ export function TelaMesa() {
       >
         <div className="minha__barra">
           <div className="minha__dados">
-            <span className="neon neon--ciano minha__nome">
+            {/* Neon só em quem está com a vez; fora dela o status fica apagado. */}
+            <span
+              className={classes(
+                'minha__nome',
+                souDaVez && emRodada ? 'neon neon--ciano' : 'minha__nome--apagado',
+              )}
+            >
               {eu?.apelido ?? sala?.participantes.find((p) => p.id === meuId)?.apelido ?? 'Você'}
             </span>
             {eu && !eu.eliminado && (

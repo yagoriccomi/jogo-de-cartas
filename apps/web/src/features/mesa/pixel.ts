@@ -106,6 +106,16 @@ export function caminhoDoTexto(texto: string): string {
   return d;
 }
 
+/** Largura, em pixels da grade, do texto desenhado por `caminhoDoTexto` (para alinhar à direita). */
+export function colunasDoTexto(texto: string): number {
+  let colunas = 0;
+  for (const caractere of texto) {
+    const glifo = GLIFOS[caractere];
+    if (glifo) colunas += (glifo[0]?.length ?? 0) + 1;
+  }
+  return Math.max(colunas - 1, 1);
+}
+
 const cacheDeNaipes = new Map<Naipe, string>();
 
 export function caminhoDoNaipe(naipe: Naipe): string {
