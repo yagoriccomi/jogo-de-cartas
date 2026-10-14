@@ -204,19 +204,23 @@ export function TelaMesa() {
               voando={animacao.voando}
               raiz={animacao.raiz}
             />
-            {palpitando && (
-              <PainelPalpite
-                key={jogo.numeroRodada}
-                cartasNaRodada={jogo.cartasPorJogador}
-                palpiteProibido={jogo.palpiteProibido}
-                souOPe={jogo.idDoPe === meuId}
-                palpitesDosOutros={palpitesDosOutros}
-                prazoFinal={prazoFinal}
-                ocupado={ocupado}
-                onConfirmar={(quantidade) => void executar(() => palpitar(quantidade))}
-              />
-            )}
           </div>
+
+          {/* Filho do feltro (não das jogadas): no celular cobre a mesa toda, vira inclusa. */}
+          {palpitando && (
+            <PainelPalpite
+              key={jogo.numeroRodada}
+              cartasNaRodada={jogo.cartasPorJogador}
+              palpiteProibido={jogo.palpiteProibido}
+              souOPe={jogo.idDoPe === meuId}
+              vira={jogo.vira}
+              manilha={jogo.manilha}
+              palpitesDosOutros={palpitesDosOutros}
+              prazoFinal={prazoFinal}
+              ocupado={ocupado}
+              onConfirmar={(quantidade) => void executar(() => palpitar(quantidade))}
+            />
+          )}
 
           <Montinhos
             jogadorId={DESTINO_DOS_EMPATES}

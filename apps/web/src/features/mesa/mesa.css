@@ -546,11 +546,11 @@
 
 /* ---------- Palpite ---------- */
 
-/* Por cima da área das jogadas, dentro do feltro: não cobre a vira, a mão nem o meu status. */
+/* Dentro do feltro, cobrindo-o (a vira vem em miniatura no painel): não cobre a mão nem o status. */
 .palpite {
   position: absolute;
-  inset: -4px;
-  z-index: 3;
+  inset: 10px;
+  z-index: 6;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -567,17 +567,49 @@
 .palpite__topo {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 10px;
+}
+
+.palpite__vira {
+  /* O tamanho da miniatura vem daqui (não da prop) para encolher em telas baixas. */
+  --l-carta: 44px;
+  flex: none;
+}
+
+.palpite__cabeca {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
 }
 
 .palpite__titulo {
-  font-size: 1.45rem;
+  font-size: 1.6rem;
+  white-space: nowrap;
 }
 
-.palpite__pergunta {
-  font-size: 0.9rem;
+.palpite__contexto {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: 0.78rem;
   color: var(--texto-suave);
+}
+
+.palpite__contexto strong {
+  font-family: var(--fonte-numeros);
+  color: var(--texto-neon);
+}
+
+.palpite__contexto .selo {
+  padding: 0 8px;
+  font-size: 0.68rem;
+}
+
+.palpite__topo .pilula {
+  flex: none;
 }
 
 .palpite__grade {
@@ -587,7 +619,8 @@
 }
 
 .palpite__opcao {
-  height: 38px;
+  /* Cresce com a altura da mesa (cqh do palco): alvo maior quando sobra espaço. */
+  height: clamp(32px, 11cqh, 52px);
   padding: 0;
   border: 2px solid var(--ciano);
   border-radius: 12px;
@@ -599,17 +632,12 @@
 }
 
 .palpite__grade--grande .palpite__opcao {
-  height: 48px;
+  height: clamp(40px, 15cqh, 64px);
   border-radius: 14px;
   font-size: 1.5rem;
 }
 
-.palpite__grade--media .palpite__opcao {
-  height: 42px;
-}
-
 .palpite__grade--pequena .palpite__opcao {
-  height: 36px;
   border-radius: 10px;
   font-size: 1.1rem;
 }
@@ -707,6 +735,8 @@
 
 .minha__dados {
   position: relative;
+  /* Ocupa a sobra da barra: sem isso o nome curto espreme os corações. */
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -1197,14 +1227,14 @@
       inset 0 0 100px rgb(0 0 0 / 0.55);
   }
 
-  /* Computador: o feltro é alto; o painel flutua centralizado sobre as jogadas. */
+  /* Computador: a vira continua à mostra na coluna dela; o painel ocupa a direita do feltro. */
   .palpite {
-    inset: 50% auto auto 50%;
-    width: min(440px, 100%);
-    max-height: 100%;
+    inset: 50% 5% auto auto;
+    width: min(440px, 58%);
+    max-height: calc(100% - 20px);
     gap: 10px;
     padding: 16px 18px;
-    transform: translate(-50%, -50%);
+    transform: translateY(-50%);
   }
 
   .palpite__titulo {
@@ -1249,22 +1279,12 @@
     --escala-em-cena: 1.45;
   }
 
-  .palpite__opcao,
-  .palpite__grade--pequena .palpite__opcao {
-    height: 44px;
-  }
-
   .palpite__rodape .botao {
-    min-height: 52px;
+    min-height: clamp(40px, 14cqh, 52px);
   }
 
   .palpite__grade--grande .palpite__opcao {
-    height: 64px;
     font-size: 1.8rem;
-  }
-
-  .palpite__grade--media .palpite__opcao {
-    height: 52px;
   }
 
   .minha__nome {
@@ -1521,22 +1541,22 @@
   }
 
   .palpite {
+    inset: 4px;
     gap: 4px;
     padding: 6px 8px;
   }
 
+  .palpite__vira {
+    --l-carta: 30px;
+  }
+
+  /* O botão riscado e o selo "Você é o pé" já dizem isso; a linha de texto não cabe aqui. */
+  .palpite__bloqueio {
+    display: none;
+  }
+
   .palpite__titulo {
     font-size: 1.2rem;
-  }
-
-  .palpite__opcao,
-  .palpite__grade--media .palpite__opcao,
-  .palpite__grade--pequena .palpite__opcao {
-    height: 32px;
-  }
-
-  .palpite__grade--grande .palpite__opcao {
-    height: 40px;
   }
 
   .palpite__rodape .botao {
