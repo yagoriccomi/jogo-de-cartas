@@ -1,0 +1,113 @@
+import { expect, test } from '@playwright/test';
+import {
+  abrirCenario,
+  ALTURA_MINIMA_DO_BOTAO_PX,
+  contem,
+  ESPERA_DA_MESA_MS,
+  esperarAnimacoes,
+  esperarSemRolagem,
+  jogarAteAMesaTer,
+  medir,
+  MESA_CHEIA,
+  telaDe,
+} from './apoio';
+
+/** Quantas cartas na mesa bastam para a fila da líder + pilha ficar apertada. */
+const CARTAS_NA_MESA_PARA_MEDIR = 6;
+/** Entre uma vaza e outra as cartas voam por ~1 s; isso dá folga para alguma pousar. */
+const ESPERA_PARA_POUSAR_MS = 10_000;
+/** Coração menor que isso some na tela do celular (já aconteceu). */
+const LARGURA_MINIMA_DO_CORACAO_PX = 8;
+
+test.describe('Mesa cheia (10 jogadores, 13 cartas)', () => {
+  test('cabe na tela sem rolar, com a mão e as vidas à mostra', async ({ page }) => {
+    await abrirCenario(page);
+    await expect(page.locator('.mao__posicao')).toHaveCount(MESA_CHEIA.cartas, {
+      timeout: ESPERA_DA_MESA_MS,
+    });
+    await esperarAnimacoes(page);
+    await esperarSemRolagem(page);
+
+    const tela = telaDe(page);
+    expect(contem(tela, await medir(page.locator('.mao')))).toBe(true);
+    expect(contem(tela, await medir(page.locator('.feltro')))).toBe(true);
+
+    const coracao = await medir(page.locator('.minha__vidas .coracao').first());
+    expect(coracao.width).toBeGreaterThanOrEqual(LARGURA_MINIMA_DO_CORACAO_PX);
+  });
+
+  test('o palpite cabe no feltro sem rolar e com botões tocáveis', async ({ page }) => {
+    await abrirCenario(page);
+    const painel = page.locator('.palpite');
+    await expect(painel).toBeVisible({ timeout: ESPERA_DA_MESA_MS });
+    await esperarAnimacoes(page);
+    await esperarSemRolagem(page);
+
+    const rolagemInterna = await painel.evaluate((el) => el.scrollHeight - el.clientHeight);
+    expect(rolagemInterna, 'o painel de palpite não pode rolar por dentro').toBeLessThanOrEqual(1);
+
+    const caixaDoPainel = await medir(painel);
+    expect(contem(telaDe(page), caixaDoPainel)).toBe(true);
+
+    const opcoes = page.locator('.palpite__opcao');
+    await expect(opcoes).toHaveCount(MESA_CHEIA.cartas + 1);
+    for (const opcao of await opcoes.all()) {
+      const caixa = await medir(opcao);
+      expect(caixa.height).toBeGreaterThanOrEqual(ALTURA_MINIMA_DO_BOTAO_PX);
+      expect(contem(caixaDoPainel, caixa)).toBe(true);
+    }
+    await expect(page.locator('.palpite__rodape .botao')).toBeInViewport();
+    // As vidas continuam visíveis durante o palpite (já ficaram cobertas por ele).
+    await expect(page.locator('.minha__vidas')).toBeInViewport();
+  });
+
+  test('as cartas jogadas ficam dentro do feltro', async ({ page }) => {
+    await abrirCenario(page);
+    await jogarAteAMesaTer(page, CARTAS_NA_MESA_PARA_MEDIR);
+    await esperarAnimacoes(page);
+    await esperarSemRolagem(page);
+
+    const feltro = await medir(page.locator('.feltro'));
+    // Com bots instantâneos outras cartas continuam chegando (ou a vaza fecha e todas voam para o
+    // montinho): mede só as que já pousaram, esperando haver alguma.
+    const medirPousadas = () =>
+      page.evaluate(() =>
+        Array.from(document.querySelectorAll<HTMLElement>('[data-carta-mesa]'))
+          .filter((carta) => carta.getAnimations({ subtree: true }).length === 0)
+          .map((carta) => {
+            const r = carta.getBoundingClientRect();
+            return { x: r.x, y: r.y, width: r.width, height: r.height };
+          }),
+      );
+    let pousadas = await medirPousadas();
+    await expect
+      .poll(async () => (pousadas = await medirPousadas()).length, {
+        timeout: ESPERA_PARA_POUSAR_MS,
+      })
+      .toBeGreaterThan(0);
+    for (const caixa of pousadas) {
+      expect(contem(feltro, caixa), 'carta da mesa vazando do feltro').toBe(true);
+    }
+  });
+
+  test('placar e regras abrem a qualquer momento e cabem na tela', async ({ page }, info) => {
+    await abrirCenario(page);
+    const celular = info.project.use.isMobile === true;
+    // No celular o topo fica recolhido atrás da alça.
+    if (celular) await page.locator('.alca-topo').click();
+
+    await page.getByRole('button', { name: 'Placar' }).first().click();
+    const placar = page.getByRole('dialog', { name: 'Placar' });
+    await expect(placar).toBeVisible();
+    await expect(placar.locator('.placar__linha')).toHaveCount(MESA_CHEIA.jogadores);
+    await page.keyboard.press('Escape');
+    await expect(placar).toBeHidden();
+
+    if (celular) await page.locator('.alca-topo').click();
+    await page.getByRole('button', { name: 'Regras' }).first().click();
+    const regras = page.getByRole('dialog', { name: /regras/i });
+    await expect(regras).toBeVisible();
+    await esperarAnimacoes(page);
+    expect(contem(telaDe(page), await medir(regras))).toBe(true);
+  });
+});

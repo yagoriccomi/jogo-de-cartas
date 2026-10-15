@@ -4,6 +4,7 @@ import {
   type ConfiguracaoPartida,
   type EstadoPartidaVisivel,
   type EstadoSala,
+  type ReacaoNaMesa,
   type Naipe,
   type SessaoJogador,
   type Valor,
@@ -110,6 +111,7 @@ export class RelogioFalso implements Relogio {
 export class NotificadorFalso implements Notificador {
   readonly salas = new Map<string, EstadoSala>();
   readonly partidas = new Map<string, EstadoPartidaVisivel>();
+  readonly reacoes: { destinatarios: readonly string[]; reacao: ReacaoNaMesa }[] = [];
 
   enviarEstadoSala(ids: readonly string[], estado: EstadoSala): void {
     for (const id of ids) this.salas.set(id, estado);
@@ -117,6 +119,10 @@ export class NotificadorFalso implements Notificador {
 
   enviarEstadoPartida(id: string, estado: EstadoPartidaVisivel): void {
     this.partidas.set(id, estado);
+  }
+
+  enviarReacao(destinatarios: readonly string[], reacao: ReacaoNaMesa): void {
+    this.reacoes.push({ destinatarios, reacao });
   }
 }
 

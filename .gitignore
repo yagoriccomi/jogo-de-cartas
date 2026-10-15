@@ -34,3 +34,10 @@ Thumbs.db
 android/app/build/
 *.keystore
 local.properties
+
+# Testes de tela (Playwright)
+apps/e2e/test-results/
+apps/e2e/playwright-report/
+
+# Worktrees de agentes do Claude Code
+.claude/worktrees/

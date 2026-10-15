@@ -1,0 +1,14 @@
+{
+  "name": "@fodinha/e2e",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Testes de tela (Playwright): layout sem rolagem, palpite, mesa e tutorial",
+  "scripts": {
+    "e2e": "playwright test",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}

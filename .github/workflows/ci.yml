@@ -34,3 +34,36 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  telas:
+    # Testes de tela (Playwright): mesa sem rolagem, palpite, cartas no feltro e tutorial em
+    # 5 tamanhos de tela. Sobe servidor e web de desenvolvimento nas portas 3101/5199.
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Instalar o Chromium do Playwright
+        working-directory: apps/e2e
+        run: npx playwright install --with-deps chromium
+
+      - name: Testes de tela
+        run: npm run test:e2e
+
+      - name: Guardar relatório (falhas)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-testes-de-tela
+          path: |
+            apps/e2e/playwright-report
+            apps/e2e/test-results
+          retention-days: 7

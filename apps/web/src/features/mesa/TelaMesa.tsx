@@ -7,6 +7,7 @@ import { useApp } from '../../estado/armazem';
 import { classes } from '../../lib/classes';
 import { useAcao } from '../../lib/useAcao';
 import { CONSULTA_COMPUTADOR, useMediaQuery } from '../../lib/useMediaQuery';
+import { useSonsDaMesa } from '../som/useSonsDaMesa';
 import { CabecalhoApp } from '../menu/CabecalhoApp';
 import { DialogoRegras } from '../menu/DialogoRegras';
 import { DESTINO_DOS_EMPATES } from './animacao-compartilhada';
@@ -23,6 +24,7 @@ import { PainelPausa } from './PainelPausa';
 import { PainelResultado } from './PainelResultado';
 import { SimbolosMaoEPe } from './SimbolosMaoEPe';
 import { PlacaJogador } from './PlacaJogador';
+import { ReacoesDaMesa } from './ReacoesDaMesa';
 import { TelaFimDePartida } from './TelaFimDePartida';
 import { useAnimacaoDeVaza } from './useAnimacaoDeVaza';
 import { aberturaDaPartida, useBaralho } from './useBaralho';
@@ -34,7 +36,7 @@ const SEM_CARTAS: readonly JogadaNaMesa[] = [];
 type Consulta = 'placar' | 'regras' | null;
 
 export function TelaMesa() {
-  const { jogo, sala, sessao, jogoRecebidoEm } = useApp();
+  const { jogo, sala, sessao, jogoRecebidoEm, tutorial } = useApp();
   const [ocupado, executar] = useAcao();
   const [consulta, definirConsulta] = useState<Consulta>(null);
   const computador = useMediaQuery(CONSULTA_COMPUTADOR);
@@ -44,6 +46,7 @@ export function TelaMesa() {
     (jogo?.mesa.length ?? 0) === 0,
     jogo?.rodadaCega ?? false,
   );
+  useSonsDaMesa(jogo, sessao?.jogadorId ?? null);
   const viraRef = useRef<HTMLDivElement>(null);
   // Enquanto a vaza fechada está em cena, é ela que as linhas exibem (a mesa já foi limpa).
   const cartasNaMesa = animacao.vaza?.jogadas ?? jogo?.mesa ?? SEM_CARTAS;
@@ -235,6 +238,8 @@ export function TelaMesa() {
       </div>
 
       <section className="minha" aria-label="Minha área">
+        {/* O tutorial roda sem sala no servidor: não há para quem reagir. */}
+        {tutorial === null && <ReacoesDaMesa meuId={meuId} />}
         <div className="minha__barra">
           <div className="minha__dados">
             <SimbolosMaoEPe

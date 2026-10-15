@@ -7,6 +7,7 @@ export interface Ambiente {
   readonly origensPermitidas: readonly string[];
   readonly nivelDeLog: NivelDeLog;
   readonly prazoDaVezMs: number;
+  readonly atrasoDoBotMs: number;
   /** Só para desenvolvimento: libera o evento `dev:cenario`. Nunca ligar em produção. */
   readonly cenariosDeTeste: boolean;
 }
@@ -35,6 +36,9 @@ export function lerAmbiente(variaveis: NodeJS.ProcessEnv = process.env): Ambient
       .filter(Boolean),
     nivelDeLog: nivel,
     prazoDaVezMs: numeroPositivo('TURN_TIMEOUT_SECONDS', variaveis.TURN_TIMEOUT_SECONDS, 30) * 1000,
+    // Ritmo de mesa real: dá tempo de os humanos acompanharem cada jogada do bot. Os testes de
+    // tela aceleram (não há humano olhando).
+    atrasoDoBotMs: numeroPositivo('BOT_DELAY_MS', variaveis.BOT_DELAY_MS, 2000),
     cenariosDeTeste: variaveis.CENARIOS_DE_TESTE === 'true',
   };
 }

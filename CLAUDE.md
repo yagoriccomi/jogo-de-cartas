@@ -79,7 +79,8 @@ fodinha/
 │   │   ├── test/                    # Vitest: domínio, aplicação
 │   │   ├── Dockerfile               # imagem de PRODUÇÃO (multi-stage, contexto = raiz)
 │   │   └── tsup.config.ts
-│   └── web/                         # React + Vite + TS, organização por feature
+│   ├── web/                         # React + Vite + TS, organização por feature
+│   └── e2e/                         # testes de tela (Playwright) contra servidor e web de dev
 ├── packages/
 │   └── shared/                      # contratos TS: cartas, configuração, estado visível, eventos
 ├── docs/
@@ -126,7 +127,7 @@ Serviços do compose: **`deps`** (one-shot, instala dependências dentro do cont
 
 ## Comandos Úteis
 
-`npm run dev` · `npm run build` · `npm test` · `npm run typecheck` · `npm run lint` · `npm run format`
+`npm run dev` · `npm run build` · `npm test` · `npm run typecheck` · `npm run lint` · `npm run format` · `npm run test:e2e` (testes de tela, Playwright em `apps/e2e`; ao mudar layout da mesa, do palpite ou do tutorial, rode-os)
 
 ## Protocolo de Atualização do README.md (CRÍTICO)
 

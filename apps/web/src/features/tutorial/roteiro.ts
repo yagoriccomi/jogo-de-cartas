@@ -1,11 +1,14 @@
 import type { Carta, JogadaNaMesa } from '@fodinha/shared';
 import {
+  CARTA_VIRADA,
   CARTAS,
   ID_PAULA,
   ID_SIMAS,
   ID_VOCE,
   type JogadorDoTutorial,
   type Momento,
+  RODADA_CEGA,
+  RODADA_DE_TRES,
 } from './mesaDoTutorial';
 
 /** O que faz o roteiro andar: o botão do balão, o tempo (vez dos bots) ou a sua jogada certa. */
@@ -87,6 +90,7 @@ function fechouVaza(momento: Momento, vencedorId: string, cartaVencedora: Carta)
 function montarRoteiro(apelido: string): Passo[] {
   const passos: Passo[] = [];
   let m: Momento = {
+    rodada: RODADA_DE_TRES,
     fase: 'palpites',
     idDaVez: ID_PAULA,
     jogadores: [
@@ -98,6 +102,7 @@ function montarRoteiro(apelido: string): Passo[] {
         palpite: null,
         vazasGanhas: [],
         vidas: VIDAS_INICIAIS,
+        testa: null,
       },
       {
         id: ID_PAULA,
@@ -107,6 +112,7 @@ function montarRoteiro(apelido: string): Passo[] {
         palpite: null,
         vazasGanhas: [],
         vidas: VIDAS_INICIAIS,
+        testa: null,
       },
       {
         id: ID_SIMAS,
@@ -116,6 +122,7 @@ function montarRoteiro(apelido: string): Passo[] {
         palpite: null,
         vazasGanhas: [],
         vidas: VIDAS_INICIAIS,
+        testa: null,
       },
     ],
     mesa: [],
@@ -370,6 +377,95 @@ function montarRoteiro(apelido: string): Passo[] {
     texto:
       'Quem erra o palpite perde 1 vida por vaza de diferença. A Paula pediu 1 e fez 0: perdeu 1 coração. Você e o Simas acertaram.',
   });
+
+  // ---------- Rodada cega (1 carta) ----------
+  const novaMao = (id: string) => {
+    if (id === ID_VOCE) return { mao: [CARTA_VIRADA], testa: CARTAS.seteDeCopas };
+    if (id === ID_PAULA) return { mao: [CARTAS.tresDeOuros], testa: CARTAS.tresDeOuros };
+    return { mao: [CARTAS.cincoDeEspadas], testa: CARTAS.cincoDeEspadas };
+  };
+  m = {
+    ...m,
+    rodada: RODADA_CEGA,
+    fase: 'palpites',
+    idDaVez: ID_SIMAS,
+    jogadores: m.jogadores.map((j) => ({ ...j, palpite: null, vazasGanhas: [], ...novaMao(j.id) })),
+    mesa: [],
+    ultimaVaza: null,
+    resultadoRodada: null,
+  };
+  passo({
+    alvo: '.mao',
+    titulo: 'A rodada cega',
+    texto:
+      'Agora a rodada mais maluca: a de 1 carta, que abre cada ciclo. Sua carta veio virada: nela você não vê a própria carta!',
+  });
+  passo({
+    alvo: alvoDaPlaca(ID_PAULA, '.placa__testa'),
+    titulo: 'Carta na testa',
+    texto:
+      'Mas você vê a dos outros, "na testa": a Paula tem um 3♦, fortíssimo, e o Simas um 5♠. A vira é Q♥, então a manilha é o J.',
+  });
+  m = { ...palpitou(m, ID_SIMAS, 0), idDaVez: ID_VOCE };
+  passo(
+    {
+      alvo: '.palpite',
+      titulo: 'Palpite no escuro',
+      texto:
+        'O Simas, que é a mão, disse 0. Sua vez: o 3 da Paula ganha de quase tudo, então sua carta dificilmente leva. Escolha 0.',
+    },
+    { tipo: 'palpite', valor: 0 },
+  );
+  m = { ...palpitou(m, ID_VOCE, 0), idDaVez: ID_PAULA };
+  passo(
+    { alvo: alvoDaPlaca(ID_PAULA, '.numeros'), texto: 'Agora palpita a Paula, que é o pé.' },
+    { tipo: 'tempo', ms: LEITURA_DA_JOGADA_MS },
+  );
+  m = { ...palpitou(m, ID_PAULA, 0), idDaVez: null };
+  passo({
+    alvo: alvoDaPlaca(ID_PAULA, '.numeros'),
+    titulo: 'Coitada da Paula',
+    texto:
+      'Com a soma em 0, o pé não podia dizer 1: ela foi obrigada a dizer 0, sem saber que tem um 3 na testa!',
+  });
+  m = {
+    ...m,
+    fase: 'jogando',
+    jogadores: m.jogadores.map((j) => ({ ...j, mao: [], testa: null })),
+    mesa: [
+      naMesa(ID_PAULA, CARTAS.tresDeOuros),
+      naMesa(ID_VOCE, CARTAS.seteDeCopas),
+      naMesa(ID_SIMAS, CARTAS.cincoDeEspadas),
+    ],
+  };
+  passo(
+    {
+      alvo: ALVO_DA_MESA,
+      titulo: 'Revelação',
+      texto:
+        'Depois dos palpites, todas as cartas vão sozinhas para a mesa. A sua era um 7♥, e o 3 da Paula leva a vaza.',
+    },
+    { tipo: 'botao', rotulo: 'Recolher' },
+  );
+  m = fechouVaza(m, ID_PAULA, CARTAS.tresDeOuros);
+  m = comJogador({ ...m, fase: 'fim_de_rodada', idDaVez: null }, ID_PAULA, (j) => ({
+    vidas: j.vidas - 1,
+  }));
+  m = {
+    ...m,
+    resultadoRodada: [
+      { jogadorId: ID_VOCE, palpite: 0, vazasFeitas: 0, vidasPerdidas: 0 },
+      { jogadorId: ID_PAULA, palpite: 0, vazasFeitas: 1, vidasPerdidas: 1 },
+      { jogadorId: ID_SIMAS, palpite: 0, vazasFeitas: 0, vidasPerdidas: 0 },
+    ],
+  };
+  passo({
+    alvo: '.resultado',
+    titulo: 'Mais uma vida',
+    texto:
+      'A Paula pediu 0 e fez 1: perdeu outro coração. Na rodada cega, o palpite é pelas cartas dos outros!',
+  });
+
   passo({
     alvo: '.alca-topo, .cabecalho__acoes',
     titulo: 'Placar e regras',
@@ -381,7 +477,7 @@ function montarRoteiro(apelido: string): Passo[] {
       alvo: null,
       titulo: 'Agora é com você!',
       texto:
-        'As rodadas vão de 1 carta até o máximo e voltam. Na de 1 carta você não vê a sua, só a dos outros! Quem zera as vidas sai; o último com vida vence.',
+        'As rodadas vão de 1 carta até o máximo que o baralho permite e voltam para 1. Quem zera as vidas sai; o último com vida vence.',
     },
     { tipo: 'botao', rotulo: 'Jogar de verdade' },
   );

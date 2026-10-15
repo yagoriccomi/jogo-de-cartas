@@ -1,5 +1,6 @@
 import type {
   Carta,
+  CartaNaMao,
   ConfiguracaoPartida,
   EstadoPartidaVisivel,
   EstadoSala,
@@ -32,10 +33,6 @@ const CONFIGURACAO: ConfiguracaoPartida = {
 
 const carta = (id: string, valor: Valor, naipe: Naipe): Carta => ({ id, valor, naipe });
 
-/** Vira 6♦: a manilha da rodada é o 7. */
-export const VIRA = carta('t-6o', '6', 'ouros');
-export const MANILHA: Valor = '7';
-
 export const CARTAS = {
   seteDePaus: carta('t-7p', '7', 'paus'),
   asDeCopas: carta('t-Ac', 'A', 'copas'),
@@ -46,20 +43,60 @@ export const CARTAS = {
   tresDeEspadas: carta('t-3e', '3', 'espadas'),
   doisDePaus: carta('t-2p', '2', 'paus'),
   damaDeOuros: carta('t-Qo', 'Q', 'ouros'),
+  // Rodada cega.
+  seteDeCopas: carta('t-7c', '7', 'copas'),
+  tresDeOuros: carta('t-3o', '3', 'ouros'),
+  cincoDeEspadas: carta('t-5e', '5', 'espadas'),
 } as const;
+
+/** Na rodada cega o servidor manda a sua carta assim: só o id, sem valor nem naipe. */
+export const CARTA_VIRADA: CartaNaMao = { id: CARTAS.seteDeCopas.id, oculta: true };
+
+/** O que muda de uma rodada para outra no roteiro: tamanho, vira, manilha, mão e pé. */
+export interface RodadaDoTutorial {
+  readonly numero: number;
+  readonly cartas: number;
+  readonly vira: Carta;
+  readonly manilha: Valor;
+  readonly idDoPrimeiro: string;
+  readonly idDoPe: string;
+}
+
+/** Rodada de 3 cartas. Vira 6♦: a manilha é o 7. Paula é a mão; você, o pé. */
+export const RODADA_DE_TRES: RodadaDoTutorial = {
+  numero: 3,
+  cartas: 3,
+  vira: carta('t-6o', '6', 'ouros'),
+  manilha: '7',
+  idDoPrimeiro: ID_PAULA,
+  idDoPe: ID_VOCE,
+};
+
+/** Rodada cega (1 carta). Vira Q♥: a manilha é o J. Simas é a mão; Paula, o pé. */
+export const RODADA_CEGA: RodadaDoTutorial = {
+  numero: 4,
+  cartas: 1,
+  vira: carta('t-Qc', 'Q', 'copas'),
+  manilha: 'J',
+  idDoPrimeiro: ID_SIMAS,
+  idDoPe: ID_PAULA,
+};
 
 export interface JogadorDoTutorial {
   readonly id: string;
   readonly apelido: string;
   readonly ehBot: boolean;
   /** Já em ordem de força (a mais forte primeiro), como o servidor manda. */
-  readonly mao: readonly Carta[];
+  readonly mao: readonly CartaNaMao[];
+  /** Rodada cega: a carta que os outros veem na testa deste jogador. */
+  readonly testa: Carta | null;
   readonly palpite: number | null;
   readonly vazasGanhas: readonly VazaGanha[];
   readonly vidas: number;
 }
 
 export interface Momento {
+  readonly rodada: RodadaDoTutorial;
   readonly fase: FasePartida;
   readonly idDaVez: string | null;
   /** Ordem dos assentos: você (o pé), Paula (a mão) e Simas. */
@@ -71,20 +108,18 @@ export interface Momento {
   readonly resultadoRodada: readonly ResultadoJogadorNaRodada[] | null;
 }
 
-export const NUMERO_DA_RODADA = 3;
-export const CARTAS_NA_RODADA = 3;
-
 export function paraEstadoDaPartida(momento: Momento): EstadoPartidaVisivel {
+  const { rodada } = momento;
   const eu = momento.jogadores.find((jogador) => jogador.id === ID_VOCE);
   const rodadaEmJogo = momento.fase === 'palpites' || momento.fase === 'jogando';
   return {
     configuracao: CONFIGURACAO,
     fase: momento.fase,
-    numeroRodada: NUMERO_DA_RODADA,
-    cartasPorJogador: CARTAS_NA_RODADA,
-    rodadaCega: false,
-    vira: VIRA,
-    manilha: MANILHA,
+    numeroRodada: rodada.numero,
+    cartasPorJogador: rodada.cartas,
+    rodadaCega: rodada.cartas === 1,
+    vira: rodada.vira,
+    manilha: rodada.manilha,
     jogadores: momento.jogadores.map((jogador) => ({
       id: jogador.id,
       apelido: jogador.apelido,
@@ -96,11 +131,12 @@ export function paraEstadoDaPartida(momento: Momento): EstadoPartidaVisivel {
       vazasFeitas: jogador.vazasGanhas.length,
       vazasGanhas: jogador.vazasGanhas,
       cartasNaMao: jogador.mao.length,
-      cartaNaTesta: null,
+      // A sua própria testa você nunca vê.
+      cartaNaTesta: jogador.id === ID_VOCE ? null : jogador.testa,
       saiAoFimDaRodada: false,
     })),
-    idDoPe: ID_VOCE,
-    idDoPrimeiro: rodadaEmJogo ? ID_PAULA : null,
+    idDoPe: rodada.idDoPe,
+    idDoPrimeiro: rodadaEmJogo ? rodada.idDoPrimeiro : null,
     idDaVez: momento.idDaVez,
     // Sem prazo: no tutorial ninguém é apressado pelo relógio.
     prazoDaVezEm: null,

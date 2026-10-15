@@ -27,14 +27,17 @@ Fodinha é um jogo de cartas multiplayer online, jogado direto no navegador. Cri
 ## Features
 
 - Salas por código, sem cadastro: entre como convidado com um apelido.
+- Reações rápidas durante a partida: o botão 😀 abre 8 emojis que aparecem por uns 2,5 segundos sobre a placa de quem reagiu (no máximo uma a cada 1,5 segundo por jogador).
+- Convite por link com mensagem pronta: compartilhamento nativo do aparelho, botão direto do WhatsApp ou cópia do link; o link preenche o código da sala.
 - Site responsivo e instalável no celular (abre em tela cheia, com ícone na tela inicial).
 - Visual "Vice City": mesa de feltro com neon e cartas em pixel art; manilhas com brilho holográfico.
 - Anfitrião configura a partida (baralhos, vidas, 8-9-10), adiciona bots e inicia.
-- Bots com estratégia simples para completar a mesa.
+- Bots que palpitam pela força da mão (e, na rodada cega, pelas cartas que veem na testa dos outros) e jogam para acertar o palpite.
 - Servidor autoritativo: o cliente só recebe a própria mão, a vira, as cartas jogadas e, na rodada cega, a carta dos outros.
 - Reconexão por token após recarregar a página.
 - Prazo da vez com jogada automática, para a mesa nunca travar.
-- Tutorial interativo na tela inicial: uma rodada roteirada contra 2 bots, com cartas sempre iguais e balões de fala apontando cada parte da mesa. Funciona sem servidor.
+- Tutorial interativo na tela inicial: uma rodada de 3 cartas e uma rodada cega roteiradas contra 2 bots, com cartas sempre iguais e balões de fala apontando cada parte da mesa. Funciona sem servidor.
+- Sons de fliperama (sintetizados, sem arquivos de áudio) e vibração na sua vez e ao perder vida, com opção de silenciar no menu.
 - Placar a qualquer momento (vidas, palpite e vazas feitas de todos) e guia de regras ilustrado, passo a passo.
 - Partida sem rolar a tela: no celular o topo fica recolhido (toque na alça ou deslize para baixo a partir do topo para abrir) e o palpite aparece dentro da mesa, sem cobrir a mão nem as suas vidas.
 
@@ -115,9 +118,12 @@ npm run typecheck   # checagem de tipos
 npm run lint        # ESLint
 npm run build       # build de todos os pacotes
 npm run format      # formata com Prettier
+npm run test:e2e    # testes de tela (Playwright)
 ```
 
-A cada push e pull request, o GitHub Actions executa lint, typecheck, testes e build.
+Os **testes de tela** abrem o jogo de verdade num Chromium em 5 tamanhos (de 360×640 a 1920×1080) e conferem o que já quebrou antes: a mesa cheia (10 jogadores, 13 cartas) sem rolar a página, o palpite cabendo no feltro, as cartas dentro da mesa, placar e regras, e o tutorial inteiro, com todo balão apontando para algo visível. Eles sobem sozinhos um servidor e um web de teste nas portas 3101 e 5199, então funcionam com o Docker de desenvolvimento ligado. Na primeira vez, instale o navegador: `npx playwright install chromium` (dentro de `apps/e2e`).
+
+A cada push e pull request, o GitHub Actions executa lint, typecheck, testes, build e os testes de tela.
 
 ## Variáveis de Ambiente
 
@@ -128,6 +134,7 @@ Copie o `.env.example` para `.env`. Nada neste projeto exige segredos.
 | `PORT`                 | servidor | Porta HTTP/WebSocket do servidor de jogo (padrão `3001`).                                                                           |
 | `CORS_ORIGINS`         | servidor | Origens autorizadas a conectar, separadas por vírgula (padrão `http://localhost:5173`).                                             |
 | `LOG_LEVEL`            | servidor | Nível de log: `debug`, `info`, `warn` ou `error`.                                                                                   |
+| `BOT_DELAY_MS`         | servidor | Milissegundos que o bot espera antes de jogar (padrão `2000`). Os testes de tela usam um valor baixo.                               |
 | `TURN_TIMEOUT_SECONDS` | servidor | Segundos que o jogador tem para agir antes da jogada automática (padrão `30`).                                                      |
 | `CENARIOS_DE_TESTE`    | servidor | Só desenvolvimento (padrão `false`; o Docker de dev liga). Libera a criação de salas de teste com bots. Nunca habilite em produção. |
 | `VITE_SERVER_URL`      | web      | URL pública do servidor de jogo. Fica exposta no navegador: nunca coloque nada sensível.                                            |

@@ -15,9 +15,19 @@
   background: var(--superficie-funda);
 }
 
+.menu__sala {
+  flex-wrap: wrap;
+}
+
 .menu__sala > div {
   display: flex;
   flex-direction: column;
+}
+
+/* Os botões ficam empilhados para a gaveta estreita não estourar. */
+.menu__sala > .menu__convites {
+  flex: 1 1 140px;
+  gap: 8px;
 }
 
 .menu__codigo {

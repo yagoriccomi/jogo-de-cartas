@@ -1,4 +1,10 @@
-import { LIMITES, type ConfiguracaoPartida, type SessaoJogador } from '@fodinha/shared';
+import {
+  LIMITES,
+  REACOES,
+  type ConfiguracaoPartida,
+  type Reacao,
+  type SessaoJogador,
+} from '@fodinha/shared';
 import type { GeradorAleatorio } from '../domain/aleatoriedade';
 import { ErroDeRegra } from '../domain/erros';
 import { Sala, type Expulsao, type Participante } from '../domain/sala';
@@ -23,6 +29,9 @@ const CONFIGURACAO_DE_CENARIO: ConfiguracaoPartida = {
   vidasIniciais: LIMITES.maxVidas,
   incluirOitoNoveDez: false,
 };
+
+/** Evita que alguém inunde a mesa de emojis; vale por jogador, além do limitador do socket. */
+const INTERVALO_ENTRE_REACOES_MS = 1_500;
 
 function inteiroEntre(valor: unknown, minimo: number, maximo: number): number | null {
   const ok = Number.isInteger(valor) && (valor as number) >= minimo && (valor as number) <= maximo;
@@ -49,6 +58,7 @@ export interface DependenciasDoServico {
 /** Casos de uso de sala e partida. Cada método termina publicando o novo estado. */
 export class ServicoDeSalas {
   private readonly limpezasAgendadas = new Map<string, Cancelamento>();
+  private readonly ultimaReacaoEm = new Map<string, number>();
 
   constructor(private readonly deps: DependenciasDoServico) {}
 
@@ -208,6 +218,7 @@ export class ServicoDeSalas {
   sair(ator: Ator): void {
     const sala = this.salaExistente(ator.codigoSala);
     sala.sair(ator.jogadorId);
+    this.ultimaReacaoEm.delete(ator.jogadorId);
     if (sala.humanosPresentes === 0) {
       this.removerSala(sala);
       return;
@@ -241,6 +252,32 @@ export class ServicoDeSalas {
       throw new ErroDeRegra('JOGADA_INVALIDA', 'Carta inválida.');
     }
     this.alterar(ator, (sala) => this.partidaEmJogo(sala).jogarCarta(ator.jogadorId, cartaId));
+  }
+
+  /** Não passa por `alterar`: reação não muda a sala, então não há estado a republicar. */
+  reagir(ator: Ator, reacao: unknown): void {
+    if (!REACOES.includes(reacao as Reacao)) {
+      throw new ErroDeRegra('ENTRADA_INVALIDA', 'Reação inválida.');
+    }
+    const sala = this.salaExistente(ator.codigoSala);
+    const participante = sala.participante(ator.jogadorId);
+    if (!participante || participante.saindo) {
+      throw new ErroDeRegra('SEM_PERMISSAO', 'Você não está nesta sala.');
+    }
+    if (!sala.emPartida) {
+      throw new ErroDeRegra('JOGADA_INVALIDA', 'Não há partida em andamento.');
+    }
+    const agora = this.deps.relogio.agora();
+    const ultima = this.ultimaReacaoEm.get(ator.jogadorId);
+    if (ultima !== undefined && agora - ultima < INTERVALO_ENTRE_REACOES_MS) {
+      throw new ErroDeRegra('MUITAS_REQUISICOES', 'Calma! Espere um instante para reagir de novo.');
+    }
+    this.ultimaReacaoEm.set(ator.jogadorId, agora);
+    this.deps.condutor.publicarReacao(sala, {
+      jogadorId: ator.jogadorId,
+      reacao: reacao as Reacao,
+      em: agora,
+    });
   }
 
   private alterar<T>(ator: Ator, mudanca: (sala: Sala) => T): T {
@@ -295,6 +332,7 @@ export class ServicoDeSalas {
 
   private removerSala(sala: Sala): void {
     this.cancelarLimpeza(sala.codigo);
+    for (const p of sala.todos) this.ultimaReacaoEm.delete(p.id);
     this.deps.condutor.encerrar(sala.codigo);
     this.deps.repositorio.remover(sala.codigo);
     this.deps.registrador.info({ sala: sala.codigo }, 'Sala removida');
