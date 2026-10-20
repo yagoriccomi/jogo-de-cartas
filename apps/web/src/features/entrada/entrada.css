@@ -43,16 +43,7 @@
 }
 
 .entrada__logo {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.12em;
   font-size: 4.5rem;
-}
-
-.entrada__marca {
-  width: 0.95em;
-  height: 0.95em;
-  flex: none;
 }
 
 .entrada__slogan {

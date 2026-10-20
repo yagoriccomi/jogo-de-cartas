@@ -79,11 +79,7 @@ export function TelaEntrada() {
             <Carta carta={{ id: 'c', valor: '4', naipe: 'paus' }} manilha="A" />
           </div>
         </div>
-        <h1 className="neon entrada__logo">
-          {/* O mesmo "F da carta" do ícone do app: a marca é uma só. */}
-          <img className="entrada__marca" src="/icone.svg" alt="" />
-          Fodinha
-        </h1>
+        <h1 className="neon entrada__logo">Fodinha</h1>
         <p className="entrada__slogan">
           <span className="so-celular">Dê seu palpite. Sobreviva às vidas.</span>
           <span className="so-computador">
