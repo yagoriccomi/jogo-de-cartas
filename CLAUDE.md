@@ -26,6 +26,7 @@
 - Opção da sala `mortosVeemCartas` (padrão desligada; só o dono muda, também no meio da partida por `sala:definirMortosVeemCartas`): eliminado recebe a mão dos outros em `maoRevelada` e a vê tocando na placa. Vivo nunca recebe mão alheia.
 - Saída/expulsão no meio da rodada: efetiva-se entre rodadas (`Partida.agendarSaida`), para não desfazer palpites e vazas.
 - A mão vai ao cliente ordenada da mais forte para a mais fraca (o cliente não reordena).
+- Bots reagem: a cada carta jogada, 10% de chance de um emoji sorteado (`CHANCE_DE_REACAO_DO_BOT`, sorteio injetado no `CondutorDePartidas`).
 - Plano dessas regras: `docs/planos/PLANO-pausa-entrada-moderacao.md`.
 
 **Fora do escopo do MVP** (YAGNI [#8]): login/contas, banco de dados, histórico/ranking, escala horizontal, chat, sons e animações elaboradas. São a fase 2.

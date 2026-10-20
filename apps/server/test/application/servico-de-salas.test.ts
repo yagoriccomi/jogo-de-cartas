@@ -10,7 +10,7 @@ import type { Notificador, Relogio } from '../../src/application/portas';
 import { ServicoDeSalas } from '../../src/application/servico-de-salas';
 import { EstrategiaSimples } from '../../src/domain/estrategia-bot';
 import { RepositorioDeSalasEmMemoria } from '../../src/infrastructure/adaptadores';
-import { geradorComSemente } from '../apoio';
+import { BOTS_CALADOS, geradorComSemente } from '../apoio';
 
 const PRAZO_MS = 30_000;
 const CARENCIA_MS = 10_000;
@@ -84,6 +84,7 @@ beforeEach(() => {
     relogio,
     estrategia: new EstrategiaSimples(),
     registrador: silencioso,
+    gerarAleatorio: BOTS_CALADOS,
     tempos: {
       prazoDaVezMs: PRAZO_MS,
       atrasoDoBotMs: ATRASO_BOT_MS,

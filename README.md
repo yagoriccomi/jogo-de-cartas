@@ -32,7 +32,7 @@ Fodinha é um jogo de cartas multiplayer online, jogado direto no navegador. Cri
 ## Features
 
 - Salas por código, sem cadastro: entre como convidado com um apelido.
-- Reações rápidas durante a partida: o botão 😀 abre 8 emojis que aparecem por uns 2,5 segundos sobre a placa de quem reagiu (no máximo uma a cada 1,5 segundo por jogador).
+- Reações rápidas durante a partida: o botão 😀 abre 8 emojis que aparecem por uns 2,5 segundos sobre a placa de quem reagiu (no máximo uma a cada 1,5 segundo por jogador). Os bots também reagem: a cada carta que jogam, há 10% de chance de mandarem um emoji sorteado.
 - Convite por link com mensagem pronta: compartilhamento nativo do aparelho, botão direto do WhatsApp ou cópia do link; o link preenche o código da sala.
 - Site responsivo e instalável no celular (abre em tela cheia, com ícone na tela inicial).
 - Visual "Vice City": mesa de feltro com neon e cartas em pixel art; manilhas com brilho holográfico.

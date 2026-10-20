@@ -27,6 +27,7 @@ import {
   NotificadorSocketIo,
   type ServidorDoJogo,
 } from '../../src/infrastructure/socket/gateway';
+import { BOTS_CALADOS } from '../apoio';
 
 const CARENCIA_MS = 200;
 const PRAZO_DA_VEZ_MS = 60_000;
@@ -117,6 +118,7 @@ beforeEach(async () => {
     relogio,
     estrategia: new EstrategiaSimples(),
     registrador: silencioso,
+    gerarAleatorio: BOTS_CALADOS,
     tempos: {
       prazoDaVezMs: PRAZO_DA_VEZ_MS,
       atrasoDoBotMs: 20,

@@ -1,8 +1,12 @@
-import type { EstadoPartidaVisivel, ReacaoNaMesa } from '@fodinha/shared';
+import { REACOES, type EstadoPartidaVisivel, type ReacaoNaMesa } from '@fodinha/shared';
+import type { GeradorAleatorio } from '../domain/aleatoriedade';
 import type { EstrategiaDeJogo } from '../domain/estrategia-bot';
 import type { Partida } from '../domain/partida';
 import type { Sala } from '../domain/sala';
 import type { Cancelamento, Notificador, Registrador, Relogio } from './portas';
+
+/** Chance de o bot mandar uma reação a cada carta que joga: dá vida à mesa sem virar spam. */
+export const CHANCE_DE_REACAO_DO_BOT = 0.1;
 
 export interface TemposDoCondutor {
   /** Quanto o humano tem para agir antes de o servidor jogar por ele. */
@@ -26,6 +30,8 @@ export interface DependenciasDoCondutor {
   readonly estrategia: EstrategiaDeJogo;
   readonly registrador: Registrador;
   readonly tempos: TemposDoCondutor;
+  /** Sorteia as reações dos bots; injetado para os testes serem determinísticos. */
+  readonly gerarAleatorio: GeradorAleatorio;
 }
 
 type Momento = { readonly tipo: 'vez' | 'proximaRodada'; readonly em: number };
@@ -155,11 +161,13 @@ export class CondutorDePartidas {
     const conduzidoPorBot =
       !!sala.participante(idDaVez)?.ehBot || partida.saiAoFimDaRodada(idDaVez);
     if (conduzidoPorBot) {
-      this.agendar(sala, { atrasoMs: tempos.atrasoDoBotMs }, () => this.jogarPor(partida, idDaVez));
+      this.agendar(sala, { atrasoMs: tempos.atrasoDoBotMs }, () =>
+        this.jogarPor(sala, partida, idDaVez),
+      );
       return;
     }
     this.agendar(sala, { tipo: 'vez', atrasoMs: tempos.prazoDaVezMs }, () =>
-      this.jogarPor(partida, idDaVez),
+      this.jogarPor(sala, partida, idDaVez),
     );
   }
 
@@ -195,7 +203,7 @@ export class CondutorDePartidas {
     this.momentos.delete(codigoSala);
   }
 
-  private jogarPor(partida: Partida, jogadorId: string): void {
+  private jogarPor(sala: Sala, partida: Partida, jogadorId: string): void {
     const visao = partida.visaoPara(jogadorId);
     const { estrategia } = this.deps;
     if (partida.faseAtual === 'palpites') {
@@ -206,5 +214,15 @@ export class CondutorDePartidas {
       return;
     }
     partida.jogarCarta(jogadorId, estrategia.escolherCarta(visao, jogadorId));
+    // Só bot de verdade: quem estourou o prazo ou está saindo é humano e fala por si.
+    if (sala.participante(jogadorId)?.ehBot) this.talvezReagirComoBot(sala, jogadorId);
+  }
+
+  private talvezReagirComoBot(sala: Sala, jogadorId: string): void {
+    const { gerarAleatorio, relogio } = this.deps;
+    if (gerarAleatorio() >= CHANCE_DE_REACAO_DO_BOT) return;
+    const reacao = REACOES[Math.floor(gerarAleatorio() * REACOES.length)];
+    if (!reacao) return;
+    this.publicarReacao(sala, { jogadorId, reacao, em: relogio.agora() });
   }
 }

@@ -47,6 +47,7 @@ async function iniciar(): Promise<void> {
     relogio,
     estrategia: new EstrategiaSimples(),
     registrador,
+    gerarAleatorio: aleatorioCriptografico,
     tempos: {
       prazoDaVezMs: ambiente.prazoDaVezMs,
       atrasoDoBotMs: ambiente.atrasoDoBotMs,
