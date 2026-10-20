@@ -6,7 +6,7 @@ import {
   type VotacaoEspera,
 } from '@fodinha/shared';
 import type { GeradorAleatorio } from './aleatoriedade';
-import { validarConfiguracao } from './configuracao';
+import { validarConfiguracao, validarMortosVeemCartas } from './configuracao';
 import { ErroDeRegra } from './erros';
 import { Partida } from './partida';
 
@@ -150,6 +150,14 @@ export class Sala {
     this.exigirAnfitriao(solicitanteId);
     this.exigirLobby();
     this.configuracao = validarConfiguracao(configuracao);
+  }
+
+  /** Diferente das outras opções, vale no meio da partida: só muda o que os eliminados enxergam. */
+  definirMortosVeemCartas(solicitanteId: string, permitir: unknown): void {
+    this.exigirAnfitriao(solicitanteId);
+    const mortosVeemCartas = validarMortosVeemCartas(permitir);
+    this.configuracao = { ...this.configuracao, mortosVeemCartas };
+    this.partidaAtual?.definirMortosVeemCartas(mortosVeemCartas);
   }
 
   iniciarPartida(

@@ -10,10 +10,8 @@ export function validarConfiguracao(configuracao: unknown): ConfiguracaoPartida 
   if (typeof configuracao !== 'object' || configuracao === null) {
     throw new ErroDeRegra('ENTRADA_INVALIDA', 'Configuração da partida ausente.');
   }
-  const { quantidadeBaralhos, vidasIniciais, incluirOitoNoveDez } = configuracao as Record<
-    string,
-    unknown
-  >;
+  const { quantidadeBaralhos, vidasIniciais, incluirOitoNoveDez, mortosVeemCartas } =
+    configuracao as Record<string, unknown>;
   if (!inteiroEntre(quantidadeBaralhos, LIMITES.minBaralhos, LIMITES.maxBaralhos)) {
     throw new ErroDeRegra(
       'ENTRADA_INVALIDA',
@@ -29,5 +27,18 @@ export function validarConfiguracao(configuracao: unknown): ConfiguracaoPartida 
   if (typeof incluirOitoNoveDez !== 'boolean') {
     throw new ErroDeRegra('ENTRADA_INVALIDA', 'Informe se o baralho inclui 8, 9 e 10.');
   }
-  return { quantidadeBaralhos, vidasIniciais, incluirOitoNoveDez };
+  // Ausente vale `false`: um cliente antigo, ainda em cache (PWA), não conhece a opção.
+  const veem = mortosVeemCartas ?? false;
+  if (typeof veem !== 'boolean') {
+    throw new ErroDeRegra('ENTRADA_INVALIDA', 'Informe se os eliminados veem as cartas.');
+  }
+  return { quantidadeBaralhos, vidasIniciais, incluirOitoNoveDez, mortosVeemCartas: veem };
+}
+
+/** A opção que o dono pode trocar a qualquer momento, validada à parte do resto. */
+export function validarMortosVeemCartas(permitir: unknown): boolean {
+  if (typeof permitir !== 'boolean') {
+    throw new ErroDeRegra('ENTRADA_INVALIDA', 'Informe se os eliminados veem as cartas.');
+  }
+  return permitir;
 }

@@ -16,19 +16,34 @@ const TRUCO = valoresEmJogo(false);
 describe('baralho', () => {
   it('deveTer40CartasPorBaralhoSemOitoNoveDez', () => {
     expect(
-      totalDeCartas({ quantidadeBaralhos: 1, vidasIniciais: 5, incluirOitoNoveDez: false }),
+      totalDeCartas({
+        quantidadeBaralhos: 1,
+        vidasIniciais: 5,
+        incluirOitoNoveDez: false,
+        mortosVeemCartas: false,
+      }),
     ).toBe(40);
   });
 
   it('deveTer52CartasPorBaralhoComOitoNoveDezEMultiplicarPelosBaralhos', () => {
     expect(
-      totalDeCartas({ quantidadeBaralhos: 4, vidasIniciais: 5, incluirOitoNoveDez: true }),
+      totalDeCartas({
+        quantidadeBaralhos: 4,
+        vidasIniciais: 5,
+        incluirOitoNoveDez: true,
+        mortosVeemCartas: false,
+      }),
     ).toBe(208);
   });
 
   it('deveGerarIdsUnicosEOpacosMesmoComVariosBaralhos', () => {
     const cartas = montarBaralhoEmbaralhado(
-      { quantidadeBaralhos: 2, vidasIniciais: 5, incluirOitoNoveDez: false },
+      {
+        quantidadeBaralhos: 2,
+        vidasIniciais: 5,
+        incluirOitoNoveDez: false,
+        mortosVeemCartas: false,
+      },
       geradorComSemente(1),
     );
     expect(cartas).toHaveLength(80);
@@ -39,11 +54,22 @@ describe('baralho', () => {
 
 describe('configuração', () => {
   it.each([
-    { quantidadeBaralhos: 0, vidasIniciais: 5, incluirOitoNoveDez: false },
-    { quantidadeBaralhos: 5, vidasIniciais: 5, incluirOitoNoveDez: false },
-    { quantidadeBaralhos: 1, vidasIniciais: 4, incluirOitoNoveDez: false },
-    { quantidadeBaralhos: 1, vidasIniciais: 11, incluirOitoNoveDez: false },
-    { quantidadeBaralhos: 1.5, vidasIniciais: 5, incluirOitoNoveDez: false },
+    { quantidadeBaralhos: 0, vidasIniciais: 5, incluirOitoNoveDez: false, mortosVeemCartas: false },
+    { quantidadeBaralhos: 5, vidasIniciais: 5, incluirOitoNoveDez: false, mortosVeemCartas: false },
+    { quantidadeBaralhos: 1, vidasIniciais: 4, incluirOitoNoveDez: false, mortosVeemCartas: false },
+    {
+      quantidadeBaralhos: 1,
+      vidasIniciais: 11,
+      incluirOitoNoveDez: false,
+      mortosVeemCartas: false,
+    },
+    {
+      quantidadeBaralhos: 1.5,
+      vidasIniciais: 5,
+      incluirOitoNoveDez: false,
+      mortosVeemCartas: false,
+    },
+    { quantidadeBaralhos: 1, vidasIniciais: 5, incluirOitoNoveDez: false, mortosVeemCartas: 'sim' },
   ])('deveRejeitarConfiguracaoForaDosLimites %o', (configuracao) => {
     expect(() => validarConfiguracao(configuracao)).toThrow();
   });

@@ -17,10 +17,16 @@ export interface ConfiguracaoPartida {
   readonly vidasIniciais: number;
   /** `false` = baralho de truco (sem 8, 9 e 10). */
   readonly incluirOitoNoveDez: boolean;
+  /**
+   * Jogador eliminado vê a mão dos outros ao tocar na placa deles. O dono pode trocar a qualquer
+   * momento, inclusive no meio da partida.
+   */
+  readonly mortosVeemCartas: boolean;
 }
 
 export const CONFIGURACAO_PADRAO: ConfiguracaoPartida = {
   quantidadeBaralhos: 1,
   vidasIniciais: 5,
   incluirOitoNoveDez: false,
+  mortosVeemCartas: false,
 };

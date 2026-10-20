@@ -29,6 +29,7 @@ const CONFIGURACAO: ConfiguracaoPartida = {
   quantidadeBaralhos: 1,
   vidasIniciais: 5,
   incluirOitoNoveDez: false,
+  mortosVeemCartas: false,
 };
 
 const carta = (id: string, valor: Valor, naipe: Naipe): Carta => ({ id, valor, naipe });
@@ -133,6 +134,7 @@ export function paraEstadoDaPartida(momento: Momento): EstadoPartidaVisivel {
       cartasNaMao: jogador.mao.length,
       // A sua própria testa você nunca vê.
       cartaNaTesta: jogador.id === ID_VOCE ? null : jogador.testa,
+      maoRevelada: null,
       saiAoFimDaRodada: false,
     })),
     idDoPe: rodada.idDoPe,

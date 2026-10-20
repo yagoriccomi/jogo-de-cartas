@@ -29,7 +29,8 @@ function descreverConfiguracao(configuracao: ConfiguracaoPartida): string {
       ? '1 baralho'
       : `${configuracao.quantidadeBaralhos} baralhos`;
   const faixa = configuracao.incluirOitoNoveDez ? 'com 8, 9 e 10' : 'sem 8, 9 e 10';
-  return `${baralhos} · ${configuracao.vidasIniciais} vidas · ${faixa}`;
+  const mortos = configuracao.mortosVeemCartas ? ' · eliminados veem as cartas' : '';
+  return `${baralhos} · ${configuracao.vidasIniciais} vidas · ${faixa}${mortos}`;
 }
 
 function inicialDe(apelido: string): string {

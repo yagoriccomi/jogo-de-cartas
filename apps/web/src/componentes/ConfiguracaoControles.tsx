@@ -54,6 +54,7 @@ function Passo({ rotulo, substantivo, valor, minimo, maximo, desabilitado, onCha
 /** Controles de configuração reaproveitados pela criação de sala e pelo lobby (DRY). */
 export function ConfiguracaoControles({ valor, onChange, desabilitado = false }: Props) {
   const idInterruptor = useId();
+  const idMortos = useId();
   return (
     <div className="configuracao">
       <Passo
@@ -84,6 +85,20 @@ export function ConfiguracaoControles({ valor, onChange, desabilitado = false }:
           className="interruptor"
           disabled={desabilitado}
           onClick={() => onChange({ ...valor, incluirOitoNoveDez: !valor.incluirOitoNoveDez })}
+        >
+          <span className="interruptor__bola" />
+        </button>
+      </div>
+      <div className="linha-config">
+        <span id={idMortos}>Eliminados veem as cartas</span>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={valor.mortosVeemCartas}
+          aria-labelledby={idMortos}
+          className="interruptor"
+          disabled={desabilitado}
+          onClick={() => onChange({ ...valor, mortosVeemCartas: !valor.mortosVeemCartas })}
         >
           <span className="interruptor__bola" />
         </button>

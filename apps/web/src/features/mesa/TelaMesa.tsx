@@ -14,6 +14,7 @@ import { DESTINO_DOS_EMPATES } from './animacao-compartilhada';
 import { Baralho } from './Baralho';
 import { Carta } from './Carta';
 import { ContagemRegressiva } from './ContagemRegressiva';
+import { DialogoMaoRevelada } from './DialogoMaoRevelada';
 import { DialogoPlacar } from './DialogoPlacar';
 import { Mao } from './Mao';
 import { MesaLinhas } from './MesaLinhas';
@@ -41,6 +42,7 @@ export function TelaMesa() {
   const { jogo, sala, sessao, jogoRecebidoEm, tutorial } = useApp();
   const [ocupado, executar] = useAcao();
   const [consulta, definirConsulta] = useState<Consulta>(null);
+  const [maoAbertaDe, definirMaoAbertaDe] = useState<string | null>(null);
   const computador = useMediaQuery(CONSULTA_COMPUTADOR);
   // Hook antes dos retornos antecipados: a ordem dos hooks não pode depender do estado do jogo.
   const animacao = useAnimacaoDeVaza(
@@ -97,6 +99,7 @@ export function TelaMesa() {
   const emRodada = jogo.fase === 'palpites' || jogo.fase === 'jogando';
   const souDaVez = emRodada && jogo.idDaVez === meuId && !pausado;
   const estouEliminado = eu?.eliminado ?? false;
+  const jogadorDaMaoAberta = jogo.jogadores.find((j) => j.id === maoAbertaDe);
   const palpitando = jogo.fase === 'palpites' && souDaVez && !estouEliminado;
   const podeJogar = jogo.fase === 'jogando' && souDaVez && !estouEliminado;
 
@@ -177,6 +180,7 @@ export function TelaMesa() {
                 manilha={jogo.manilha}
                 vidasIniciais={jogo.configuracao.vidasIniciais}
                 ocultarUltimoMonte={jogador.id === donoDoMonteOculto}
+                onVerMao={jogador.maoRevelada ? () => definirMaoAbertaDe(jogador.id) : undefined}
               />
             );
           })}
@@ -361,6 +365,13 @@ export function TelaMesa() {
         <DialogoPlacar jogo={jogo} meuId={meuId} onFechar={() => definirConsulta(null)} />
       )}
       {consulta === 'regras' && <DialogoRegras onFechar={() => definirConsulta(null)} />}
+      {jogadorDaMaoAberta && (
+        <DialogoMaoRevelada
+          jogador={jogadorDaMaoAberta}
+          manilha={jogo.manilha}
+          onFechar={() => definirMaoAbertaDe(null)}
+        />
+      )}
     </div>
   );
 }

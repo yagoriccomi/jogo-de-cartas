@@ -58,6 +58,11 @@ export interface JogadorVisivel {
   readonly cartasNaMao: number;
   /** Só preenchido na rodada cega: a carta "na testa" dos outros jogadores. */
   readonly cartaNaTesta: Carta | null;
+  /**
+   * Mão inteira deste jogador (da mais forte para a mais fraca). Só chega a quem foi eliminado,
+   * e só com a opção `mortosVeemCartas` ligada; para todos os demais é `null`.
+   */
+  readonly maoRevelada: readonly Carta[] | null;
   /** Saiu, foi expulso ou votado para fora: um bot termina a rodada por ele. */
   readonly saiAoFimDaRodada: boolean;
 }
@@ -94,7 +99,8 @@ export interface PausaVisivel {
 
 /**
  * Projeção do estado da partida para UM jogador. O servidor nunca envia a mão
- * dos adversários (exceto a carta na testa da rodada cega) nem o baralho restante.
+ * dos adversários (exceto a carta na testa da rodada cega e, se o dono permitir, a quem já foi
+ * eliminado) nem o baralho restante.
  */
 export interface EstadoPartidaVisivel {
   readonly configuracao: ConfiguracaoPartida;

@@ -97,6 +97,11 @@ export interface EventosClienteParaServidor {
     dados: { configuracao: ConfiguracaoPartida },
     responder: (resposta: Resposta<null>) => void,
   ) => void;
+  /** Só o dono; vale também no meio da partida (as demais opções só mudam no lobby). */
+  'sala:definirMortosVeemCartas': (
+    dados: { permitir: boolean },
+    responder: (resposta: Resposta<null>) => void,
+  ) => void;
   'sala:adicionarBot': (responder: (resposta: Resposta<null>) => void) => void;
   /** Só o dono. Humano expulso fica banido da sala; bot é apenas removido. */
   'sala:expulsar': (

@@ -153,6 +153,12 @@ export function configurarSala(configuracao: ConfiguracaoPartida): Promise<boole
   return comando('sala:configurar', (r) => socket.emit('sala:configurar', { configuracao }, r));
 }
 
+export function definirMortosVeemCartas(permitir: boolean): Promise<boolean> {
+  return comando('sala:definirMortosVeemCartas', (r) =>
+    socket.emit('sala:definirMortosVeemCartas', { permitir }, r),
+  );
+}
+
 export function adicionarBot(): Promise<boolean> {
   return comando('sala:adicionarBot', (r) => socket.emit('sala:adicionarBot', r));
 }

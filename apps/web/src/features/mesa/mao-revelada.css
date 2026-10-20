@@ -1,0 +1,51 @@
+.mao-revelada {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 12px 0 4px;
+  padding: 0;
+  list-style: none;
+}
+
+.mao-revelada__vazia,
+.mao-revelada__nota {
+  margin: 8px 0 0;
+  text-align: center;
+  color: var(--texto-suave);
+}
+
+.mao-revelada__nota {
+  font-size: 0.78rem;
+}
+
+/* Botão invisível sobre a placa inteira: o toque em qualquer ponto dela abre a mão. */
+.placa__ver-mao {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.placa__ver-mao:hover,
+.placa__ver-mao:focus-visible {
+  outline: 2px solid var(--rosa);
+  outline-offset: 2px;
+  box-shadow: 0 0 14px rgb(255 42 138 / 0.55);
+}
+
+.placa__dica-mao {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--rosa-claro);
+}
+
+.placa__dica-mao .icone {
+  width: 14px;
+  height: 14px;
+}

@@ -18,6 +18,7 @@ describe('ServicoDeSalas — criarCenario', () => {
       quantidadeBaralhos: LIMITES.maxBaralhos,
       vidasIniciais: LIMITES.maxVidas,
       incluirOitoNoveDez: false,
+      mortosVeemCartas: false,
     });
     expect(sala?.emPartida).toBe(true);
     const jogo = partidaDe(ator(sessao));

@@ -1,5 +1,6 @@
 import type { JogadorVisivel, Valor } from '@fodinha/shared';
 import { Coracoes } from '../../componentes/Coracoes';
+import { IconeOlho } from '../../componentes/Icones';
 import { classes } from '../../lib/classes';
 import { CONSULTA_COMPUTADOR, useMediaQuery } from '../../lib/useMediaQuery';
 import { MARCADORES } from './animacao-compartilhada';
@@ -24,6 +25,8 @@ interface Props {
   readonly manilha: Valor | null;
   /** O montinho mais novo ainda está a caminho (animação da vaza): não mostrá-lo antes. */
   readonly ocultarUltimoMonte: boolean;
+  /** Só para quem foi eliminado, com a opção do dono ligada: abre a mão deste jogador. */
+  readonly onVerMao?: () => void;
 }
 
 function descreverPlaca(jogador: JogadorVisivel): string {
@@ -49,6 +52,7 @@ export function PlacaJogador({
   prazoFinal,
   manilha,
   ocultarUltimoMonte,
+  onVerMao,
 }: Props) {
   const offline = !jogador.conectado && !jogador.ehBot;
   const computador = useMediaQuery(CONSULTA_COMPUTADOR);
@@ -81,6 +85,12 @@ export function PlacaJogador({
           )}
           {offline && !jogador.saiAoFimDaRodada && !jogador.eliminado && (
             <span className="placa__nota">Offline</span>
+          )}
+          {onVerMao && (
+            <span className="placa__nota placa__dica-mao">
+              <IconeOlho className="icone" />
+              ver cartas
+            </span>
           )}
           {ehDaVez && prazoFinal !== null && (
             <ContagemRegressiva prazoFinal={prazoFinal} className="placa__contagem" />
@@ -122,6 +132,15 @@ export function PlacaJogador({
       )}
 
       <SimbolosMaoEPe ehMao={ehPrimeiro} ehPe={ehPe} className="simbolos--placa" />
+
+      {onVerMao && (
+        <button
+          type="button"
+          className="placa__ver-mao"
+          aria-label={`Ver as cartas de ${jogador.apelido}`}
+          onClick={onVerMao}
+        />
+      )}
     </li>
   );
 }

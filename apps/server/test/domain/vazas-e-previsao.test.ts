@@ -7,6 +7,7 @@ const DOIS_BARALHOS: ConfiguracaoPartida = {
   quantidadeBaralhos: 2,
   vidasIniciais: 5,
   incluirOitoNoveDez: true,
+  mortosVeemCartas: false,
 };
 
 /** Evita o estreitamento de tipo do TS: a fase muda por efeito colateral das chamadas. */
