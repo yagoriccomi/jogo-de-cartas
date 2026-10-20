@@ -38,7 +38,7 @@ Fodinha é um jogo de cartas multiplayer online, jogado direto no navegador. Cri
 - Prazo da vez com jogada automática, para a mesa nunca travar.
 - Tutorial interativo na tela inicial: uma rodada de 3 cartas e uma rodada cega roteiradas contra 2 bots, com cartas sempre iguais e balões de fala apontando cada parte da mesa. Funciona sem servidor.
 - Sons de fliperama (sintetizados, sem arquivos de áudio) e vibração na sua vez e ao perder vida.
-- Música de fundo lo-fi tranquila no lobby e na mesa (piano elétrico abafado, batida leve e chiado de vinil, sem vocais), gerada na hora pelo navegador com Web Audio: não há arquivo de música nem licença de terceiros. Começa depois do primeiro toque na tela (regra de autoplay dos navegadores) e pausa quando a aba fica oculta.
+- Música de fundo tranquila no lobby e na mesa, no clima cassino anos 80: city pop com pé na bossa (piano elétrico, baixo sincopado, aro de caixa, chocalho e sinos com eco, sem vocais), gerada na hora pelo navegador com Web Audio: não há arquivo de música nem licença de terceiros. Começa depois do primeiro toque na tela (regra de autoplay dos navegadores) e pausa quando a aba fica oculta.
 - Menu lateral com o mudo geral (som, música e vibração) e volumes separados de música (começa em 50%) e de efeitos; as escolhas ficam salvas no aparelho.
 - Placar a qualquer momento (vidas, palpite e vazas feitas de todos) e guia de regras ilustrado, passo a passo.
 - Partida sem rolar a tela: no celular o topo fica recolhido (toque na alça ou deslize para baixo a partir do topo para abrir) e o palpite aparece dentro da mesa, sem cobrir a mão nem as suas vidas.
