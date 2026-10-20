@@ -48,7 +48,7 @@ test('o tutorial vai do começo ao fim com todo balão apontando para algo visí
     ).toBe(true);
     passosVistos += 1;
 
-    const proximo = page.locator('.tutorial__proximo');
+    const proximo = page.locator('.tutorial__proximo.botao--primario');
     if (await proximo.isVisible()) {
       const ultimo = (await proximo.textContent())?.includes('Jogar de verdade') ?? false;
       await proximo.click();
@@ -60,7 +60,7 @@ test('o tutorial vai do começo ao fim com todo balão apontando para algo visí
       if (pedido === undefined) throw new Error(`Passo de palpite sem número na dica: "${dica}"`);
       await page.locator('.palpite__opcao', { hasText: new RegExp(`^${pedido}$`) }).click();
       await page.locator('.palpite__rodape .botao').click();
-    } else if ((await balao.locator('.tutorial__dica', { hasText: 'Toque duas' }).count()) > 0) {
+    } else if ((await balao.locator('.tutorial__dica', { hasText: 'duas vezes' }).count()) > 0) {
       await jogarCartaDestacada(page);
     }
     // Passos de "tempo" (vez dos bots) avançam sozinhos; os outros, pela ação acima.
@@ -71,4 +71,18 @@ test('o tutorial vai do começo ao fim com todo balão apontando para algo visí
 
   await expect(page.locator('.entrada'), 'o tutorial termina na tela inicial').toBeVisible();
   expect(passosVistos).toBeGreaterThan(20);
+});
+
+test('a versão rápida pula os passos só explicativos', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: /aprender a jogar/i }).click();
+  const progresso = page.locator('.tutorial__progresso');
+  await expect(progresso).toBeVisible();
+  const totalCompleto = Number((await lerProgresso(page)).split('/')[1]);
+
+  await page.getByRole('button', { name: 'Versão rápida' }).click();
+
+  await expect
+    .poll(async () => Number((await lerProgresso(page)).split('/')[1]))
+    .toBeLessThan(totalCompleto);
 });

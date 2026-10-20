@@ -10,10 +10,16 @@ import {
   RODADA_CEGA,
   RODADA_DE_TRES,
 } from './mesaDoTutorial';
+import { usaToque } from './ponteiro';
 
 /** O que faz o roteiro andar: o botão do balão, o tempo (vez dos bots) ou a sua jogada certa. */
 export type Espera =
-  | { readonly tipo: 'botao'; readonly rotulo?: string }
+  | {
+      readonly tipo: 'botao';
+      readonly rotulo?: string;
+      /** Segundo botão que segue pela versão rápida (sem os passos opcionais). */
+      readonly atalho?: string;
+    }
   | { readonly tipo: 'tempo'; readonly ms: number }
   | { readonly tipo: 'palpite'; readonly valor: number }
   | { readonly tipo: 'jogar'; readonly carta: Carta };
@@ -29,6 +35,8 @@ export interface Passo {
   readonly momento: Momento;
   readonly balao: Balao | null;
   readonly espera: Espera;
+  /** Passo só explicativo, pulado na versão rápida. */
+  readonly opcional?: boolean;
 }
 
 /** Tempo para ler uma jogada de bot antes de a próxima acontecer. */
@@ -132,6 +140,9 @@ function montarRoteiro(apelido: string): Passo[] {
   };
   const passo = (balao: Balao | null, espera: Espera = { tipo: 'botao' }) =>
     passos.push({ momento: m, balao, espera });
+  // Só explica: a versão rápida pula. Nunca espera jogada, então pular não trava a mesa.
+  const passoOpcional = (balao: Balao) =>
+    passos.push({ momento: m, balao, espera: { tipo: 'botao' }, opcional: true });
 
   // ---------- Apresentação ----------
   passo(
@@ -141,7 +152,7 @@ function montarRoteiro(apelido: string): Passo[] {
       texto:
         'Vou te ensinar Fodinha jogando uma rodada de 3 cartas contra a Paula e o Simas. É só seguir os balões.',
     },
-    { tipo: 'botao', rotulo: 'Bora!' },
+    { tipo: 'botao', rotulo: 'Bora!', atalho: 'Versão rápida' },
   );
   passo({
     alvo: '.mao',
@@ -155,24 +166,24 @@ function montarRoteiro(apelido: string): Passo[] {
     texto:
       'Esta é a vira (6♦). O valor logo acima dela vira a manilha, que vence qualquer carta comum. Aqui, a manilha é o 7.',
   });
-  passo({
+  passoOpcional({
     alvo: alvoDaCartaNaMao(CARTAS.seteDePaus),
     titulo: 'Você tem manilha!',
     texto:
       'Repare no brilho holográfico. Entre manilhas o naipe decide: ♣ > ♥ > ♠ > ♦. Seu 7♣ é a carta mais forte da rodada.',
   });
-  passo({
+  passoOpcional({
     alvo: '.adversarios',
     titulo: 'Seus adversários',
     texto:
       'Cada placa mostra as vidas (corações), o palpite e quantas vazas a pessoa já fez. O robozinho indica que é bot.',
   });
-  passo({
+  passoOpcional({
     alvo: alvoDaPlaca(ID_PAULA, '.simbolo--mao'),
     titulo: 'A mão',
     texto: 'A mãozinha marca quem abre a rodada: a Paula palpita e joga primeiro.',
   });
-  passo({
+  passoOpcional({
     alvo: '.simbolos--minha',
     titulo: 'O pé',
     texto: 'E você é o pé: palpita por último. Isso tem uma regra especial, já já você vê.',
@@ -221,13 +232,15 @@ function montarRoteiro(apelido: string): Passo[] {
     alvo: ALVO_DA_MESA,
     titulo: 'Quem está ganhando',
     texto:
-      'O Simas jogou 3♠, mais forte. A carta que está ganhando fica sozinha à esquerda; as outras formam uma pilha ao lado.',
+      'O Simas jogou 3♠, mais forte. A carta que está ganhando fica sozinha à esquerda, com o nome de quem a jogou em cima; as outras formam uma pilha ao lado. Passe o mouse ou toque numa delas para ver de quem é.',
   });
   passo(
     {
       alvo: alvoDaCartaNaMao(CARTAS.seteDePaus),
       titulo: 'Sua vez de jogar',
-      texto: 'Toque uma vez na carta para escolher e mais uma para jogar. Jogue o 7♣!',
+      texto: usaToque()
+        ? 'Toque uma vez na carta para escolher e mais uma para jogar. Jogue o 7♣!'
+        : 'Clique na carta para escolher e dê dois cliques rápidos para jogar. Jogue o 7♣!',
     },
     { tipo: 'jogar', carta: CARTAS.seteDePaus },
   );
@@ -250,7 +263,7 @@ function montarRoteiro(apelido: string): Passo[] {
     { tipo: 'botao', rotulo: 'Recolher' },
   );
   m = fechouVaza(m, ID_VOCE, CARTAS.seteDePaus);
-  passo({
+  passoOpcional({
     alvo: ALVO_DO_MEU_FEZ,
     titulo: 'Uma vaza!',
     texto:
@@ -302,7 +315,7 @@ function montarRoteiro(apelido: string): Passo[] {
     { tipo: 'botao', rotulo: 'Recolher' },
   );
   m = fechouVaza(m, ID_VOCE, CARTAS.asDeCopas);
-  passo({
+  passoOpcional({
     alvo: ALVO_DO_MEU_FEZ,
     titulo: 'Bateu o palpite',
     texto: 'Você fez 2, exatamente o que pediu. O "Fez" fica ciano quando bate com o palpite.',
@@ -422,7 +435,7 @@ function montarRoteiro(apelido: string): Passo[] {
     { tipo: 'tempo', ms: LEITURA_DA_JOGADA_MS },
   );
   m = { ...palpitou(m, ID_PAULA, 0), idDaVez: null };
-  passo({
+  passoOpcional({
     alvo: alvoDaPlaca(ID_PAULA, '.numeros'),
     titulo: 'Coitada da Paula',
     texto:
@@ -459,18 +472,19 @@ function montarRoteiro(apelido: string): Passo[] {
       { jogadorId: ID_SIMAS, palpite: 0, vazasFeitas: 0, vidasPerdidas: 0 },
     ],
   };
-  passo({
+  passoOpcional({
     alvo: '.resultado',
     titulo: 'Mais uma vida',
     texto:
       'A Paula pediu 0 e fez 1: perdeu outro coração. Na rodada cega, o palpite é pelas cartas dos outros!',
   });
 
-  passo({
+  passoOpcional({
     alvo: '.alca-topo, .cabecalho__acoes',
     titulo: 'Placar e regras',
-    texto:
-      'Aqui no topo ficam o placar de todos e o guia de regras, a qualquer momento. No celular, toque na alça para abrir.',
+    texto: usaToque()
+      ? 'Aqui no topo ficam o placar de todos e o guia de regras, a qualquer momento. Toque na alça para abrir.'
+      : 'Aqui no topo ficam o placar de todos e o guia de regras, a qualquer momento.',
   });
   passo(
     {

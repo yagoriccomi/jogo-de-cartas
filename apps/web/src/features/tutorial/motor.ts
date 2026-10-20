@@ -51,6 +51,16 @@ export function avancarTutorial(): void {
   irPara(tutorial.passo + 1);
 }
 
+/** Versão rápida: tira os passos só explicativos que ainda estão por vir e segue. */
+export function avancarTutorialRapido(): void {
+  const tutorial = obterEstado().tutorial;
+  if (tutorial === null || passoAtual()?.espera.tipo !== 'botao') return;
+  const feitos = roteiro.slice(0, tutorial.passo + 1);
+  const restantes = roteiro.slice(tutorial.passo + 1).filter((passo) => !passo.opcional);
+  roteiro = [...feitos, ...restantes];
+  irPara(tutorial.passo + 1);
+}
+
 function seguirSe(acertou: boolean, dica: string): boolean {
   const tutorial = obterEstado().tutorial;
   if (tutorial === null) return false;
