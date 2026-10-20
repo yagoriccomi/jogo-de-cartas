@@ -18,5 +18,3 @@ services:
         sync: false # defina no painel: URL do frontend na Vercel (várias, separadas por vírgula)
       - key: LOG_LEVEL
         value: info
-      - key: TURN_TIMEOUT_SECONDS
-        value: '30'

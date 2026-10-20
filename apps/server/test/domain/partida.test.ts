@@ -136,6 +136,7 @@ describe('Partida', () => {
       vidasIniciais: 5,
       incluirOitoNoveDez: true,
       mortosVeemCartas: false,
+      prazoDaVezSegundos: 30,
     });
     for (let passos = 0; passos < 100_000 && partida.faseAtual !== 'encerrada'; passos++) {
       avancar(partida);

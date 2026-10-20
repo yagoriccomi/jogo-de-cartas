@@ -16,7 +16,7 @@ Fodinha é um jogo de cartas multiplayer online, jogado direto no navegador. Cri
 - **Rodada cega:** na rodada de 1 carta, você não vê a sua, mas vê a dos outros jogadores (na testa). Assim que todos palpitam, as cartas vão sozinhas para a mesa, o resultado sai e o jogo segue.
 - **Vidas:** ao fim da rodada, cada jogador perde 1 vida por vaza de diferença entre o palpite e o que ganhou. Quem zera vidas é eliminado; vence o último de pé.
 - **Mesa:** até 10 participantes, com até 4 bots.
-- **Tempo da vez:** se o jogador não agir dentro do prazo, o servidor joga por ele automaticamente.
+- **Tempo da vez:** o dono escolhe, ao criar a sala ou no lobby, quanto tempo cada um tem para palpitar ou jogar: de 10 segundos a 2 minutos (padrão 30 s), ou sem limite. Estourado o prazo, o servidor joga pelo jogador e todos os bots da mesa reagem com um emoji sorteado.
 - **Queda de conexão:** se alguém fica mais de 10 segundos desconectado, a partida pausa e os jogadores votam "Deseja esperar o retorno de [apelido]?". Basta um SIM para continuar esperando; se todos votarem NÃO, um bot termina a rodada dele e ele é eliminado.
 - **Entrar no meio:** dá para entrar com a partida em andamento. Quem chega assiste até a próxima rodada e senta com a mesma quantidade de vidas do jogador vivo com mais vidas.
 - **Dono da sala:** quem criou a sala pode pausar e retomar a partida quando quiser, reiniciá-la (volta à rodada 1 com vidas cheias para todos) e expulsar pessoas. Quem é expulso não consegue voltar àquela sala pelo mesmo navegador. Se o dono sair, o posto passa para quem está há mais tempo na sala, e volta para o criador se ele retornar.
@@ -36,7 +36,7 @@ Fodinha é um jogo de cartas multiplayer online, jogado direto no navegador. Cri
 - Convite por link com mensagem pronta: compartilhamento nativo do aparelho, botão direto do WhatsApp ou cópia do link; o link preenche o código da sala.
 - Site responsivo e instalável no celular (abre em tela cheia, com ícone na tela inicial).
 - Visual "Vice City": mesa de feltro com neon e cartas em pixel art; manilhas com brilho holográfico.
-- Anfitrião configura a partida (baralhos, vidas, 8-9-10), adiciona bots e inicia.
+- Anfitrião configura a partida (baralhos, vidas, 8-9-10, tempo da vez), adiciona bots e inicia.
 - Bots que palpitam pela força da mão (e, na rodada cega, pelas cartas que veem na testa dos outros) e jogam para acertar o palpite.
 - Servidor autoritativo: o cliente só recebe a própria mão, a vira, as cartas jogadas e, na rodada cega, a carta dos outros.
 - Reconexão por token após recarregar a página.
@@ -136,16 +136,15 @@ A cada push e pull request, o GitHub Actions executa lint, typecheck, testes, bu
 
 Copie o `.env.example` para `.env`. Nada neste projeto exige segredos.
 
-| Variável               | Onde     | Para que serve                                                                                                                      |
-| ---------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `PORT`                 | servidor | Porta HTTP/WebSocket do servidor de jogo (padrão `3001`).                                                                           |
-| `CORS_ORIGINS`         | servidor | Origens autorizadas a conectar, separadas por vírgula (padrão `http://localhost:5173`).                                             |
-| `LOG_LEVEL`            | servidor | Nível de log: `debug`, `info`, `warn` ou `error`.                                                                                   |
-| `BOT_DELAY_MS`         | servidor | Milissegundos que o bot espera antes de jogar (padrão `2000`). Os testes de tela usam um valor baixo.                               |
-| `TURN_TIMEOUT_SECONDS` | servidor | Segundos que o jogador tem para agir antes da jogada automática (padrão `30`).                                                      |
-| `CENARIOS_DE_TESTE`    | servidor | Só desenvolvimento (padrão `false`; o Docker de dev liga). Libera a criação de salas de teste com bots. Nunca habilite em produção. |
-| `VITE_SERVER_URL`      | web      | URL pública do servidor de jogo. Fica exposta no navegador: nunca coloque nada sensível.                                            |
-| `WEB_PORT`             | Docker   | Opcional. Porta do frontend no host (padrão `5173`). Se mudar, inclua a nova origem em `CORS_ORIGINS`.                              |
+| Variável            | Onde     | Para que serve                                                                                                                      |
+| ------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`              | servidor | Porta HTTP/WebSocket do servidor de jogo (padrão `3001`).                                                                           |
+| `CORS_ORIGINS`      | servidor | Origens autorizadas a conectar, separadas por vírgula (padrão `http://localhost:5173`).                                             |
+| `LOG_LEVEL`         | servidor | Nível de log: `debug`, `info`, `warn` ou `error`.                                                                                   |
+| `BOT_DELAY_MS`      | servidor | Milissegundos que o bot espera antes de jogar (padrão `2000`). Os testes de tela usam um valor baixo.                               |
+| `CENARIOS_DE_TESTE` | servidor | Só desenvolvimento (padrão `false`; o Docker de dev liga). Libera a criação de salas de teste com bots. Nunca habilite em produção. |
+| `VITE_SERVER_URL`   | web      | URL pública do servidor de jogo. Fica exposta no navegador: nunca coloque nada sensível.                                            |
+| `WEB_PORT`          | Docker   | Opcional. Porta do frontend no host (padrão `5173`). Se mudar, inclua a nova origem em `CORS_ORIGINS`.                              |
 
 ### Testar com 10 jogadores
 
@@ -159,7 +158,7 @@ O frontend vai para a Vercel e o servidor de jogo para a Render.
 
 1. No painel da Render, crie um **Blueprint** apontando para este repositório; o arquivo `render.yaml` na raiz descreve o serviço (web service Node, plano grátis, verificação de saúde em `/health`).
 2. Defina `CORS_ORIGINS` com a URL do frontend na Vercel (por exemplo `https://fodinha.vercel.app`). Várias origens são separadas por vírgula.
-3. `LOG_LEVEL` e `TURN_TIMEOUT_SECONDS` já têm valores padrão no Blueprint.
+3. `LOG_LEVEL` já tem valor padrão no Blueprint.
 
 Também há um `Dockerfile` de produção em `apps/server/Dockerfile` (build multi-stage, usuário não-root). Para gerar a imagem, a partir da raiz: `docker build -f apps/server/Dockerfile -t fodinha-server .`
 

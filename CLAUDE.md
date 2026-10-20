@@ -17,7 +17,7 @@
 - Cartas iguais se anulam (a próxima maior vence; se todas se anulam, ninguém leva a vaza).
 - Rodadas: 1 carta → máximo possível → volta a 1. A rodada de 1 carta é **cega** (vê-se a carta dos outros, não a própria); terminados os palpites, todas as cartas vão sozinhas à mesa e a vaza é resolvida (`Partida.revelarRodadaCega`).
 - Perde 1 vida por vaza de diferença entre palpite e resultado. O "pé" (último a palpitar) não pode fechar a soma.
-- Prazo da vez (`TURN_TIMEOUT_SECONDS`): estourou, o servidor joga automaticamente.
+- Prazo da vez por sala (`prazoDaVezSegundos`: 10 a 120 s, padrão 30, ou `null` = sem limite; degraus no `ConfiguracaoControles`): estourou, o servidor joga automaticamente e todos os bots da mesa reagem com emoji sorteado.
 - Pausa de fim de rodada: 10 s (3 s da última vaza parada + voo + ~6 s de resultado), mais 4 s quando a rodada era cega (`pausaExtraRodadaCegaMs`); o cliente segura a última vaza (`PAUSA_DA_ULTIMA_VAZA_MS`) e a revelação cega (`useAnimacaoDeVaza`).
 - Lugares e primeiro pé sorteados a cada partida/reinício (`Partida` com `GeradorAleatorio`); a mão é o vivo seguinte ao pé.
 - Desconexão > 10 s (carência) pausa a partida e abre votação de espera por ausente; todos NÃO → eliminado (bot termina a rodada). Pausa congela prazos e bots.

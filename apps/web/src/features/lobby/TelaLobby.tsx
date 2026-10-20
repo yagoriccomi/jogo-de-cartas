@@ -30,7 +30,11 @@ function descreverConfiguracao(configuracao: ConfiguracaoPartida): string {
       : `${configuracao.quantidadeBaralhos} baralhos`;
   const faixa = configuracao.incluirOitoNoveDez ? 'com 8, 9 e 10' : 'sem 8, 9 e 10';
   const mortos = configuracao.mortosVeemCartas ? ' · eliminados veem as cartas' : '';
-  return `${baralhos} · ${configuracao.vidasIniciais} vidas · ${faixa}${mortos}`;
+  const prazo =
+    configuracao.prazoDaVezSegundos === null
+      ? 'sem limite de tempo'
+      : `${configuracao.prazoDaVezSegundos} s por vez`;
+  return `${baralhos} · ${configuracao.vidasIniciais} vidas · ${faixa} · ${prazo}${mortos}`;
 }
 
 function inicialDe(apelido: string): string {

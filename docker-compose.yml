@@ -61,7 +61,6 @@ services:
       PORT: ${PORT:-3001}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
       LOG_LEVEL: ${LOG_LEVEL:-info}
-      TURN_TIMEOUT_SECONDS: ${TURN_TIMEOUT_SECONDS:-30}
       # Só no ambiente de desenvolvimento: libera o evento dev:cenario (mesa lotada de bots).
       CENARIOS_DE_TESTE: 'true'
       CHOKIDAR_USEPOLLING: 'true'

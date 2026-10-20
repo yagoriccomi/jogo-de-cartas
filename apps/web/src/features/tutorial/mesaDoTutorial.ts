@@ -30,6 +30,8 @@ const CONFIGURACAO: ConfiguracaoPartida = {
   vidasIniciais: 5,
   incluirOitoNoveDez: false,
   mortosVeemCartas: false,
+  // O tutorial anda no ritmo de quem lê: não há prazo nenhum.
+  prazoDaVezSegundos: null,
 };
 
 const carta = (id: string, valor: Valor, naipe: Naipe): Carta => ({ id, valor, naipe });

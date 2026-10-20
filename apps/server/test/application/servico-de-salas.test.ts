@@ -86,7 +86,6 @@ beforeEach(() => {
     registrador: silencioso,
     gerarAleatorio: BOTS_CALADOS,
     tempos: {
-      prazoDaVezMs: PRAZO_MS,
       atrasoDoBotMs: ATRASO_BOT_MS,
       pausaFimDeRodadaMs: PAUSA_FIM_RODADA_MS,
       pausaExtraRodadaCegaMs: 0,
@@ -337,6 +336,36 @@ describe('ServicoDeSalas — partida', () => {
 
     relogio.avancar(PRAZO_MS);
     expect(partidaDe(dono)?.jogadores[0]?.palpite).not.toBeNull();
+  });
+
+  it('deveUsarOPrazoEscolhidoNaSala', () => {
+    const dono = servico.criarSala({
+      apelido: 'Ana',
+      configuracao: { ...CONFIGURACAO_PADRAO, prazoDaVezSegundos: 10 },
+      dispositivoId: 'disp-ana',
+    });
+    servico.adicionarBot(ator(dono));
+    servico.iniciarPartida(ator(dono));
+    expect(partidaDe(dono)?.prazoDaVezRestanteMs).toBe(10_000);
+
+    relogio.avancar(10_000);
+    expect(partidaDe(dono)?.jogadores.find((j) => j.id === dono.jogadorId)?.palpite).not.toBeNull();
+  });
+
+  it('naoDeveJogarPeloHumanoQuandoASalaNaoTemLimiteDeTempo', () => {
+    const dono = servico.criarSala({
+      apelido: 'Ana',
+      configuracao: { ...CONFIGURACAO_PADRAO, prazoDaVezSegundos: null },
+      dispositivoId: 'disp-ana',
+    });
+    servico.adicionarBot(ator(dono));
+    servico.iniciarPartida(ator(dono));
+
+    relogio.avancar(PRAZO_MS * 10);
+    const estado = partidaDe(dono);
+    expect(estado?.idDaVez).toBe(dono.jogadorId);
+    expect(estado?.prazoDaVezRestanteMs).toBeNull();
+    expect(estado?.jogadores.find((j) => j.id === dono.jogadorId)?.palpite).toBeNull();
   });
 
   it('deveLevarAPartidaAteOFimSoComPrazosEBots', () => {
