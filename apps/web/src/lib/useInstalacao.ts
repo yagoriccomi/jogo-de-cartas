@@ -10,8 +10,32 @@ function ehEventoInstalacao(evento: Event): evento is EventoInstalacao {
   return 'prompt' in evento && typeof evento.prompt === 'function';
 }
 
-/** Controla o convite nativo "Adicionar à tela inicial"; `podeInstalar` é falso onde o navegador não oferece. */
-export function useInstalacao(): { podeInstalar: boolean; instalar: () => Promise<void> } {
+/**
+ * iPhone/iPad: o Safari não tem convite de instalação (`beforeinstallprompt`), só o menu
+ * Compartilhar. O iPadOS se apresenta como Mac, então o toque desempata.
+ */
+function ehAparelhoApple(): boolean {
+  const { userAgent, maxTouchPoints } = navigator;
+  return /iPhone|iPad|iPod/.test(userAgent) || (/Macintosh/.test(userAgent) && maxTouchPoints > 1);
+}
+
+/** Já aberto pelo ícone da tela inicial: não há o que instalar. */
+function jaInstalado(): boolean {
+  const navegadorApple = navigator as Navigator & { readonly standalone?: boolean };
+  return (
+    window.matchMedia('(display-mode: standalone)').matches || navegadorApple.standalone === true
+  );
+}
+
+/**
+ * Controla o convite nativo "Adicionar à tela inicial"; `podeInstalar` é falso onde o navegador
+ * não oferece. `instalarPeloCompartilhar` indica o iPhone, onde só dá para instalar à mão.
+ */
+export function useInstalacao(): {
+  podeInstalar: boolean;
+  instalarPeloCompartilhar: boolean;
+  instalar: () => Promise<void>;
+} {
   const [evento, definirEvento] = useState<EventoInstalacao | null>(null);
 
   useEffect(() => {
@@ -37,5 +61,9 @@ export function useInstalacao(): { podeInstalar: boolean; instalar: () => Promis
     definirEvento(null);
   }, [evento]);
 
-  return { podeInstalar: evento !== null, instalar };
+  return {
+    podeInstalar: evento !== null,
+    instalarPeloCompartilhar: evento === null && ehAparelhoApple() && !jaInstalado(),
+    instalar,
+  };
 }

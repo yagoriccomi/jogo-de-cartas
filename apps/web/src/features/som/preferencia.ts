@@ -9,12 +9,11 @@ const CHAVE_VOLUME_REACOES = 'fodinha:volume-reacoes';
 
 export const VOLUME_MINIMO = 0;
 export const VOLUME_MAXIMO = 100;
-/** A música começa no meio: fica de fundo sem competir com os efeitos, e o jogador ajusta. */
-export const VOLUME_INICIAL_MUSICA = 50;
-/** Os efeitos já nasceram calibrados no volume cheio; manter evita mudar o som de quem já joga. */
-export const VOLUME_INICIAL_EFEITOS = 100;
-/** Reações vêm dos outros (bots inclusive) e podem ser muitas: começam abaixo dos efeitos do jogo. */
-export const VOLUME_INICIAL_REACOES = 70;
+/** Todo som começa no meio para não incomodar quem abre o jogo; cada um sobe no menu se quiser. */
+const VOLUME_INICIAL = 50;
+export const VOLUME_INICIAL_MUSICA = VOLUME_INICIAL;
+export const VOLUME_INICIAL_EFEITOS = VOLUME_INICIAL;
+export const VOLUME_INICIAL_REACOES = VOLUME_INICIAL;
 
 // O localStorage pode lançar (modo privado, dados bloqueados): o som precisa funcionar sem ele.
 function lerTexto(chave: string): string | null {

@@ -121,11 +121,11 @@ Sem cadastro · até 10 na mesa · celular e computador · servidor que não dei
 - Visual "Vice City": mesa de feltro com neon e cartas em pixel art; manilhas com brilho holográfico.
 - Sons de fliperama sintetizados na hora (sem arquivos de áudio) e vibração na sua vez e ao perder vida.
 - Música de fundo no clima cassino anos 80: city pop com pé na bossa (piano elétrico, baixo sincopado, aro de caixa, chocalho e sinos com eco), gerada pelo navegador com Web Audio, sem arquivo de música nem licença de terceiros. Começa depois do primeiro toque na tela e pausa quando a aba fica oculta.
-- Menu lateral com o mudo geral (som, música e vibração) e volumes separados de música (começa em 50%), efeitos e reações (começa em 70%), salvos no aparelho.
+- Menu lateral com o mudo geral (som, música e vibração) e volumes separados de música, efeitos e reações (todos começam em 50%, para não incomodar), salvos no aparelho.
 
 **📱 Celular**
 
-- Site responsivo e instalável (abre em tela cheia, com ícone na tela inicial).
+- Site responsivo e instalável (abre em tela cheia, com ícone na tela inicial). No Android aparece o botão "Instalar na tela inicial"; no iPhone, onde o Safari não permite esse botão, a tela inicial ensina o caminho: Compartilhar → Adicionar à Tela de Início.
 - A partida nunca rola a tela e não deixa arrastar além dela; no celular o topo fica recolhido (toque na alça ou deslize para baixo a partir do topo para abrir) e o palpite aparece dentro da mesa, sem cobrir a mão nem as suas vidas.
 
 ## Arquitetura
