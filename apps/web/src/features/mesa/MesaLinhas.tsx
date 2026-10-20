@@ -43,7 +43,12 @@ function LinhaDeCartas({ cartas, manilha, nomeDe, anuladas }: LinhaProps) {
             className={classes('mesa-linha__carta', lider && 'mesa-linha__carta--lider')}
             {...{ [MARCADORES.cartaNaMesa]: jogada.carta.id }}
             title={anuladas ? `${nome} (empatou)` : lider ? `${nome} (ganhando)` : nome}
+            // Focável para que tocar na carta (celular) revele o dono, como o mouse faz no desktop.
+            tabIndex={0}
           >
+            <span className="mesa-linha__dono" aria-hidden>
+              {nome}
+            </span>
             <Carta carta={jogada.carta} manilha={manilha} rotulo={nome} />
           </li>
         );

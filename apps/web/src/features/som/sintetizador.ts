@@ -105,7 +105,20 @@ function arpejo(ctx: AudioContext, base: number, passo: number, duracao: number,
 
 const EFEITOS: Record<EventoDaMesa, (ctx: AudioContext, base: number) => void> = {
   cartaJogada: (ctx, t) => tocarTom(ctx, t, { freq: NOTA.la4, ate: NOTA.mi5, duracao: 0.07 }),
-  minhaVez: (ctx, t) => arpejo(ctx, t, 0.13, 0.12, [NOTA.mi5, NOTA.la5, NOTA.mi6]),
+  // Campainha "plim-plom" em onda triangular, longa e repetida: os jogadores confundiam o aviso da
+  // vez (antes um arpejo quadrado) com o de vaza ganha.
+  minhaVez: (ctx, t) => {
+    const campainha: readonly (readonly [number, number])[] = [
+      [NOTA.sol5, 0],
+      [NOTA.mi5, 0.18],
+      [NOTA.sol5, 0.5],
+      [NOTA.mi5, 0.68],
+    ];
+    campainha.forEach(([freq, inicio]) =>
+      tocarTom(ctx, t, { freq, inicio, duracao: 0.34, onda: 'triangle', volume: 1.6 }),
+    );
+    tocarTom(ctx, t, { freq: NOTA.mi6, duracao: 0.05, volume: 0.35 });
+  },
   vazaMinha: (ctx, t) => arpejo(ctx, t, 0.07, 0.1, [NOTA.do5, NOTA.mi5, NOTA.sol5, NOTA.do6]),
   vazaDeOutro: (ctx, t) =>
     tocarTom(ctx, t, { freq: NOTA.sol3, duracao: 0.1, onda: 'triangle', volume: 0.8 }),

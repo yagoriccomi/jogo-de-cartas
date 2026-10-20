@@ -156,7 +156,7 @@
   width: fit-content;
   padding: 0 8px;
   border-radius: 999px;
-  background: var(--rosa);
+  background: var(--rosa-forte);
   color: #fff;
   font-size: 0.72rem;
   font-weight: 800;
@@ -326,6 +326,50 @@
   gap: 2px;
 }
 
+/* Contador da vaza (1/5): em que ponto da rodada a mesa está, acima da vira. */
+.feltro__vaza {
+  font-family: var(--fonte-numeros);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+/* Vazas em que tudo se anulou: um só monte abaixo da manilha, com o total ao lado. */
+.empates {
+  --l-monte: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  opacity: 0.9;
+}
+
+.empates--chegando {
+  visibility: hidden;
+}
+
+.empates__corpo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.empates__monte {
+  position: relative;
+  width: var(--l-monte);
+  filter: grayscale(0.5);
+}
+
+.empates__monte .carta {
+  --l-carta: var(--l-monte);
+}
+
+.empates__contagem {
+  font-family: var(--fonte-numeros);
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--ciano-palido);
+}
+
 .feltro__rotulo {
   font-size: 0.65rem;
 }
@@ -395,19 +439,6 @@
 
 /* ---------- Montinhos das vazas empatadas (canto inferior direito da mesa) ---------- */
 
-.montes--empates {
-  --l-monte: 26px;
-  position: absolute;
-  right: 7%;
-  bottom: 12px;
-  z-index: 2;
-  max-width: 40%;
-  justify-content: flex-end;
-  opacity: 0.85;
-  filter: grayscale(0.5);
-  pointer-events: none;
-}
-
 .feltro__vazio {
   position: absolute;
   inset: 0;
@@ -429,7 +460,9 @@
     100cqw /
       (min(var(--n-max, 1), 2) + var(--folga-lider) + max(var(--n-max, 1) - 2, 0) * var(--visivel))
   );
-  --l-pela-altura: calc((100cqh - 8px) / 2.85);
+  /* Cada linha reserva em cima a altura da etiqueta com o nome de quem jogou. */
+  --altura-dono: 16px;
+  --l-pela-altura: calc((100cqh - 8px - 2 * var(--altura-dono)) / 2.85);
   --l-carta: clamp(40px, min(var(--l-pela-largura), var(--l-pela-altura)), 68px);
   --sobreposicao: calc(1 - var(--visivel));
   display: flex;
@@ -450,6 +483,7 @@
   justify-content: flex-start;
   width: 100%;
   min-height: calc(var(--l-carta) * 1.4);
+  padding-top: var(--altura-dono);
   list-style: none;
 }
 
@@ -489,6 +523,61 @@
 
 .mesa-linha--anuladas .carta {
   filter: grayscale(0.6) brightness(0.8);
+}
+
+/* Dono da carta: sempre visível na que está ganhando; nas demais, só ao passar o mouse, focar ou
+   tocar (o foco vem do `tabIndex`), junto com o contorno rosa. */
+.mesa-linha__dono {
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 50%;
+  z-index: 1;
+  max-width: calc(var(--l-carta) * 1.8);
+  padding: 0 6px;
+  overflow: hidden;
+  border: 1px solid var(--rosa);
+  border-radius: 999px;
+  background: var(--fundo);
+  color: var(--texto-neon);
+  font-size: 0.7rem;
+  line-height: calc(var(--altura-dono) - 2px);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  transform: translateX(-50%);
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.mesa-linha__carta--lider .mesa-linha__dono {
+  visibility: visible;
+}
+
+.mesa-linha__carta {
+  outline: none;
+  cursor: pointer;
+}
+
+.mesa-linha__carta:hover,
+.mesa-linha__carta:focus {
+  z-index: 5;
+}
+
+.mesa-linha__carta:hover .mesa-linha__dono,
+.mesa-linha__carta:focus .mesa-linha__dono {
+  z-index: 6;
+  visibility: visible;
+}
+
+.mesa-linha__carta:hover .carta,
+.mesa-linha__carta:focus .carta {
+  box-shadow:
+    0 0 0 max(3px, calc(var(--l-carta) * 0.035)) var(--rosa),
+    var(--brilho-rosa);
+}
+
+/* Durante o voo para o montinho, as etiquetas sairiam voando soltas. */
+.mesa-linhas--voando .mesa-linha__dono {
+  visibility: hidden;
 }
 
 /* ---------- Montinhos de vazas ganhas ---------- */
@@ -679,7 +768,7 @@
 
 .palpite__opcao[aria-pressed='true'] {
   border-color: var(--rosa-palido);
-  background: var(--rosa);
+  background: var(--rosa-forte);
   color: #fff;
   box-shadow: 0 0 16px var(--rosa);
 }
@@ -714,7 +803,7 @@
   align-items: center;
   padding: 2px 10px;
   border-radius: 999px;
-  background: var(--rosa);
+  background: var(--rosa-forte);
   color: #fff;
   font-weight: 700;
   font-size: 0.85rem;
@@ -735,6 +824,62 @@
 @keyframes pulsar {
   50% {
     opacity: 0.55;
+  }
+}
+
+/* ---------- Sinais da minha vez ---------- */
+
+/* Jogadores não percebiam a própria vez: a faixa cruza o feltro e some sozinha. Não captura toques,
+   então nunca atrapalha o palpite nem a jogada. */
+.faixa-da-vez {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 30;
+  padding: 6px 28px;
+  border: 2px solid var(--rosa-palido);
+  border-radius: 999px;
+  background: var(--rosa-forte);
+  color: #fff;
+  font-family: var(--fonte-titulo);
+  font-size: clamp(2rem, 6vw, 3.4rem);
+  line-height: 1.1;
+  white-space: nowrap;
+  box-shadow:
+    0 0 24px var(--rosa),
+    0 0 60px rgb(255 42 138 / 0.45);
+  pointer-events: none;
+  animation: faixa-da-vez 1.8s ease-out forwards;
+}
+
+@keyframes faixa-da-vez {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+  25%,
+  70% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* A mão respira em rosa enquanto espera a minha jogada. */
+.minha--jogar .mao__leque {
+  animation: mao-da-vez 1.6s ease-in-out infinite;
+}
+
+@keyframes mao-da-vez {
+  50% {
+    filter: drop-shadow(0 0 10px var(--rosa)) drop-shadow(0 0 4px var(--rosa-palido));
   }
 }
 
@@ -806,7 +951,7 @@
 
 .vez--minha {
   border-color: var(--rosa);
-  background: var(--rosa);
+  background: var(--rosa-forte);
   color: #fff;
   font-weight: 800;
   letter-spacing: 1px;
@@ -1095,7 +1240,7 @@
 }
 
 .votacao__nao.votacao--escolhido {
-  background: var(--rosa);
+  background: var(--rosa-forte);
   color: #fff;
   box-shadow:
     0 0 0 3px var(--texto),
@@ -1155,21 +1300,93 @@
 }
 
 .fim {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 22px 20px;
+  gap: 16px;
+  padding: 22px 20px 0;
+  overflow: clip;
 }
 
-.fim__titulo {
-  font-size: 2.6rem;
+/* O vencedor é o protagonista: troféu, nome grande em neon e confete caindo atrás. */
+.fim__destaque {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.fim__trofeu {
+  width: 88px;
+  height: 88px;
+  filter: drop-shadow(0 0 14px rgb(255 214 90 / 0.6));
+  animation: trofeu-entra 0.7s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+@keyframes trofeu-entra {
+  from {
+    opacity: 0;
+    transform: translateY(-24px) scale(0.5) rotate(-12deg);
+  }
+}
+
+.fim__vencedor {
+  max-width: 100%;
+  font-size: clamp(2.6rem, 11vw, 3.6rem);
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+  animation: vencedor-entra 0.6s 0.25s ease-out both;
+}
+
+@keyframes vencedor-entra {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
 }
 
 .fim__texto {
   color: var(--texto-suave);
 }
 
+.confete {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.confete__pedaco {
+  position: absolute;
+  top: -12px;
+  left: var(--coluna);
+  width: 8px;
+  height: 12px;
+  background: var(--cor);
+  opacity: 0;
+  animation: confete-cai 3.2s var(--atraso) linear infinite;
+}
+
+@keyframes confete-cai {
+  0% {
+    opacity: 1;
+    transform: translateY(0) rotate(0);
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(420px) rotate(calc(var(--giro) * 540deg));
+  }
+}
+
 .fim__placar {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -1177,11 +1394,33 @@
 
 .fim__placar li {
   display: flex;
-  justify-content: space-between;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
   padding: 8px 12px;
+  border: 1px solid transparent;
   border-radius: 12px;
   background: var(--superficie-funda);
+}
+
+.fim__placar .fim__linha--vencedor {
+  border-color: var(--dourado);
+  box-shadow: 0 0 12px rgb(255 214 90 / 0.35);
+  font-weight: 700;
+}
+
+.fim__posicao {
+  min-width: 2ch;
+  font-family: var(--fonte-numeros);
+  font-size: 1.2rem;
+  color: var(--texto-suave);
+}
+
+.fim__nome {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .fim__vidas {
@@ -1191,9 +1430,22 @@
   font-weight: 700;
 }
 
+/* Ações presas no rodapé: com 10 jogadores a lista passa da dobra do celular. */
 .fim__acoes {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
   display: flex;
   flex-direction: column;
+  gap: 10px;
+  margin: 0 -20px;
+  padding: 14px 20px 18px;
+  background: linear-gradient(to bottom, transparent, var(--superficie) 22%);
+}
+
+.fim__acoes-secundarias {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
 
@@ -1270,9 +1522,53 @@
   }
 
   /* A coluna (vira, rótulos e manilha) ocupa ~1,4 carta + 150px: encolhe junto com a mesa. */
+  /* A coluna também leva o contador da vaza e, se houver, o monte de empates: a vira cede. */
   .feltro__esquerda {
-    --l-carta: clamp(44px, calc((100cqh - 150px) / 1.4), 84px);
+    --l-carta: clamp(44px, calc((100cqh - 180px) / 1.4), 84px);
     gap: 8px;
+  }
+
+  /* No computador o feltro é baixo e largo: com empates, a coluna vira duas (vira e baralho de um
+     lado; manilha e, abaixo dela, os empates do outro) em vez de crescer para baixo. */
+  .feltro__esquerda:has(.empates) {
+    display: grid;
+    grid-template-columns: auto auto;
+    align-items: center;
+    justify-items: center;
+    column-gap: 18px;
+    row-gap: 8px;
+  }
+
+  .feltro__esquerda:has(.empates) .feltro__monte {
+    grid-row: 1 / span 2;
+  }
+
+  /* Notebook (768 de altura) jogando: o feltro fica baixo e a coluna da vira passaria da borda. */
+  @container (max-height: 300px) {
+    .feltro {
+      padding-block: 10px;
+    }
+
+    /* Prefixo .feltro: vence as regras de tamanho do computador que vêm depois no arquivo. */
+    .feltro .feltro__esquerda {
+      gap: 2px;
+    }
+
+    .feltro .feltro__vaza {
+      font-size: 1.25rem;
+    }
+
+    .feltro .feltro__manilha-valor {
+      font-size: 2.2rem;
+    }
+  }
+
+  .empates {
+    --l-monte: 34px;
+  }
+
+  .feltro__vaza {
+    font-size: 2rem;
   }
 
   .feltro__monte {
@@ -1291,15 +1587,26 @@
     font-size: 0.95rem;
   }
 
+  /* No desktop sobra feltro: a carta cresce até o limite da altura e o grupo fica centralizado,
+     com a largura exata da fila mais longa. */
   .mesa-linhas {
     --visivel: 0.45;
-    --l-carta: clamp(48px, min(var(--l-pela-largura), var(--l-pela-altura)), 84px);
+    --altura-dono: 20px;
+    --l-carta: clamp(48px, min(var(--l-pela-largura), var(--l-pela-altura)), 132px);
     gap: 14px;
+    width: min(
+      100%,
+      var(--l-carta) *
+        (
+          min(var(--n-max, 1), 2) + var(--folga-lider) + max(var(--n-max, 1) - 2, 0) *
+            var(--visivel)
+        )
+    );
+    margin-inline: auto;
   }
 
-  .montes--empates {
-    --l-monte: 34px;
-    bottom: 22px;
+  .mesa-linha__dono {
+    font-size: 0.85rem;
   }
 
   .baralho {
@@ -1354,8 +1661,17 @@
   }
 
   .feltro__esquerda {
-    --l-carta: clamp(40px, calc((100cqh - 110px) / 1.4), 56px);
+    --l-carta: clamp(40px, calc((100cqh - 135px) / 1.4), 56px);
     gap: 6px;
+  }
+
+  /* No celular o monte de empates vira só contador: o espaço do feltro vai para a mesa. */
+  .feltro__esquerda:has(.empates) {
+    --l-carta: clamp(36px, calc((100cqh - 175px) / 1.4), 56px);
+  }
+
+  .empates__monte {
+    display: none;
   }
 
   .feltro__manilha-valor {

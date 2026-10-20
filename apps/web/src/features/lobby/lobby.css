@@ -82,7 +82,7 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: var(--rosa);
+  background: var(--rosa-forte);
   font-weight: 800;
 }
 
@@ -151,6 +151,19 @@
 
 .lobby__acoes {
   margin-top: auto;
+}
+
+/* No celular a lista de jogadores empurra "Iniciar partida" para fora da dobra: fica preso no
+   rodapé, com um degradê para não cortar o conteúdo de forma seca. */
+@media (max-width: 899px) {
+  .lobby__acoes {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    margin-inline: -4px;
+    padding: 16px 4px calc(12px + env(safe-area-inset-bottom));
+    background: linear-gradient(to bottom, transparent, var(--fundo) 30%);
+  }
 }
 
 .lobby__espera {
