@@ -14,9 +14,9 @@ import {
 import { lerAmbiente } from './infrastructure/ambiente';
 import { GatewayDoJogo, NotificadorSocketIo } from './infrastructure/socket/gateway';
 
-// Inclui ~3 s da última vaza na mesa e indo para o montinho antes de o resultado aparecer;
-// jogadores reclamaram que 6 s não davam para ler o resultado.
-const PAUSA_FIM_DE_RODADA_MS = 8_000;
+// Inclui ~4 s da última vaza (3 s parada na mesa + o voo ao montinho) e deixa o resultado
+// da rodada ~6 s na tela, o tempo que os jogadores aprovaram.
+const PAUSA_FIM_DE_RODADA_MS = 10_000;
 // A rodada cega se resolve sozinha: a revelação no cliente leva ~3 s a mais para ser lida.
 const PAUSA_EXTRA_RODADA_CEGA_MS = 4_000;
 const TEMPO_DE_ABANDONO_MS = 10 * 60_000;

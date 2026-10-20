@@ -15,7 +15,7 @@ const PAUSA_ANTES_DO_VOO_MS = 800;
  * As vazas do meio continuam curtas: com bots jogando a cada ~2 s, uma pausa maior seria
  * atropelada pela próxima carta.
  */
-const PAUSA_DA_ULTIMA_VAZA_MS = 2000;
+const PAUSA_DA_ULTIMA_VAZA_MS = 3000;
 /** Na rodada cega as cartas chegam desvirando; todos precisam descobrir a própria carta. */
 const LEITURA_DA_REVELACAO_MS = 2500;
 const DURACAO_DO_VOO_MS = 950;
