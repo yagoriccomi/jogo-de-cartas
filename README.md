@@ -24,8 +24,10 @@ Fodinha é um jogo de cartas multiplayer online, jogado direto no navegador. Cri
 - **Saída no meio da rodada:** quem sai (ou é expulso) tem a rodada terminada por um bot e só então deixa a mesa.
 - **Mão organizada:** suas cartas aparecem sempre da mais forte (à esquerda) para a mais fraca (à direita), considerando a manilha da rodada.
 - **Mesa:** a carta que está ganhando fica sozinha à esquerda, com o nome de quem a jogou em cima; as demais que valem formam uma pilha ao lado, da mais forte para a mais fraca. Passe o mouse ou toque numa carta para ver quem a jogou. As que empataram e se anularam ficam na linha de baixo. Cada vaza ganha vira um montinho na frente de quem ganhou; as vazas todas empatadas vão para um monte abaixo da manilha (no celular, só o contador). Acima da vira, um contador mostra a vaza da rodada (ex.: 2/5).
-- **Ritmo:** a última vaza de cada rodada fica mais tempo na mesa antes de ir para o montinho, e o resultado da rodada fica uns 8 segundos na tela (uns 12 nas rodadas cegas, que se resolvem sozinhas). Quando a partida acaba, uma tela celebra o vencedor.
-- **Sua vez:** a faixa "Sua vez!" cruza a mesa, suas cartas pulsam em rosa, toca uma campainha própria, o título da aba muda e, no celular, as placas de cima rolam acompanhando quem está jogando.
+- **Ritmo:** a última vaza de cada rodada fica 3 segundos na mesa antes de ir para o montinho, e o resultado da rodada fica uns 6 segundos na tela (uns 4 a mais nas rodadas cegas, que se resolvem sozinhas). Quando a partida acaba, uma tela celebra o vencedor.
+- **Sua vez:** a faixa "Sua vez!" cruza a mesa, suas cartas pulsam em rosa, toca uma campainha própria, o título da aba muda e as placas de cima rolam acompanhando quem está jogando.
+- **Lugares e ordem:** a cada partida (e a cada reinício) os lugares na mesa são sorteados, assim como o primeiro pé; a mão é sempre quem vem depois dele. As placas de cima seguem a ordem de jogo: a mão à esquerda, o pé à direita.
+- **Painel de palpite:** mostra as cartas da rodada e o saldo (cartas menos a soma dos palpites já dados; pode ficar negativo). "Mostrar mais" abre quem já palpitou, em ordem, e quantos ainda palpitam depois de você.
 
 ## Features
 
