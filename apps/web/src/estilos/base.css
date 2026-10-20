@@ -7,10 +7,13 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  /* Arrastar além do topo/fim não puxa a página (sem "puxar para atualizar" nem borda à mostra). */
+  overscroll-behavior: none;
 }
 
 body {
   margin: 0;
+  overscroll-behavior: none;
   min-height: 100dvh;
   background-color: var(--fundo);
   color: var(--texto);
