@@ -49,7 +49,6 @@ async function iniciar(): Promise<void> {
     registrador,
     gerarAleatorio: aleatorioCriptografico,
     tempos: {
-      prazoDaVezMs: ambiente.prazoDaVezMs,
       atrasoDoBotMs: ambiente.atrasoDoBotMs,
       pausaFimDeRodadaMs: PAUSA_FIM_DE_RODADA_MS,
       pausaExtraRodadaCegaMs: PAUSA_EXTRA_RODADA_CEGA_MS,

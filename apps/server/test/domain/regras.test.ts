@@ -21,6 +21,7 @@ describe('baralho', () => {
         vidasIniciais: 5,
         incluirOitoNoveDez: false,
         mortosVeemCartas: false,
+        prazoDaVezSegundos: 30,
       }),
     ).toBe(40);
   });
@@ -32,6 +33,7 @@ describe('baralho', () => {
         vidasIniciais: 5,
         incluirOitoNoveDez: true,
         mortosVeemCartas: false,
+        prazoDaVezSegundos: 30,
       }),
     ).toBe(208);
   });
@@ -43,6 +45,7 @@ describe('baralho', () => {
         vidasIniciais: 5,
         incluirOitoNoveDez: false,
         mortosVeemCartas: false,
+        prazoDaVezSegundos: 30,
       },
       geradorComSemente(1),
     );
@@ -62,12 +65,14 @@ describe('configuração', () => {
       vidasIniciais: 11,
       incluirOitoNoveDez: false,
       mortosVeemCartas: false,
+      prazoDaVezSegundos: 30,
     },
     {
       quantidadeBaralhos: 1.5,
       vidasIniciais: 5,
       incluirOitoNoveDez: false,
       mortosVeemCartas: false,
+      prazoDaVezSegundos: 30,
     },
     { quantidadeBaralhos: 1, vidasIniciais: 5, incluirOitoNoveDez: false, mortosVeemCartas: 'sim' },
   ])('deveRejeitarConfiguracaoForaDosLimites %o', (configuracao) => {

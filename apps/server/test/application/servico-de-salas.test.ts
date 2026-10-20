@@ -86,7 +86,6 @@ beforeEach(() => {
     registrador: silencioso,
     gerarAleatorio: BOTS_CALADOS,
     tempos: {
-      prazoDaVezMs: PRAZO_MS,
       atrasoDoBotMs: ATRASO_BOT_MS,
       pausaFimDeRodadaMs: PAUSA_FIM_RODADA_MS,
       pausaExtraRodadaCegaMs: 0,

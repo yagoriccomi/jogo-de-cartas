@@ -9,8 +9,6 @@ import type { Cancelamento, Notificador, Registrador, Relogio } from './portas';
 export const CHANCE_DE_REACAO_DO_BOT = 0.1;
 
 export interface TemposDoCondutor {
-  /** Quanto o humano tem para agir antes de o servidor jogar por ele. */
-  readonly prazoDaVezMs: number;
   /** Atraso artificial do bot, para que os humanos acompanhem as jogadas. */
   readonly atrasoDoBotMs: number;
   /** Tempo de exibição do resultado da rodada antes da próxima distribuição. */
@@ -166,9 +164,12 @@ export class CondutorDePartidas {
       );
       return;
     }
-    this.agendar(sala, { tipo: 'vez', atrasoMs: tempos.prazoDaVezMs }, () =>
-      this.jogarPor(sala, partida, idDaVez),
-    );
+    const prazoMs = sala.prazoDaVezMs;
+    if (prazoMs === null) return;
+    this.agendar(sala, { tipo: 'vez', atrasoMs: prazoMs }, () => {
+      this.jogarPor(sala, partida, idDaVez);
+      this.botsZoamQuemPerdeuAVez(sala);
+    });
   }
 
   /** `tipo` informado = o prazo é exibido aos jogadores (contagem regressiva). */
@@ -219,8 +220,19 @@ export class CondutorDePartidas {
   }
 
   private talvezReagirComoBot(sala: Sala, jogadorId: string): void {
+    if (this.deps.gerarAleatorio() >= CHANCE_DE_REACAO_DO_BOT) return;
+    this.reagirComoBot(sala, jogadorId);
+  }
+
+  /** Humano estourou o prazo: a mesa inteira de bots reage, cada um com um emoji sorteado. */
+  private botsZoamQuemPerdeuAVez(sala: Sala): void {
+    for (const bot of sala.todos) {
+      if (bot.ehBot && !bot.saindo) this.reagirComoBot(sala, bot.id);
+    }
+  }
+
+  private reagirComoBot(sala: Sala, jogadorId: string): void {
     const { gerarAleatorio, relogio } = this.deps;
-    if (gerarAleatorio() >= CHANCE_DE_REACAO_DO_BOT) return;
     const reacao = REACOES[Math.floor(gerarAleatorio() * REACOES.length)];
     if (!reacao) return;
     this.publicarReacao(sala, { jogadorId, reacao, em: relogio.agora() });

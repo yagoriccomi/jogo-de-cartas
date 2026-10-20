@@ -8,6 +8,8 @@ export const LIMITES = {
   maxVidas: 10,
   maxApelido: 20,
   maxIdentificador: 100,
+  minPrazoDaVezSegundos: 10,
+  maxPrazoDaVezSegundos: 120,
 } as const;
 
 export interface ConfiguracaoPartida {
@@ -22,6 +24,11 @@ export interface ConfiguracaoPartida {
    * momento, inclusive no meio da partida.
    */
   readonly mortosVeemCartas: boolean;
+  /**
+   * Segundos para palpitar ou jogar antes de o servidor agir pelo jogador (10 a 120).
+   * `null` = sem limite de tempo.
+   */
+  readonly prazoDaVezSegundos: number | null;
 }
 
 export const CONFIGURACAO_PADRAO: ConfiguracaoPartida = {
@@ -29,4 +36,5 @@ export const CONFIGURACAO_PADRAO: ConfiguracaoPartida = {
   vidasIniciais: 5,
   incluirOitoNoveDez: false,
   mortosVeemCartas: false,
+  prazoDaVezSegundos: 30,
 };

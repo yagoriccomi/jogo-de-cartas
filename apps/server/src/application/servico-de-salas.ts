@@ -1,4 +1,5 @@
 import {
+  CONFIGURACAO_PADRAO,
   LIMITES,
   REACOES,
   type ConfiguracaoPartida,
@@ -29,6 +30,7 @@ const CONFIGURACAO_DE_CENARIO: ConfiguracaoPartida = {
   vidasIniciais: LIMITES.maxVidas,
   incluirOitoNoveDez: false,
   mortosVeemCartas: false,
+  prazoDaVezSegundos: CONFIGURACAO_PADRAO.prazoDaVezSegundos,
 };
 
 /** Evita que alguém inunde a mesa de emojis; vale por jogador, além do limitador do socket. */
