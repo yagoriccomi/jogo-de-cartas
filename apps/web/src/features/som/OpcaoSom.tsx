@@ -5,9 +5,11 @@ import {
   definirSomLigado,
   definirVolumeEfeitos,
   definirVolumeMusica,
+  definirVolumeReacoes,
   useSomLigado,
   useVolumeEfeitos,
   useVolumeMusica,
+  useVolumeReacoes,
 } from './preferencia';
 import './som.css';
 
@@ -49,11 +51,12 @@ function ControleDeVolume({ rotulo, valor, desativado, onMudar }: PropsVolume) {
   );
 }
 
-/** Bloco do menu lateral: o mudo geral (som, música e vibração) e os volumes de música e efeitos. */
+/** Bloco do menu lateral: o mudo geral (som, música e vibração) e os volumes de cada canal. */
 export function OpcaoSom() {
   const ligado = useSomLigado();
   const volumeMusica = useVolumeMusica();
   const volumeEfeitos = useVolumeEfeitos();
+  const volumeReacoes = useVolumeReacoes();
   return (
     <div className="opcao-som">
       <button
@@ -95,6 +98,12 @@ export function OpcaoSom() {
         valor={volumeEfeitos}
         desativado={!ligado}
         onMudar={definirVolumeEfeitos}
+      />
+      <ControleDeVolume
+        rotulo="Reações"
+        valor={volumeReacoes}
+        desativado={!ligado}
+        onMudar={definirVolumeReacoes}
       />
     </div>
   );

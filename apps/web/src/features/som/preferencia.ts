@@ -5,6 +5,7 @@ const CHAVE_SOM = 'fodinha:som';
 const VALOR_DESLIGADO = 'off';
 const CHAVE_VOLUME_MUSICA = 'fodinha:volume-musica';
 const CHAVE_VOLUME_EFEITOS = 'fodinha:volume-efeitos';
+const CHAVE_VOLUME_REACOES = 'fodinha:volume-reacoes';
 
 export const VOLUME_MINIMO = 0;
 export const VOLUME_MAXIMO = 100;
@@ -12,6 +13,8 @@ export const VOLUME_MAXIMO = 100;
 export const VOLUME_INICIAL_MUSICA = 50;
 /** Os efeitos já nasceram calibrados no volume cheio; manter evita mudar o som de quem já joga. */
 export const VOLUME_INICIAL_EFEITOS = 100;
+/** Reações vêm dos outros (bots inclusive) e podem ser muitas: começam abaixo dos efeitos do jogo. */
+export const VOLUME_INICIAL_REACOES = 70;
 
 // O localStorage pode lançar (modo privado, dados bloqueados): o som precisa funcionar sem ele.
 function lerTexto(chave: string): string | null {
@@ -52,6 +55,7 @@ export function volumeParaGanho(volume: number): number {
 let somLigado = lerTexto(CHAVE_SOM) !== VALOR_DESLIGADO;
 let volumeMusica = normalizarVolume(lerTexto(CHAVE_VOLUME_MUSICA), VOLUME_INICIAL_MUSICA);
 let volumeEfeitos = normalizarVolume(lerTexto(CHAVE_VOLUME_EFEITOS), VOLUME_INICIAL_EFEITOS);
+let volumeReacoes = normalizarVolume(lerTexto(CHAVE_VOLUME_REACOES), VOLUME_INICIAL_REACOES);
 const ouvintes = new Set<() => void>();
 
 function avisarOuvintes(): void {
@@ -88,6 +92,16 @@ export function definirVolumeEfeitos(volume: number): void {
   avisarOuvintes();
 }
 
+export function obterVolumeReacoes(): number {
+  return volumeReacoes;
+}
+
+export function definirVolumeReacoes(volume: number): void {
+  volumeReacoes = normalizarVolume(volume, VOLUME_INICIAL_REACOES);
+  gravarTexto(CHAVE_VOLUME_REACOES, String(volumeReacoes));
+  avisarOuvintes();
+}
+
 /** Assinatura fora do React: a música reage às preferências sem depender de componente montado. */
 export function assinarPreferencias(ouvinte: () => void): () => void {
   ouvintes.add(ouvinte);
@@ -104,4 +118,8 @@ export function useVolumeMusica(): number {
 
 export function useVolumeEfeitos(): number {
   return useSyncExternalStore(assinarPreferencias, obterVolumeEfeitos);
+}
+
+export function useVolumeReacoes(): number {
+  return useSyncExternalStore(assinarPreferencias, obterVolumeReacoes);
 }

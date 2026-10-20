@@ -3,6 +3,8 @@ import { REACOES, type Reacao, type ReacaoNaMesa } from '@fodinha/shared';
 import { reagir } from '../../estado/acoes';
 import { useApp } from '../../estado/armazem';
 import { useAcao } from '../../lib/useAcao';
+import { somEstaLigado } from '../som/preferencia';
+import { tocarReacao } from '../som/sintetizador';
 import { MARCADORES, seletor } from './animacao-compartilhada';
 import './reacoes.css';
 
@@ -10,6 +12,21 @@ import './reacoes.css';
 const ALVO_DA_MINHA_REACAO = '.minha__dados';
 /** Folga lateral para o balão não sair da tela quando a placa está na borda. */
 const MARGEM_LATERAL_PX = 36;
+
+const chaveDaReacao = (reacao: ReacaoNaMesa) => `${reacao.jogadorId}-${reacao.em}`;
+
+/** Cada reação soa uma única vez, quando chega, por mais que a lista seja redesenhada. */
+function useSomDasReacoes(reacoes: readonly ReacaoNaMesa[]): void {
+  const tocadas = useRef(new Set<string>());
+  useEffect(() => {
+    for (const reacao of reacoes) {
+      if (tocadas.current.has(chaveDaReacao(reacao)) || !somEstaLigado()) continue;
+      tocarReacao(reacao.reacao);
+    }
+    // Só as vigentes: as que já sumiram da mesa não precisam ser lembradas.
+    tocadas.current = new Set(reacoes.map(chaveDaReacao));
+  }, [reacoes]);
+}
 
 interface PropsBolha {
   readonly reacao: ReacaoNaMesa;
@@ -62,6 +79,7 @@ export function ReacoesDaMesa({ meuId }: { readonly meuId: string }) {
   const [aberto, definirAberto] = useState(false);
   const [ocupado, executar] = useAcao();
   const raiz = useRef<HTMLDivElement>(null);
+  useSomDasReacoes(reacoes);
 
   useEffect(() => {
     if (!aberto) return;
@@ -116,7 +134,7 @@ export function ReacoesDaMesa({ meuId }: { readonly meuId: string }) {
         )}
       </div>
       {reacoes.map((reacao) => (
-        <BolhaDeReacao key={`${reacao.jogadorId}-${reacao.em}`} reacao={reacao} meuId={meuId} />
+        <BolhaDeReacao key={chaveDaReacao(reacao)} reacao={reacao} meuId={meuId} />
       ))}
     </>
   );
