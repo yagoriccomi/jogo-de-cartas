@@ -501,6 +501,48 @@
 
 /* ---------- Montinhos das vazas empatadas (canto inferior direito da mesa) ---------- */
 
+/* Palpites dos outros: de quem é a vez e a soma, no meio do feltro (as jogadas ainda estão vazias). */
+.andamento {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding-inline: 8px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.andamento p {
+  margin: 0;
+  max-width: 100%;
+}
+
+/* Quebra equilibrada em vez de reticências: no celular o nome inteiro cabe em duas linhas. */
+.andamento__vez {
+  font-size: 0.85rem;
+  line-height: 1.2;
+  text-wrap: balance;
+  color: var(--texto);
+}
+
+.andamento__nome {
+  color: var(--rosa-claro);
+}
+
+.andamento__saldo {
+  font-size: 1.25rem;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.andamento__quantos {
+  font-size: 0.75rem;
+  color: var(--texto-suave);
+}
+
 .feltro__vazio {
   position: absolute;
   inset: 0;
@@ -1115,14 +1157,6 @@
 
 .minha__dados:has(.simbolo--mao):has(.simbolo--pe) {
   padding-right: 58px;
-}
-
-.minha__dados:has(.simbolos--com-rotulo) {
-  padding-right: 54px;
-}
-
-.minha__dados:has(.simbolos--com-rotulo .simbolo--mao):has(.simbolos--com-rotulo .simbolo--pe) {
-  padding-right: 104px;
 }
 
 .simbolos--minha {
@@ -1789,6 +1823,18 @@
 
   .feltro__vazio {
     font-size: 0.95rem;
+  }
+
+  .andamento__vez {
+    font-size: 1.1rem;
+  }
+
+  .andamento__saldo {
+    font-size: 2.2rem;
+  }
+
+  .andamento__quantos {
+    font-size: 0.85rem;
   }
 
   /* No desktop sobra feltro: a carta cresce até o limite da altura e o grupo fica centralizado,

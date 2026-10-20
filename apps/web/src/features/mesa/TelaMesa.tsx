@@ -27,6 +27,7 @@ import { PainelResultado } from './PainelResultado';
 import { SimbolosMaoEPe } from './SimbolosMaoEPe';
 import { PlacaJogador } from './PlacaJogador';
 import { ReacoesDaMesa } from './ReacoesDaMesa';
+import { AndamentoDosPalpites } from './AndamentoDosPalpites';
 import { TelaFimDePartida } from './TelaFimDePartida';
 import { MonteDeEmpates } from './MonteDeEmpates';
 import { useAnimacaoDeVaza } from './useAnimacaoDeVaza';
@@ -105,7 +106,8 @@ export function TelaMesa() {
   const jogadorDaMaoAberta = jogo.jogadores.find((j) => j.id === maoAbertaDe);
   const palpitando = jogo.fase === 'palpites' && souDaVez && !estouEliminado;
   const podeJogar = jogo.fase === 'jogando' && souDaVez && !estouEliminado;
-  // Primeiro palpite da partida: os ícones de mão e pé aparecem com o nome, depois só o ícone.
+  // Primeiro palpite da partida: nas placas, mão e pé aparecem com o nome, depois só o ícone. Na
+  // minha barra não: o rótulo cortaria o "Você", e o painel de palpite já diz "Você é o pé".
   const rotularMaoEPe = jogo.numeroRodada === 1 && jogo.fase === 'palpites';
 
   // Contagem a partir do "tempo restante" que o servidor mandou, não do relógio dele.
@@ -124,6 +126,8 @@ export function TelaMesa() {
         : [{ id: j.id, nome: j.apelido, palpite: j.palpite, ehMao: j.id === jogo.idDoPrimeiro }],
     );
   const depoisDeVoce = minhaPosicao === -1 ? 0 : vivosEmOrdem.length - minhaPosicao - 1;
+  const jaPalpitaram = vivosEmOrdem.filter((j) => j.palpite !== null);
+  const somaDosPalpites = jaPalpitaram.reduce((soma, j) => soma + (j.palpite ?? 0), 0);
 
   let situacao: string;
   if (aguardandoProximaRodada) situacao = 'Você entra na próxima rodada';
@@ -233,13 +237,18 @@ export function TelaMesa() {
           </div>
 
           <div className="feltro__jogadas">
-            {cartasNaMesa.length === 0 && !palpitando && (
+            {jogo.fase === 'palpites' && !palpitando && (
+              <AndamentoDosPalpites
+                nomeDaVez={pausado ? null : nomeDe(jogo.idDaVez)}
+                soma={somaDosPalpites}
+                cartasNaRodada={jogo.cartasPorJogador}
+                palpitaram={jaPalpitaram.length}
+                vivos={vivosEmOrdem.length}
+              />
+            )}
+            {cartasNaMesa.length === 0 && jogo.fase !== 'palpites' && (
               <p className="feltro__vazio">
-                {jogo.fase === 'palpites'
-                  ? 'Palpites em andamento…'
-                  : podeJogar
-                    ? 'Sua vez: jogue uma carta'
-                    : 'Nenhuma carta na mesa ainda.'}
+                {podeJogar ? 'Sua vez: jogue uma carta' : 'Nenhuma carta na mesa ainda.'}
               </p>
             )}
             {/* Sempre montadas: manter o mesmo DOM entre a mesa e a vaza fechada preserva os voos. */}
@@ -292,7 +301,6 @@ export function TelaMesa() {
             <SimbolosMaoEPe
               ehMao={jogo.idDoPrimeiro === meuId}
               ehPe={jogo.idDoPe === meuId}
-              comRotulo={rotularMaoEPe}
               className="simbolos--minha"
             />
             {/* Neon só em quem está com a vez; fora dela o status fica apagado. */}

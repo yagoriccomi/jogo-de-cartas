@@ -3,6 +3,7 @@ import type { Carta as DadosDaCarta, Valor } from '@fodinha/shared';
 import { classes } from '../../lib/classes';
 import type { EstiloComVariaveis } from '../../lib/estiloComVariaveis';
 import { verboDeToque } from '../tutorial/ponteiro';
+import { descreverSaldo } from './AndamentoDosPalpites';
 import { Carta } from './Carta';
 import { INTERVALO_DUPLO_CLIQUE_MS } from './Mao';
 import { SimbolosMaoEPe } from './SimbolosMaoEPe';
@@ -32,13 +33,6 @@ export interface PalpiteAnterior {
   readonly nome: string;
   readonly palpite: number;
   readonly ehMao: boolean;
-}
-
-/** "Pediram 3 de 5 · sobram 2": o saldo dito em palavras, sem precisar abrir o detalhe. */
-function descreverSaldo(soma: number, cartasNaRodada: number): string {
-  const saldo = cartasNaRodada - soma;
-  const resto = saldo < 0 ? `passou ${-saldo}` : `sobram ${saldo}`;
-  return `Pediram ${soma} de ${cartasNaRodada} · ${resto}`;
 }
 
 function tamanhoDaGrade(opcoes: number): 'grande' | 'media' | 'pequena' {
