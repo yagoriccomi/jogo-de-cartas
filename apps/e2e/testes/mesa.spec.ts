@@ -3,6 +3,7 @@ import {
   abrirCenario,
   ALTURA_MINIMA_DO_BOTAO_PX,
   contem,
+  distancia,
   ESPERA_DA_MESA_MS,
   esperarAnimacoes,
   esperarSemRolagem,
@@ -16,6 +17,8 @@ import {
 const CARTAS_NA_MESA_PARA_MEDIR = 6;
 /** Entre uma vaza e outra as cartas voam por ~1 s; isso dá folga para alguma pousar. */
 const ESPERA_PARA_POUSAR_MS = 10_000;
+/** Folga entre o botão de reações e os números do palpite: dois toques rápidos não erram o alvo. */
+const FOLGA_DO_BOTAO_DE_REACOES_PX = 8;
 /** Coração menor que isso some na tela do celular (já aconteceu). */
 const LARGURA_MINIMA_DO_CORACAO_PX = 8;
 
@@ -34,6 +37,20 @@ test.describe('Mesa cheia (10 jogadores, 13 cartas)', () => {
 
     const coracao = await medir(page.locator('.minha__vidas .coracao').first());
     expect(coracao.width).toBeGreaterThanOrEqual(LARGURA_MINIMA_DO_CORACAO_PX);
+  });
+
+  test('o botão de reações fica longe dos números do palpite', async ({ page }) => {
+    await abrirCenario(page);
+    await expect(page.locator('.palpite')).toBeVisible({ timeout: ESPERA_DA_MESA_MS });
+    await esperarAnimacoes(page);
+
+    const botao = await medir(page.locator('.reacoes__botao'));
+    const alvos = page.locator('.palpite__opcao, .palpite__rodape .botao, .palpite__mais');
+    for (const alvo of await alvos.all()) {
+      expect(distancia(botao, await medir(alvo))).toBeGreaterThanOrEqual(
+        FOLGA_DO_BOTAO_DE_REACOES_PX,
+      );
+    }
   });
 
   test('o palpite cabe no feltro sem rolar e com botões tocáveis', async ({ page }) => {

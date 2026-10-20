@@ -19,6 +19,8 @@ interface Props {
   readonly vidasIniciais: number;
   readonly ehPe: boolean;
   readonly ehPrimeiro: boolean;
+  /** Primeiro palpite da partida: os ícones de mão/pé vêm com o nome por extenso. */
+  readonly rotularMaoEPe?: boolean;
   readonly ehDaVez: boolean;
   /** Instante local em que o prazo da vez acaba (só preenchido para o jogador da vez). */
   readonly prazoFinal: number | null;
@@ -48,6 +50,7 @@ export function PlacaJogador({
   vidasIniciais,
   ehPe,
   ehPrimeiro,
+  rotularMaoEPe = false,
   ehDaVez,
   prazoFinal,
   manilha,
@@ -131,7 +134,12 @@ export function PlacaJogador({
         />
       )}
 
-      <SimbolosMaoEPe ehMao={ehPrimeiro} ehPe={ehPe} className="simbolos--placa" />
+      <SimbolosMaoEPe
+        ehMao={ehPrimeiro}
+        ehPe={ehPe}
+        comRotulo={rotularMaoEPe}
+        className="simbolos--placa"
+      />
 
       {onVerMao && (
         <button

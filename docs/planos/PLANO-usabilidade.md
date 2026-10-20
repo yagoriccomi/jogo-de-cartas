@@ -46,7 +46,7 @@ Modo: Loop (sem confirmação). Branch: `feature/feedback-jogadores`. Origem: `H
 
 ## Progresso
 
-- [x] 1 · [x] 2 (com 9, 12 e 13, adiantados: o painel só parou de rolar em 360×640 com o contador único e os corações em linhas iguais) · [ ] 3 (resta o item 3) · [ ] 4 · [ ] 5 · [ ] 6 · [ ] 7
+- [x] 1 · [x] 2 (com 9, 12 e 13, adiantados: o painel só parou de rolar em 360×640 com o contador único e os corações em linhas iguais) · [x] 3 · [x] 4 (achado no caminho: quem era o pé perdia o Confirmar para fora do painel no notebook; a linha de bloqueio saiu e o selo foi para o lado do título) · [ ] 5 · [ ] 6 · [ ] 7
 
 ## Riscos e rollback
 

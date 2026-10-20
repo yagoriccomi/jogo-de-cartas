@@ -105,6 +105,8 @@ export function TelaMesa() {
   const jogadorDaMaoAberta = jogo.jogadores.find((j) => j.id === maoAbertaDe);
   const palpitando = jogo.fase === 'palpites' && souDaVez && !estouEliminado;
   const podeJogar = jogo.fase === 'jogando' && souDaVez && !estouEliminado;
+  // Primeiro palpite da partida: os ícones de mão e pé aparecem com o nome, depois só o ícone.
+  const rotularMaoEPe = jogo.numeroRodada === 1 && jogo.fase === 'palpites';
 
   // Contagem a partir do "tempo restante" que o servidor mandou, não do relógio dele.
   const prazoFinal =
@@ -185,6 +187,7 @@ export function TelaMesa() {
                 jogador={jogador}
                 ehPe={jogador.id === jogo.idDoPe}
                 ehPrimeiro={jogador.id === jogo.idDoPrimeiro}
+                rotularMaoEPe={rotularMaoEPe}
                 ehDaVez={ehDaVez}
                 prazoFinal={ehDaVez ? prazoFinal : null}
                 manilha={jogo.manilha}
@@ -216,8 +219,10 @@ export function TelaMesa() {
               </div>
               <Baralho />
             </div>
+            {/* Rótulo dentro do selo: nada da coluna da vira o cobre, em nenhum tamanho de mesa. */}
             <div className="feltro__manilha">
-              <span className="rotulo-pequeno feltro__rotulo">Manilha</span>
+              <span className="feltro__manilha-holo" aria-hidden="true" />
+              <span className="feltro__manilha-rotulo">Manilha</span>
               <strong className="feltro__manilha-valor">{jogo.manilha ?? '–'}</strong>
             </div>
             <MonteDeEmpates
@@ -287,6 +292,7 @@ export function TelaMesa() {
             <SimbolosMaoEPe
               ehMao={jogo.idDoPrimeiro === meuId}
               ehPe={jogo.idDoPe === meuId}
+              comRotulo={rotularMaoEPe}
               className="simbolos--minha"
             />
             {/* Neon só em quem está com a vez; fora dela o status fica apagado. */}
@@ -348,11 +354,6 @@ export function TelaMesa() {
         {estouEliminado && (
           <p className="minha__aviso" role="status">
             Você foi eliminado. Acompanhe a partida até o fim.
-          </p>
-        )}
-        {jogo.rodadaCega && !aguardandoProximaRodada && !estouEliminado && (
-          <p className="minha__dica-cega">
-            Rodada cega: você não vê a sua carta, mas vê a dos outros.
           </p>
         )}
 

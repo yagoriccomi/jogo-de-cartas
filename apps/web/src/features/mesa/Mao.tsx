@@ -229,13 +229,9 @@ export function Mao({
 
   return (
     <div className="mao" ref={referencia} onContextMenu={aoCancelar}>
-      <div className="mao__legenda">
-        <span className="mao__forte">◀ Mais forte</span>
-        <span className="mao__dica" aria-live="polite">
-          {dica}
-        </span>
-        <span className="mao__fraca">Mais fraca ▶</span>
-      </div>
+      <p className="mao__dica" aria-live="polite">
+        {dica}
+      </p>
       <ul
         className="mao__leque"
         ref={lequeRef}
@@ -284,6 +280,13 @@ export function Mao({
           );
         })}
       </ul>
+      {/* Sob as cartas e apagada: orienta sem competir com a mão. Com 1 carta não há ordem. */}
+      {cartas.length > 1 && (
+        <div className="mao__ordem" aria-hidden="true">
+          <span>◀ Mais forte</span>
+          <span>Mais fraca ▶</span>
+        </div>
+      )}
     </div>
   );
 }

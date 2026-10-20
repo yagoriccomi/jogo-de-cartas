@@ -41,6 +41,13 @@ export function contem(fora: Retangulo, dentro: Retangulo): boolean {
   );
 }
 
+/** Menor distância entre as bordas de dois retângulos (0 quando se tocam ou se cruzam). */
+export function distancia(a: Retangulo, b: Retangulo): number {
+  const dx = Math.max(0, b.x - (a.x + a.width), a.x - (b.x + b.width));
+  const dy = Math.max(0, b.y - (a.y + a.height), a.y - (b.y + b.height));
+  return Math.hypot(dx, dy);
+}
+
 export function telaDe(page: Page): Retangulo {
   const tamanho = page.viewportSize();
   if (tamanho === null) throw new Error('Viewport não definido.');

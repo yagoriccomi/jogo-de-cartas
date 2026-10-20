@@ -210,6 +210,26 @@
   padding-right: 56px;
 }
 
+/* Primeiro palpite da partida: ícone + "MÃO"/"PÉ" por extenso; depois encolhe para só o ícone. */
+.simbolo--com-rotulo {
+  width: auto;
+  gap: 3px;
+  padding: 0 5px 0 3px;
+  font-weight: 800;
+  font-size: 0.62rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.placa:has(.simbolos--com-rotulo) .placa__nome {
+  padding-right: 52px;
+}
+
+.placa:has(.simbolos--com-rotulo .simbolo--mao):has(.simbolos--com-rotulo .simbolo--pe)
+  .placa__nome {
+  padding-right: 100px;
+}
+
 /* ---------- Palpite e vazas feitas (placas, minha área e placar) ---------- */
 
 .numeros {
@@ -374,10 +394,52 @@
   font-size: 0.65rem;
 }
 
+/* Selo da manilha: moldura pixel com o brilho holográfico das cartas de manilha. */
 .feltro__manilha {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow: hidden;
+  padding: 3px 10px 4px;
+  border: 2px solid var(--rosa);
+  border-radius: 3px;
+  background: var(--feltro-escuro);
+  box-shadow:
+    3px 3px 0 rgb(0 0 0 / 0.6),
+    0 0 12px rgb(255 42 138 / 0.55);
+}
+
+.feltro__manilha-holo {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: repeating-linear-gradient(
+    115deg,
+    rgb(255 42 138 / 0.22) 0 6px,
+    rgb(255 214 90 / 0.16) 6px 12px,
+    rgb(45 226 230 / 0.22) 12px 18px,
+    transparent 18px 30px
+  );
+  background-size: 200% 200%;
+  animation: holo 7s linear infinite alternate;
+}
+
+.feltro__manilha-rotulo {
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--texto);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feltro__manilha-holo {
+    animation: none;
+  }
 }
 
 .feltro__manilha-valor {
@@ -777,9 +839,10 @@
   text-decoration: line-through;
 }
 
-.palpite__bloqueio {
-  font-size: 0.75rem;
-  color: var(--rosa-suave);
+/* A regra inteira cabe ao lado da manilha: em caixa normal a frase ocupa metade do espaço. */
+.selo.palpite__selo-pe {
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 /* Resumo sempre à vista; o detalhe (quem já palpitou) só abre a pedido, para não poluir o painel. */
@@ -1054,6 +1117,14 @@
   padding-right: 58px;
 }
 
+.minha__dados:has(.simbolos--com-rotulo) {
+  padding-right: 54px;
+}
+
+.minha__dados:has(.simbolos--com-rotulo .simbolo--mao):has(.simbolos--com-rotulo .simbolo--pe) {
+  padding-right: 104px;
+}
+
 .simbolos--minha {
   top: 2px;
   right: 0;
@@ -1096,8 +1167,7 @@
   box-shadow: 0 0 16px var(--rosa);
 }
 
-.minha__aviso,
-.minha__dica-cega {
+.minha__aviso {
   padding: 10px 14px;
   border: 1px dashed var(--ciano);
   border-radius: 12px;
@@ -1106,16 +1176,10 @@
   text-align: center;
 }
 
-.minha__dica-cega {
-  border: 0;
-  padding: 0;
-  font-size: 0.8rem;
-  color: var(--texto-suave);
-}
-
 /* ---------- Mão em leque ---------- */
 
 .mao {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1124,39 +1188,33 @@
   min-width: 0;
 }
 
-.mao__legenda {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 8px;
+.mao__dica {
   width: 100%;
   max-width: 1080px;
+  margin: 0;
   font-size: 0.68rem;
-  letter-spacing: 1px;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.mao__forte,
-.mao__fraca {
-  white-space: nowrap;
-}
-
-.mao__forte {
-  color: var(--rosa-claro);
-}
-
-.mao__fraca {
-  color: var(--ciano-claro);
-}
-
-.mao__dica {
-  flex: 1;
   text-align: center;
-  font-weight: 400;
-  text-transform: none;
-  letter-spacing: 0;
   color: var(--ciano-palido);
+}
+
+/* Fora do fluxo, no respiro abaixo das cartas: não rouba altura do feltro (o palpite do 360×640). */
+.mao__ordem {
+  position: absolute;
+  top: calc(100% + 2px);
+  inset-inline: 0;
+  display: flex;
+  justify-content: space-between;
+  max-width: 1080px;
+  margin-inline: auto;
+  line-height: 1;
+  pointer-events: none;
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--texto-suave);
+  opacity: 0.6;
 }
 
 .mao__leque {
@@ -1648,7 +1706,7 @@
   /* Computador: a vira continua à mostra na coluna dela; o painel ocupa a direita do feltro. */
   .palpite {
     inset: 50% 5% auto auto;
-    width: min(440px, 58%);
+    width: min(480px, 62%);
     max-height: calc(100% - 20px);
     gap: 10px;
     padding: 16px 18px;
@@ -1657,6 +1715,14 @@
 
   .palpite__titulo {
     font-size: 2rem;
+  }
+
+  /* O feltro do computador é baixo: o selo do pé vai ao lado do título, não numa linha a mais. */
+  .palpite__cabeca {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 14px;
   }
 
   /* A coluna (vira, rótulos e manilha) ocupa ~1,4 carta + 150px: encolhe junto com a mesa. */
@@ -1768,9 +1834,8 @@
     font-size: 0.9rem;
   }
 
-  .mao__legenda {
+  .mao__dica {
     font-size: 0.75rem;
-    letter-spacing: 2px;
   }
 }
 
@@ -2056,13 +2121,13 @@
     gap: 4px;
   }
 
-  /* O botão riscado e o selo "Você é o pé" já dizem isso; a linha de texto não cabe aqui. */
-  .palpite__bloqueio {
-    display: none;
-  }
-
   .palpite__rodape .botao {
     min-height: 36px;
     font-size: 0.82rem;
+  }
+
+  /* Aqui o painel ocupa o feltro todo e o botão de reações pousa no canto de baixo: o link recua. */
+  .palpite__mais {
+    margin-left: 48px;
   }
 }

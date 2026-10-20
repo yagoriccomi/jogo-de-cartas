@@ -68,7 +68,6 @@ export function PainelPalpite({
   const saldo = cartasNaRodada - soma;
   const colunas = Math.min(opcoes.length, COLUNAS_DA_GRADE_LONGA);
   const estiloGrade: EstiloComVariaveis = { '--colunas': colunas };
-  const cartasTexto = cartasNaRodada === 1 ? '1 carta' : `${cartasNaRodada} cartas`;
 
   // Um toque escolhe; o segundo no mesmo número confirma, como jogar carta na mão.
   function tocar(quantidade: number) {
@@ -99,7 +98,11 @@ export function PainelPalpite({
             <span className="so-celular">
               Manilha <strong>{manilha ?? '–'}</strong>
             </span>
-            {souOPe && <span className="selo selo--pe">Você é o pé</span>}
+            {souOPe && (
+              <span className="selo selo--pe palpite__selo-pe">
+                Você é o pé: não pode fechar a soma
+              </span>
+            )}
           </span>
         </div>
       </div>
@@ -127,13 +130,6 @@ export function PainelPalpite({
           );
         })}
       </div>
-
-      {palpiteProibido !== null && (
-        <p className="palpite__bloqueio" role="note">
-          O {palpiteProibido} está bloqueado: a soma fecharia nas {cartasTexto}.
-          <span className="so-computador"> O pé precisa garantir que alguém erre.</span>
-        </p>
-      )}
 
       <div className="palpite__rodape">
         <div className="palpite__info">
