@@ -10,6 +10,8 @@ export const LIMITES = {
   maxIdentificador: 100,
   minPrazoDaVezSegundos: 10,
   maxPrazoDaVezSegundos: 120,
+  /** Pausa 'lendo as regras': a mesa espera o novato no máximo isto, uma vez por partida. */
+  maxLeituraDasRegrasSegundos: 60,
 } as const;
 
 export interface ConfiguracaoPartida {

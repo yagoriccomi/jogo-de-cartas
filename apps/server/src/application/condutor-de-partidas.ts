@@ -1,4 +1,4 @@
-import { REACOES, type EstadoPartidaVisivel, type ReacaoNaMesa } from '@fodinha/shared';
+import { LIMITES, REACOES, type EstadoPartidaVisivel, type ReacaoNaMesa } from '@fodinha/shared';
 import type { GeradorAleatorio } from '../domain/aleatoriedade';
 import type { EstrategiaDeJogo } from '../domain/estrategia-bot';
 import type { Partida } from '../domain/partida';
@@ -7,6 +7,8 @@ import type { Cancelamento, Notificador, Registrador, Relogio } from './portas';
 
 /** Chance de o bot mandar uma reação a cada carta que joga: dá vida à mesa sem virar spam. */
 export const CHANCE_DE_REACAO_DO_BOT = 0.1;
+const MS_POR_SEGUNDO = 1000;
+const LIMITE_DA_LEITURA_DAS_REGRAS_MS = LIMITES.maxLeituraDasRegrasSegundos * MS_POR_SEGUNDO;
 
 export interface TemposDoCondutor {
   /** Atraso artificial do bot, para que os humanos acompanhem as jogadas. */
@@ -32,7 +34,10 @@ export interface DependenciasDoCondutor {
   readonly gerarAleatorio: GeradorAleatorio;
 }
 
-type Momento = { readonly tipo: 'vez' | 'proximaRodada'; readonly em: number };
+type Momento = {
+  readonly tipo: 'vez' | 'proximaRodada' | 'leituraDasRegras';
+  readonly em: number;
+};
 
 /**
  * Faz a partida andar sozinha quando ninguém age: joga pelos bots, joga por quem estourou o prazo,
@@ -87,13 +92,21 @@ export class CondutorDePartidas {
     const restante = (tipo: Momento['tipo']) =>
       momento?.tipo === tipo ? Math.max(0, momento.em - this.deps.relogio.agora()) : null;
     const previsao = partida.previsaoDaProximaRodada();
+    const leitura = sala.leituraDasRegras;
     return {
       ...visao,
       prazoDaVezEm: momento?.tipo === 'vez' ? momento.em : null,
       prazoDaVezRestanteMs: restante('vez'),
       proximaRodada: previsao && { ...previsao, comecaEmMs: restante('proximaRodada') },
       pausa: sala.pausada
-        ? { votacoes: sala.votacoesVisiveis(), pausadaPeloDono: sala.pausadaPeloDono }
+        ? {
+            votacoes: sala.votacoesVisiveis(),
+            pausadaPeloDono: sala.pausadaPeloDono,
+            lendoRegras: leitura && {
+              jogadorId: leitura.jogadorId,
+              restanteMs: restante('leituraDasRegras') ?? 0,
+            },
+          }
         : null,
       jogadores: visao.jogadores.map((jogador) => {
         const participante = sala.participante(jogador.id);
@@ -144,6 +157,18 @@ export class CondutorDePartidas {
     this.cancelarPasso(sala.codigo);
     const partida = sala.partida;
     if (!partida || partida.faseAtual === 'encerrada') return;
+    // A leitura das regras é a única pausa com fim marcado: o relógio dela anda mesmo pausado.
+    const leitura = sala.leituraDasRegras;
+    if (leitura) {
+      const atrasoMs = Math.max(
+        0,
+        leitura.desde + LIMITE_DA_LEITURA_DAS_REGRAS_MS - this.deps.relogio.agora(),
+      );
+      this.agendar(sala, { tipo: 'leituraDasRegras', atrasoMs }, () =>
+        sala.encerrarLeituraDasRegras(leitura.jogadorId),
+      );
+      return;
+    }
     // Pausa congela a mesa inteira (premissa P4): nada é agendado até a votação se resolver.
     if (sala.pausada) return;
 

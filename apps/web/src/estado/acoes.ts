@@ -183,6 +183,26 @@ export function retomarPartida(): Promise<boolean> {
   return comando('sala:retomar', (r) => socket.emit('sala:retomar', r));
 }
 
+/**
+ * A pausa de leitura é cortesia: se o servidor recusar (já usada nesta partida, outro lendo), o
+ * resumo abre do mesmo jeito, sem pausar e sem aviso de erro.
+ */
+export async function lerRegras(): Promise<boolean> {
+  if (interceptador) return false;
+  try {
+    await requisitar<null>((r) => socket.emit('jogo:lerRegras', r));
+    return true;
+  } catch (erro) {
+    registrar('warn', 'leitura_das_regras.recusada', descreverErro(erro));
+    return false;
+  }
+}
+
+export function pararDeLerRegras(): Promise<boolean> {
+  if (interceptador) return Promise.resolve(true);
+  return comando('jogo:pararDeLerRegras', (r) => socket.emit('jogo:pararDeLerRegras', r));
+}
+
 export function palpitar(quantidade: number): Promise<boolean> {
   if (interceptador) return Promise.resolve(interceptador.palpitar(quantidade));
   return comando('jogo:palpitar', (r) => socket.emit('jogo:palpitar', { quantidade }, r));

@@ -10,6 +10,7 @@ import { CONSULTA_COMPUTADOR, useMediaQuery } from '../../lib/useMediaQuery';
 import { useSonsDaMesa } from '../som/useSonsDaMesa';
 import { CabecalhoApp } from '../menu/CabecalhoApp';
 import { DialogoRegras } from '../menu/DialogoRegras';
+import { ResumoDasRegras } from '../regras/ResumoDasRegras';
 import { DESTINO_DOS_EMPATES } from './animacao-compartilhada';
 import { Baralho } from './Baralho';
 import { Carta } from './Carta';
@@ -384,6 +385,12 @@ export function TelaMesa() {
         <PainelResultado jogo={jogo} meuId={meuId} recebidoEm={jogoRecebidoEm} />
       )}
       {pausado && <PainelPausa jogo={jogo} meuId={meuId} />}
+      <ResumoDasRegras
+        jogo={jogo}
+        meuId={meuId}
+        recebidoEm={jogoRecebidoEm}
+        ativo={tutorial === null && eu !== undefined && !estouEliminado}
+      />
       {consulta === 'placar' && (
         <DialogoPlacar jogo={jogo} meuId={meuId} onFechar={() => definirConsulta(null)} />
       )}

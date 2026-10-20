@@ -114,6 +114,9 @@ export interface EventosClienteParaServidor {
   /** Só o dono: congela a partida (sem prazo da vez nem bots) até ele retomar. */
   'sala:pausar': (responder: (resposta: Resposta<null>) => void) => void;
   'sala:retomar': (responder: (resposta: Resposta<null>) => void) => void;
+  /** Pausa a mesa enquanto ele lê o resumo das regras (1 vez por partida, no máximo 60 s). */
+  'jogo:lerRegras': (responder: (resposta: Resposta<null>) => void) => void;
+  'jogo:pararDeLerRegras': (responder: (resposta: Resposta<null>) => void) => void;
   'sala:sair': (responder: (resposta: Resposta<null>) => void) => void;
   'jogo:palpitar': (
     dados: { quantidade: number },

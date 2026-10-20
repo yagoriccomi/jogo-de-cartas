@@ -1,5 +1,6 @@
 import {
   CONFIGURACAO_PADRAO,
+  LIMITES,
   type EstadoPartidaVisivel,
   type EstadoSala,
   type ReacaoNaMesa,
@@ -536,7 +537,7 @@ describe('ServicoDeSalas — pausa pelo dono', () => {
     const { dono } = mesaComBot();
     servico.pausar(ator(dono));
     const pausado = partidaDe(dono);
-    expect(pausado?.pausa).toEqual({ votacoes: [], pausadaPeloDono: true });
+    expect(pausado?.pausa).toEqual({ votacoes: [], pausadaPeloDono: true, lendoRegras: null });
     expect(pausado?.prazoDaVezEm).toBeNull();
 
     const fotografia = JSON.stringify(partidaDe(dono)?.jogadores);
@@ -581,6 +582,71 @@ describe('ServicoDeSalas — pausa pelo dono', () => {
     servico.pausar(ator(dono));
     servico.reiniciar(ator(dono));
     expect(partidaDe(dono)?.pausa).toBeNull();
+  });
+});
+
+describe('ServicoDeSalas — pausa para ler as regras', () => {
+  const LIMITE_MS = LIMITES.maxLeituraDasRegrasSegundos * 1000;
+  const invalida = expect.objectContaining({ codigo: 'ENTRADA_INVALIDA' });
+
+  function mesaComBot() {
+    const dono = criarSala();
+    const bia = entrar(dono, 'Bia');
+    servico.adicionarBot(ator(dono));
+    servico.iniciarPartida(ator(dono));
+    return { dono, bia };
+  }
+
+  it('deveCongelarAMesaEAvisarTodosDeQuemEstaLendo', () => {
+    const { dono, bia } = mesaComBot();
+    servico.lerRegras(ator(bia));
+    const visto = partidaDe(dono);
+    expect(visto?.pausa?.lendoRegras).toEqual({ jogadorId: bia.jogadorId, restanteMs: LIMITE_MS });
+    expect(visto?.prazoDaVezEm).toBeNull();
+
+    const fotografia = JSON.stringify(partidaDe(dono)?.jogadores);
+    relogio.avancar(LIMITE_MS - 1);
+    expect(JSON.stringify(partidaDe(dono)?.jogadores)).toBe(fotografia);
+
+    servico.pararDeLerRegras(ator(bia));
+    expect(partidaDe(dono)?.pausa).toBeNull();
+  });
+
+  it('deveRetomarSozinhaQuandoOTempoAcaba', () => {
+    const { dono, bia } = mesaComBot();
+    servico.lerRegras(ator(bia));
+    relogio.avancar(LIMITE_MS);
+    expect(partidaDe(dono)?.pausa).toBeNull();
+    // Fechar o diálogo depois do tempo esgotado não é erro.
+    expect(() => servico.pararDeLerRegras(ator(bia))).not.toThrow();
+  });
+
+  it('devePermitirUmaLeituraPorJogadorPorPartida', () => {
+    const { dono, bia } = mesaComBot();
+    servico.lerRegras(ator(bia));
+    servico.pararDeLerRegras(ator(bia));
+    expect(() => servico.lerRegras(ator(bia))).toThrow(invalida);
+
+    servico.reiniciar(ator(dono));
+    expect(() => servico.lerRegras(ator(bia))).not.toThrow();
+  });
+
+  it('deveAceitarUmLeitorPorVez', () => {
+    const { dono, bia } = mesaComBot();
+    servico.lerRegras(ator(bia));
+    expect(() => servico.lerRegras(ator(dono))).toThrow(invalida);
+  });
+
+  it('deveEncerrarALeituraDeQuemCaiu', () => {
+    const { dono, bia } = mesaComBot();
+    servico.lerRegras(ator(bia));
+    servico.desconectar(ator(bia));
+    expect(partidaDe(dono)?.pausa?.lendoRegras ?? null).toBeNull();
+  });
+
+  it('naoDevePausarForaDePartida', () => {
+    const dono = criarSala();
+    expect(() => servico.lerRegras(ator(dono))).toThrow(invalida);
   });
 });
 

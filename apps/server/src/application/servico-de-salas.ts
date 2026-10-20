@@ -222,6 +222,17 @@ export class ServicoDeSalas {
     });
   }
 
+  lerRegras(ator: Ator): void {
+    this.alterar(ator, (sala) => {
+      sala.comecarLeituraDasRegras(ator.jogadorId, this.deps.relogio.agora());
+      this.deps.registrador.info({ sala: sala.codigo }, 'Partida pausada para leitura das regras');
+    });
+  }
+
+  pararDeLerRegras(ator: Ator): void {
+    this.alterar(ator, (sala) => sala.encerrarLeituraDasRegras(ator.jogadorId));
+  }
+
   sair(ator: Ator): void {
     const sala = this.salaExistente(ator.codigoSala);
     sala.sair(ator.jogadorId);

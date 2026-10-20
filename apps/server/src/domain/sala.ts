@@ -24,6 +24,12 @@ export interface Participante {
   readonly dispositivoId: string | null;
 }
 
+/** Quem está com o resumo das regras aberto e desde quando (relógio do condutor). */
+export interface LeituraDasRegras {
+  readonly jogadorId: string;
+  readonly desde: number;
+}
+
 interface Votacao {
   readonly desde: number;
   readonly votos: Map<string, boolean>;
@@ -51,6 +57,9 @@ export class Sala {
   private configuracao: ConfiguracaoPartida;
   private partidaAtual: Partida | null = null;
   private pausaDoDono = false;
+  private leitura: LeituraDasRegras | null = null;
+  /** Quem já usou a pausa de leitura nesta partida: ela não vira pausa à vontade. */
+  private readonly jaLeram = new Set<string>();
   private readonly maxBots: number;
 
   constructor(
@@ -83,12 +92,16 @@ export class Sala {
 
   /** Com votação aberta nada anda: sem prazo da vez, sem jogada de bot, sem jogada humana. */
   get pausada(): boolean {
-    return this.votacoes.size > 0 || this.pausadaPeloDono;
+    return this.votacoes.size > 0 || this.pausadaPeloDono || this.leituraDasRegras !== null;
   }
 
   /** O dono congelou a mesa: dura até ele retomar (ou a partida acabar/reiniciar). */
   get pausadaPeloDono(): boolean {
     return this.pausaDoDono && this.emPartida;
+  }
+
+  get leituraDasRegras(): LeituraDasRegras | null {
+    return this.emPartida ? this.leitura : null;
   }
 
   get todos(): readonly Participante[] {
@@ -199,6 +212,33 @@ export class Sala {
     this.pausaDoDono = false;
   }
 
+  /**
+   * O novato abriu o resumo das regras: a mesa inteira espera. Uma vez por jogador por partida e
+   * um leitor por vez, para ninguém usar a leitura como pausa sem fim.
+   */
+  comecarLeituraDasRegras(jogadorId: string, agora: number): void {
+    const participante = this.exigirParticipante(jogadorId);
+    if (participante.ehBot || !this.emPartida || !this.partidaAtual?.estaJogando(jogadorId)) {
+      throw new ErroDeRegra(
+        'ENTRADA_INVALIDA',
+        'Só quem está jogando pode pausar para ler as regras.',
+      );
+    }
+    if (this.jaLeram.has(jogadorId)) {
+      throw new ErroDeRegra('ENTRADA_INVALIDA', 'Você já pausou para ler as regras nesta partida.');
+    }
+    if (this.leitura) {
+      throw new ErroDeRegra('ENTRADA_INVALIDA', 'Outro jogador está lendo as regras agora.');
+    }
+    this.jaLeram.add(jogadorId);
+    this.leitura = { jogadorId, desde: agora };
+  }
+
+  /** Idempotente: fechar duas vezes (ou depois do tempo esgotado) não é erro. */
+  encerrarLeituraDasRegras(jogadorId: string): void {
+    if (this.leitura?.jogadorId === jogadorId) this.leitura = null;
+  }
+
   /** Saída voluntária: no meio da rodada, um bot termina por ele e o assento some depois. */
   sair(participanteId: string): void {
     this.desligar(this.exigirParticipante(participanteId));
@@ -207,6 +247,8 @@ export class Sala {
   marcarConexao(participanteId: string, conectado: boolean): void {
     this.exigirParticipante(participanteId).conectado = conectado;
     if (conectado) this.votacoes.delete(participanteId);
+    // Quem caiu não está lendo: a mesa não fica presa esperando um diálogo que ninguém fecha.
+    else this.encerrarLeituraDasRegras(participanteId);
   }
 
   /**
@@ -318,12 +360,15 @@ export class Sala {
     this.participantes.splice(0, this.participantes.length, ...ativos);
     this.votacoes.clear();
     this.pausaDoDono = false;
+    this.leitura = null;
+    this.jaLeram.clear();
     this.partidaAtual = partida;
     return partida;
   }
 
   /** Saída (voluntária ou expulsão): fora de partida é imediata; em partida, ao fim da rodada. */
   private desligar(participante: Participante): void {
+    this.encerrarLeituraDasRegras(participante.id);
     this.votacoes.delete(participante.id);
     for (const votacao of this.votacoes.values()) votacao.votos.delete(participante.id);
 

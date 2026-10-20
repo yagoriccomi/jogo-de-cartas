@@ -19,6 +19,7 @@ Fodinha é um jogo de cartas multiplayer online, jogado direto no navegador. Cri
 - **Tempo da vez:** o dono escolhe no lobby quanto cada um tem para agir (15 a 90 segundos, padrão 30) ou "sem limite". Se o jogador não agir dentro do prazo, o servidor joga por ele e os bots da mesa reagem com um emoji.
 - **Queda de conexão:** se alguém fica mais de 10 segundos desconectado, a partida pausa e os jogadores votam "Deseja esperar o retorno de [apelido]?". Basta um SIM para continuar esperando; se todos votarem NÃO, um bot termina a rodada dele e ele é eliminado.
 - **Entrar no meio:** dá para entrar com a partida em andamento. Quem chega assiste até a próxima rodada e senta com a mesma quantidade de vidas do jogador vivo com mais vidas.
+- **Resumo das regras:** no começo de cada partida aparece um resumo curto das regras, até o jogador marcar "Não perguntar novamente neste computador". Enquanto ele lê, a mesa inteira pausa e os outros veem "Jogador noob lendo as regras!" com o tempo restante: no máximo 60 segundos, uma vez por jogador por partida.
 - **Dono da sala:** quem criou a sala pode pausar e retomar a partida quando quiser, reiniciá-la (volta à rodada 1 com vidas cheias para todos) e expulsar pessoas. Quem é expulso não consegue voltar àquela sala pelo mesmo navegador. Se o dono sair, o posto passa para quem está há mais tempo na sala, e volta para o criador se ele retornar.
 - **Eliminados veem as cartas (opcional):** o dono decide, na criação da sala, no lobby ou no menu lateral (inclusive no meio da partida), se quem já foi eliminado pode ver a mão de quem ainda joga, tocando na placa do jogador. Vem desligada. Quem ainda está vivo nunca recebe as cartas dos outros.
 - **Saída no meio da rodada:** quem sai (ou é expulso) tem a rodada terminada por um bot e só então deixa a mesa.
@@ -136,15 +137,15 @@ A cada push e pull request, o GitHub Actions executa lint, typecheck, testes, bu
 
 Copie o `.env.example` para `.env`. Nada neste projeto exige segredos.
 
-| Variável               | Onde     | Para que serve                                                                                                                      |
-| ---------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `PORT`                 | servidor | Porta HTTP/WebSocket do servidor de jogo (padrão `3001`).                                                                           |
-| `CORS_ORIGINS`         | servidor | Origens autorizadas a conectar, separadas por vírgula (padrão `http://localhost:5173`).                                             |
-| `LOG_LEVEL`            | servidor | Nível de log: `debug`, `info`, `warn` ou `error`.                                                                                   |
-| `BOT_DELAY_MS`         | servidor | Milissegundos que o bot espera antes de jogar (padrão `2000`). Os testes de tela usam um valor baixo.                               |
-| `CENARIOS_DE_TESTE`    | servidor | Só desenvolvimento (padrão `false`; o Docker de dev liga). Libera a criação de salas de teste com bots. Nunca habilite em produção. |
-| `VITE_SERVER_URL`      | web      | URL pública do servidor de jogo. Fica exposta no navegador: nunca coloque nada sensível.                                            |
-| `WEB_PORT`             | Docker   | Opcional. Porta do frontend no host (padrão `5173`). Se mudar, inclua a nova origem em `CORS_ORIGINS`.                              |
+| Variável            | Onde     | Para que serve                                                                                                                      |
+| ------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`              | servidor | Porta HTTP/WebSocket do servidor de jogo (padrão `3001`).                                                                           |
+| `CORS_ORIGINS`      | servidor | Origens autorizadas a conectar, separadas por vírgula (padrão `http://localhost:5173`).                                             |
+| `LOG_LEVEL`         | servidor | Nível de log: `debug`, `info`, `warn` ou `error`.                                                                                   |
+| `BOT_DELAY_MS`      | servidor | Milissegundos que o bot espera antes de jogar (padrão `2000`). Os testes de tela usam um valor baixo.                               |
+| `CENARIOS_DE_TESTE` | servidor | Só desenvolvimento (padrão `false`; o Docker de dev liga). Libera a criação de salas de teste com bots. Nunca habilite em produção. |
+| `VITE_SERVER_URL`   | web      | URL pública do servidor de jogo. Fica exposta no navegador: nunca coloque nada sensível.                                            |
+| `WEB_PORT`          | Docker   | Opcional. Porta do frontend no host (padrão `5173`). Se mudar, inclua a nova origem em `CORS_ORIGINS`.                              |
 
 ### Testar com 10 jogadores
 

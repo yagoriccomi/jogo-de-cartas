@@ -126,16 +126,38 @@ function PausaDoDono({ souDono }: { readonly souDono: boolean }) {
   );
 }
 
+/** Um novato abriu o resumo das regras: todos sabem por que a mesa parou e até quando. */
+function LeituraDasRegras({
+  nome,
+  restanteMs,
+}: {
+  readonly nome: string;
+  readonly restanteMs: number;
+}) {
+  return (
+    <div className="votacao__pergunta">
+      <p className="votacao__titulo">Jogador noob lendo as regras!</p>
+      <p className="votacao__espera">
+        {nome} abriu o resumo das regras. A partida volta quando o resumo for fechado ou em{' '}
+        <strong>{formatarDuracao(restanteMs)}</strong>.
+      </p>
+    </div>
+  );
+}
+
 /**
  * Diálogo bloqueante: a partida fica congelada enquanto houver votação sobre quem caiu ou
  * enquanto o dono a mantiver pausada.
  */
 export function PainelPausa({ jogo, meuId }: Props) {
   const agora = useAgora(INTERVALO_RELOGIO_MS);
-  const { sala } = useApp();
+  const { sala, jogoRecebidoEm } = useApp();
   const pausa = jogo.pausa;
   if (pausa === null) return null;
   const votacoes = pausa.votacoes;
+  // Quem está lendo vê o próprio resumo, não este aviso.
+  const leitura = pausa.lendoRegras?.jogadorId === meuId ? null : pausa.lendoRegras;
+  if (!pausa.pausadaPeloDono && votacoes.length === 0 && !leitura) return null;
   const souDono = sala?.participantes.find((p) => p.id === meuId)?.ehAnfitriao ?? false;
 
   return (
@@ -146,6 +168,12 @@ export function PainelPausa({ jogo, meuId }: Props) {
           Partida pausada
         </h2>
       </div>
+      {leitura && (
+        <LeituraDasRegras
+          nome={jogo.jogadores.find((j) => j.id === leitura.jogadorId)?.apelido ?? 'Um jogador'}
+          restanteMs={jogoRecebidoEm + leitura.restanteMs - agora}
+        />
+      )}
       {pausa.pausadaPeloDono && <PausaDoDono souDono={souDono} />}
       {votacoes.map((votacao) => (
         <Votacao

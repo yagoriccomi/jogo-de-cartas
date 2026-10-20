@@ -39,6 +39,33 @@ test.describe('Mesa cheia (10 jogadores, 13 cartas)', () => {
     expect(coracao.width).toBeGreaterThanOrEqual(LARGURA_MINIMA_DO_CORACAO_PX);
   });
 
+  test('o resumo das regras abre no começo, cabe na tela e não volta depois de dispensado', async ({
+    page,
+  }) => {
+    await abrirCenario(page, { ...MESA_CHEIA, comResumoDasRegras: true });
+    const resumo = page.getByRole('dialog', { name: 'Regras em 1 minuto' });
+    await expect(resumo).toBeVisible({ timeout: ESPERA_DA_MESA_MS });
+    // A mesa só fica pausada depois que o servidor aceita: o aviso de espera confirma.
+    await expect(resumo.getByRole('status')).toContainText('esperando você');
+    await expect(resumo).toContainText('1×');
+
+    // Os dois botões ficam à vista sem rolar o diálogo, até no celular baixo.
+    expect(
+      await resumo.evaluate((caixa) => caixa.scrollHeight - caixa.clientHeight),
+    ).toBeLessThanOrEqual(1);
+    const tela = telaDe(page);
+    const dispensar = resumo.getByRole('button', { name: 'Não perguntar novamente' });
+    expect(contem(tela, await medir(dispensar))).toBe(true);
+    expect(contem(tela, await medir(resumo.getByRole('button', { name: 'Entendi' })))).toBe(true);
+
+    await dispensar.click();
+    await expect(resumo).toBeHidden();
+    await expect(page.locator('.sobreposicao')).toHaveCount(0);
+    await page.reload();
+    await expect(page.locator('.mesa')).toBeVisible({ timeout: ESPERA_DA_MESA_MS });
+    await expect(resumo).toBeHidden();
+  });
+
   test('o botão de reações fica longe dos números do palpite', async ({ page }) => {
     await abrirCenario(page);
     await expect(page.locator('.palpite')).toBeVisible({ timeout: ESPERA_DA_MESA_MS });

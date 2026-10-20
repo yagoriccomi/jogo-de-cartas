@@ -17,11 +17,28 @@ export interface Retangulo {
   readonly height: number;
 }
 
+/** Mesma chave e valor de `features/regras/preferencia.ts` no web. */
+const CHAVE_DO_RESUMO = 'fodinha:resumo-das-regras';
+const RESUMO_DISPENSADO = 'dispensado';
+
+interface OpcoesDoCenario {
+  readonly jogadores: number;
+  readonly cartas: number;
+  /** O resumo das regras abre no começo da partida e cobriria a mesa: só aparece se pedido. */
+  readonly comResumoDasRegras?: boolean;
+}
+
 /** Abre o cenário de teste de desenvolvimento: você + bots, já na rodada pedida. */
 export async function abrirCenario(
   page: Page,
-  { jogadores, cartas }: { jogadores: number; cartas: number } = MESA_CHEIA,
+  { jogadores, cartas, comResumoDasRegras = false }: OpcoesDoCenario = MESA_CHEIA,
 ): Promise<void> {
+  if (!comResumoDasRegras) {
+    await page.addInitScript(([chave, valor]) => localStorage.setItem(chave, valor), [
+      CHAVE_DO_RESUMO,
+      RESUMO_DISPENSADO,
+    ] as const);
+  }
   await page.goto(`/?cenario=${jogadores}x${cartas}`);
   await expect(page.locator('.mesa')).toBeVisible({ timeout: ESPERA_DA_MESA_MS });
 }

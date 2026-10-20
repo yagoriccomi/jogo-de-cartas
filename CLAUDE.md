@@ -22,6 +22,7 @@
 - Lugares e primeiro pé sorteados a cada partida/reinício (`Partida` com `GeradorAleatorio`); a mão é o vivo seguinte ao pé.
 - Desconexão > 10 s (carência) pausa a partida e abre votação de espera por ausente; todos NÃO → eliminado (bot termina a rodada). Pausa congela prazos e bots.
 - Entrada no meio da partida: senta na próxima rodada com a maior vida entre os vivos.
+- Resumo das regras (`ResumoDasRegras`): abre no começo de cada partida (rodada 1, palpites) até o jogador tocar "Não perguntar novamente neste computador" (localStorage `fodinha:resumo-das-regras`; os e2e o dispensam em `abrirCenario`). Aberto, pede `jogo:lerRegras`: a mesa inteira pausa (prazos e bots congelados) e os outros veem "Jogador noob lendo as regras!" com o tempo restante; no máximo `LIMITES.maxLeituraDasRegrasSegundos` (60 s), 1 vez por jogador por partida, um leitor por vez; cai/sai = leitura encerrada (`Sala.comecarLeituraDasRegras`).
 - Dono (criador; passa ao humano mais antigo e volta ao criador pelo mesmo `dispositivoId`): pausa/retoma a partida a qualquer momento (congela prazos e bots), reinicia a sala e expulsa (humano expulso fica banido pelo `dispositivoId`).
 - Opção da sala `mortosVeemCartas` (padrão desligada; só o dono muda, também no meio da partida por `sala:definirMortosVeemCartas`): eliminado recebe a mão dos outros em `maoRevelada` e a vê tocando na placa. Vivo nunca recebe mão alheia.
 - Saída/expulsão no meio da rodada: efetiva-se entre rodadas (`Partida.agendarSaida`), para não desfazer palpites e vazas.
