@@ -1,6 +1,7 @@
+import type { Reacao } from '@fodinha/shared';
 import { obterContexto } from './contextoDeAudio';
 import type { EventoDaMesa } from './eventos';
-import { obterVolumeEfeitos, volumeParaGanho } from './preferencia';
+import { obterVolumeEfeitos, obterVolumeReacoes, volumeParaGanho } from './preferencia';
 
 /** Volume geral: chiptune em onda quadrada é estridente, então fica bem abaixo do máximo. */
 const VOLUME_MESTRE = 0.16;
@@ -43,18 +44,29 @@ const NOTA = {
 
 let buferDeRuido: AudioBuffer | null = null;
 let saidaDosEfeitos: GainNode | null = null;
+let saidaDasReacoes: GainNode | null = null;
+
+function criarSaida(ctx: AudioContext): GainNode {
+  const ganho = ctx.createGain();
+  ganho.connect(ctx.destination);
+  return ganho;
+}
 
 /** Todos os efeitos passam por um ganho único, ajustado pelo volume de efeitos do menu. */
 function obterSaida(ctx: AudioContext): GainNode {
-  if (saidaDosEfeitos === null) {
-    saidaDosEfeitos = ctx.createGain();
-    saidaDosEfeitos.connect(ctx.destination);
-  }
+  saidaDosEfeitos ??= criarSaida(ctx);
   saidaDosEfeitos.gain.setValueAtTime(volumeParaGanho(obterVolumeEfeitos()), ctx.currentTime);
   return saidaDosEfeitos;
 }
 
-function tocarTom(ctx: AudioContext, base: number, tom: Tom): void {
+/** Canal próprio das reações: o jogador abaixa a farra da mesa sem perder os avisos do jogo. */
+function obterSaidaDasReacoes(ctx: AudioContext): GainNode {
+  saidaDasReacoes ??= criarSaida(ctx);
+  saidaDasReacoes.gain.setValueAtTime(volumeParaGanho(obterVolumeReacoes()), ctx.currentTime);
+  return saidaDasReacoes;
+}
+
+function tocarTom(ctx: AudioContext, base: number, tom: Tom, saida = obterSaida(ctx)): void {
   const inicio = base + (tom.inicio ?? 0);
   const fim = inicio + tom.duracao;
   const oscilador = ctx.createOscillator();
@@ -65,7 +77,7 @@ function tocarTom(ctx: AudioContext, base: number, tom: Tom): void {
   ganho.gain.setValueAtTime(SILENCIO, inicio);
   ganho.gain.linearRampToValueAtTime((tom.volume ?? 1) * VOLUME_MESTRE, inicio + ATAQUE_S);
   ganho.gain.exponentialRampToValueAtTime(SILENCIO, fim);
-  oscilador.connect(ganho).connect(obterSaida(ctx));
+  oscilador.connect(ganho).connect(saida);
   oscilador.start(inicio);
   oscilador.stop(fim + ATAQUE_S);
 }
@@ -94,7 +106,20 @@ function arpejo(ctx: AudioContext, base: number, passo: number, duracao: number,
 
 const EFEITOS: Record<EventoDaMesa, (ctx: AudioContext, base: number) => void> = {
   cartaJogada: (ctx, t) => tocarTom(ctx, t, { freq: NOTA.la4, ate: NOTA.mi5, duracao: 0.07 }),
-  minhaVez: (ctx, t) => arpejo(ctx, t, 0.13, 0.12, [NOTA.mi5, NOTA.la5, NOTA.mi6]),
+  // Campainha "plim-plom" em onda triangular, longa e repetida: os jogadores confundiam o aviso da
+  // vez (antes um arpejo quadrado) com o de vaza ganha.
+  minhaVez: (ctx, t) => {
+    const campainha: readonly (readonly [number, number])[] = [
+      [NOTA.sol5, 0],
+      [NOTA.mi5, 0.18],
+      [NOTA.sol5, 0.5],
+      [NOTA.mi5, 0.68],
+    ];
+    campainha.forEach(([freq, inicio]) =>
+      tocarTom(ctx, t, { freq, inicio, duracao: 0.34, onda: 'triangle', volume: 1.6 }),
+    );
+    tocarTom(ctx, t, { freq: NOTA.mi6, duracao: 0.05, volume: 0.35 });
+  },
   vazaMinha: (ctx, t) => arpejo(ctx, t, 0.07, 0.1, [NOTA.do5, NOTA.mi5, NOTA.sol5, NOTA.do6]),
   vazaDeOutro: (ctx, t) =>
     tocarTom(ctx, t, { freq: NOTA.sol3, duracao: 0.1, onda: 'triangle', volume: 0.8 }),
@@ -149,4 +174,50 @@ export function tocarEvento(evento: EventoDaMesa): void {
   if (ctx === null || ctx.state !== 'running' || obterVolumeEfeitos() === 0) return;
   const atraso = EVENTOS_DE_RESULTADO.has(evento) ? ATRASO_DO_RESULTADO_S : 0;
   EFEITOS[evento](ctx, ctx.currentTime + atraso);
+}
+
+/** Um som curto e reconhecível por reação, no mesmo timbre de fliperama dos efeitos. */
+const SONS_DAS_REACOES: Record<Reacao, readonly Tom[]> = {
+  // Risada: "ha-ha-ha" descendo.
+  '😂': [NOTA.mi5, NOTA.do5, NOTA.la4].map((freq, i) => ({
+    freq,
+    duracao: 0.09,
+    inicio: i * 0.12,
+  })),
+  // Fogo: subida rápida.
+  '🔥': [{ freq: NOTA.do5, ate: NOTA.do6 * 2, duracao: 0.3, onda: 'sawtooth', volume: 0.6 }],
+  // Susto: buzina descendo.
+  '😱': [{ freq: NOTA.la5, ate: NOTA.la4 / 2, duracao: 0.45, onda: 'sawtooth', volume: 0.7 }],
+  // Palmas: arpejo curto subindo.
+  '👏': [NOTA.do5, NOTA.mi5, NOTA.sol5].map((freq, i) => ({
+    freq,
+    duracao: 0.07,
+    inicio: i * 0.06,
+  })),
+  // Palhaço: "fom-fom" de buzininha.
+  '🤡': [0, 0.2].map((inicio) => ({
+    freq: NOTA.sol3,
+    duracao: 0.14,
+    inicio,
+    onda: 'sawtooth' as const,
+  })),
+  // Sorte: brilho agudo com eco.
+  '🍀': [1, 0.5, 0.25].map((volume, i) => ({
+    freq: NOTA.mi6,
+    duracao: 0.12,
+    inicio: i * 0.13,
+    onda: 'triangle' as const,
+    volume,
+  })),
+  // Choro: glissando triste.
+  '😭': [{ freq: NOTA.mi5, ate: NOTA.sol4, duracao: 0.6, onda: 'triangle', volume: 1.4 }],
+  // Reza: dois bips.
+  '🙏': [0, 0.16].map((inicio) => ({ freq: NOTA.si5, duracao: 0.08, inicio })),
+};
+
+export function tocarReacao(reacao: Reacao): void {
+  const ctx = obterContexto();
+  if (ctx === null || ctx.state !== 'running' || obterVolumeReacoes() === 0) return;
+  const saida = obterSaidaDasReacoes(ctx);
+  for (const tom of SONS_DAS_REACOES[reacao]) tocarTom(ctx, ctx.currentTime, tom, saida);
 }

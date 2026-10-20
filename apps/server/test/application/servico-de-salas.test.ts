@@ -10,7 +10,7 @@ import type { Notificador, Relogio } from '../../src/application/portas';
 import { ServicoDeSalas } from '../../src/application/servico-de-salas';
 import { EstrategiaSimples } from '../../src/domain/estrategia-bot';
 import { RepositorioDeSalasEmMemoria } from '../../src/infrastructure/adaptadores';
-import { geradorComSemente } from '../apoio';
+import { BOTS_CALADOS, geradorComSemente } from '../apoio';
 
 const PRAZO_MS = 30_000;
 const CARENCIA_MS = 10_000;
@@ -84,10 +84,11 @@ beforeEach(() => {
     relogio,
     estrategia: new EstrategiaSimples(),
     registrador: silencioso,
+    gerarAleatorio: BOTS_CALADOS,
     tempos: {
-      prazoDaVezMs: PRAZO_MS,
       atrasoDoBotMs: ATRASO_BOT_MS,
       pausaFimDeRodadaMs: PAUSA_FIM_RODADA_MS,
+      pausaExtraRodadaCegaMs: 0,
       carenciaDeDesconexaoMs: CARENCIA_MS,
     },
   });
@@ -310,12 +311,15 @@ describe('ServicoDeSalas — partida', () => {
     servico.iniciarPartida(ator(dono));
     const estado = partidaDe(dono);
     expect(estado?.fase).toBe('palpites');
-    expect(estado?.jogadores[0]?.apelido).toBe('Ana');
-    expect(estado?.jogadores[1]?.ehBot).toBe(true);
+    // Os lugares são sorteados: procura cada um pelo id, não pela posição.
+    const ana = estado?.jogadores.find((j) => j.id === dono.jogadorId);
+    const bot = estado?.jogadores.find((j) => j.ehBot);
+    expect(ana?.apelido).toBe('Ana');
+    expect(bot).toBeDefined();
     expect(estado?.idDoPrimeiro).not.toBeNull();
     // Rodada cega: o humano vê a carta do bot, mas não a própria.
-    expect(estado?.jogadores[1]?.cartaNaTesta).not.toBeNull();
-    expect(estado?.jogadores[0]?.cartaNaTesta).toBeNull();
+    expect(bot?.cartaNaTesta).not.toBeNull();
+    expect(ana?.cartaNaTesta).toBeNull();
   });
 
   it('deveJogarPeloHumanoQuandoOPrazoEstouraEInformarOTempoRestante', () => {
@@ -332,6 +336,36 @@ describe('ServicoDeSalas — partida', () => {
 
     relogio.avancar(PRAZO_MS);
     expect(partidaDe(dono)?.jogadores[0]?.palpite).not.toBeNull();
+  });
+
+  it('deveUsarOPrazoEscolhidoNaSala', () => {
+    const dono = servico.criarSala({
+      apelido: 'Ana',
+      configuracao: { ...CONFIGURACAO_PADRAO, prazoDaVezSegundos: 10 },
+      dispositivoId: 'disp-ana',
+    });
+    servico.adicionarBot(ator(dono));
+    servico.iniciarPartida(ator(dono));
+    expect(partidaDe(dono)?.prazoDaVezRestanteMs).toBe(10_000);
+
+    relogio.avancar(10_000);
+    expect(partidaDe(dono)?.jogadores.find((j) => j.id === dono.jogadorId)?.palpite).not.toBeNull();
+  });
+
+  it('naoDeveJogarPeloHumanoQuandoASalaNaoTemLimiteDeTempo', () => {
+    const dono = servico.criarSala({
+      apelido: 'Ana',
+      configuracao: { ...CONFIGURACAO_PADRAO, prazoDaVezSegundos: null },
+      dispositivoId: 'disp-ana',
+    });
+    servico.adicionarBot(ator(dono));
+    servico.iniciarPartida(ator(dono));
+
+    relogio.avancar(PRAZO_MS * 10);
+    const estado = partidaDe(dono);
+    expect(estado?.idDaVez).toBe(dono.jogadorId);
+    expect(estado?.prazoDaVezRestanteMs).toBeNull();
+    expect(estado?.jogadores.find((j) => j.id === dono.jogadorId)?.palpite).toBeNull();
   });
 
   it('deveLevarAPartidaAteOFimSoComPrazosEBots', () => {
@@ -525,7 +559,9 @@ describe('ServicoDeSalas — pausa pelo dono', () => {
 
     servico.retomar(ator(dono));
     expect(partidaDe(dono)?.pausa).toBeNull();
-    expect(partidaDe(dono)?.prazoDaVezEm ?? 0).toBeGreaterThan(0);
+    // Retomada, a mesa volta a andar: o bot joga ou o prazo do humano estoura e o servidor joga.
+    relogio.avancar(PRAZO_MS + ATRASO_BOT_MS);
+    expect(JSON.stringify(partidaDe(dono)?.jogadores)).not.toBe(fotografia);
   });
 
   it('deveRecusarJogadasEnquantoPausada', () => {

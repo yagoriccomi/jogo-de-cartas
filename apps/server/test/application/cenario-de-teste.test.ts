@@ -1,4 +1,4 @@
-import { LIMITES } from '@fodinha/shared';
+import { CONFIGURACAO_PADRAO, LIMITES } from '@fodinha/shared';
 import { describe, expect, it } from 'vitest';
 import { ator, montarCenario } from '../apoio';
 
@@ -18,6 +18,8 @@ describe('ServicoDeSalas — criarCenario', () => {
       quantidadeBaralhos: LIMITES.maxBaralhos,
       vidasIniciais: LIMITES.maxVidas,
       incluirOitoNoveDez: false,
+      mortosVeemCartas: false,
+      prazoDaVezSegundos: CONFIGURACAO_PADRAO.prazoDaVezSegundos,
     });
     expect(sala?.emPartida).toBe(true);
     const jogo = partidaDe(ator(sessao));

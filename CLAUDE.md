@@ -17,12 +17,17 @@
 - Cartas iguais se anulam (a próxima maior vence; se todas se anulam, ninguém leva a vaza).
 - Rodadas: 1 carta → máximo possível → volta a 1. A rodada de 1 carta é **cega** (vê-se a carta dos outros, não a própria); terminados os palpites, todas as cartas vão sozinhas à mesa e a vaza é resolvida (`Partida.revelarRodadaCega`).
 - Perde 1 vida por vaza de diferença entre palpite e resultado. O "pé" (último a palpitar) não pode fechar a soma.
-- Prazo da vez (`TURN_TIMEOUT_SECONDS`): estourou, o servidor joga automaticamente.
+- Prazo da vez por sala (`prazoDaVezSegundos`: 10 a 120 s, padrão 30, ou `null` = sem limite; degraus no `ConfiguracaoControles`): estourou, o servidor joga automaticamente e todos os bots da mesa reagem com emoji sorteado.
+- Pausa de fim de rodada: 10 s (3 s da última vaza parada + voo + ~6 s de resultado), mais 4 s quando a rodada era cega (`pausaExtraRodadaCegaMs`); o cliente segura a última vaza (`PAUSA_DA_ULTIMA_VAZA_MS`) e a revelação cega (`useAnimacaoDeVaza`).
+- Lugares e primeiro pé sorteados a cada partida/reinício (`Partida` com `GeradorAleatorio`); a mão é o vivo seguinte ao pé.
 - Desconexão > 10 s (carência) pausa a partida e abre votação de espera por ausente; todos NÃO → eliminado (bot termina a rodada). Pausa congela prazos e bots.
 - Entrada no meio da partida: senta na próxima rodada com a maior vida entre os vivos.
 - Dono (criador; passa ao humano mais antigo e volta ao criador pelo mesmo `dispositivoId`): pausa/retoma a partida a qualquer momento (congela prazos e bots), reinicia a sala e expulsa (humano expulso fica banido pelo `dispositivoId`).
+- Opção da sala `mortosVeemCartas` (padrão desligada; só o dono muda, também no meio da partida por `sala:definirMortosVeemCartas`): eliminado recebe a mão dos outros em `maoRevelada` e a vê tocando na placa. Vivo nunca recebe mão alheia.
 - Saída/expulsão no meio da rodada: efetiva-se entre rodadas (`Partida.agendarSaida`), para não desfazer palpites e vazas.
+- Seletores do jogador em jogo (cartas, palpite, reações): 1 toque seleciona, 2 rápidos confirmam (`useDuploToque`; Enter/Espaço confirmam direto).
 - A mão vai ao cliente ordenada da mais forte para a mais fraca (o cliente não reordena).
+- Bots reagem: a cada carta jogada, 10% de chance de um emoji sorteado (`CHANCE_DE_REACAO_DO_BOT`, sorteio injetado no `CondutorDePartidas`).
 - Plano dessas regras: `docs/planos/PLANO-pausa-entrada-moderacao.md`.
 
 **Fora do escopo do MVP** (YAGNI [#8]): login/contas, banco de dados, histórico/ranking, escala horizontal, chat, sons e animações elaboradas. São a fase 2.
@@ -31,7 +36,7 @@
 
 **Identidade visual aprovada:** "Feltro + neon Vice City" (fundo #120720, feltro #0d3a3c, neon rosa #ff2a8a e ciano #2de2e6, `Yellowtail` + `Kanit`; números em `Jersey 15`, escolhida por distinguir bem 2, 3 e 8 em tamanho pequeno) com cartas em pixel art (valor grande; naipe pequeno nas comuns, grande e holográfico só na manilha). Símbolos pixel de "mão" (abre a rodada) e "pé" (último a palpitar) no canto do status.
 
-**Mesa (decisões de layout):** a partida nunca rola a página (`.app` com `100dvh`; as áreas internas encolhem, cartas da mesa medidas por `cqw/cqh`). Linha de cima: a carta que está ganhando sozinha à esquerda e a pilha das demais válidas (forte → fraca, cada uma por cima da anterior). Linha de baixo: as anuladas. Vaza ganha vira montinho no jogador (no celular o destino é a caixinha "Fez"); vaza toda empatada vira montinho no canto inferior direito do feltro (`vazasEmpatadas`). Palpite dentro do feltro; placar e regras ilustradas no topo, que no celular fica recolhido atrás de uma alça.
+**Mesa (decisões de layout):** a partida nunca rola a página nem deixa arrastar além da tela (`html`/`body` presos e `overscroll-behavior: none`; o que precisar aparecer se sobrepõe à mesa; `.app` com `100dvh`; as áreas internas encolhem, cartas da mesa medidas por `cqw/cqh`). Linha de cima: a carta que está ganhando sozinha à esquerda e a pilha das demais válidas (forte → fraca, cada uma por cima da anterior). Linha de baixo: as anuladas. O dono da carta líder aparece sempre acima dela; nas demais, ao passar o mouse/focar/tocar (contorno rosa). Vaza ganha vira montinho no jogador (no celular o destino é a caixinha "Fez"); vazas todas empatadas viram um só monte abaixo da manilha (`MonteDeEmpates`; no celular só o contador; no computador a coluna da vira vira duas colunas). Contador da vaza (`n/total`) acima da vira. Placas de cima na ordem de jogo (`emOrdemDeJogo`: mão à esquerda, pé à direita, eliminados no fim); no computador têm largura mínima e a faixa rola acompanhando a vez, como no celular. Painel de palpite: "Vai fazer quantas?", resumo "Rodada de N cartas | Saldo" ao lado do Confirmar e "Mostrar mais" recolhido (lista de quem já palpitou e "depois de você +K") abaixo do Confirmar, para o botão nunca sair de vista. Sinais da vez: faixa "Sua vez!", mão pulsando, campainha própria, título da aba e rolagem das placas até quem joga. Fundos rosa com texto branco usam `--rosa-forte` (contraste AA); o neon `--rosa` fica para brilhos e contornos. Palpite dentro do feltro; placar e regras ilustradas no topo, que no celular fica recolhido atrás de uma alça.
 
 ## Stack Tecnológica e Ferramentas
 

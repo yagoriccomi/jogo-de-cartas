@@ -12,7 +12,7 @@ import type {
   VazaResolvida,
 } from '@fodinha/shared';
 import { LIMITES, NAIPES } from '@fodinha/shared';
-import type { GeradorAleatorio } from './aleatoriedade';
+import { embaralhar, type GeradorAleatorio } from './aleatoriedade';
 import { montarBaralhoEmbaralhado, totalDeCartas, valoresEmJogo } from './baralho';
 import { validarConfiguracao } from './configuracao';
 import { ErroDeRegra } from './erros';
@@ -50,6 +50,7 @@ export interface JogadorNaVisao {
   readonly vazasGanhas: readonly VazaGanha[];
   readonly cartasNaMao: number;
   readonly cartaNaTesta: Carta | null;
+  readonly maoRevelada: readonly Carta[] | null;
   readonly saiAoFimDaRodada: boolean;
 }
 
@@ -112,13 +113,17 @@ export class Partida {
   private vencedores: string[] = [];
 
   private constructor(
-    private readonly configuracao: ConfiguracaoPartida,
+    private configuracao: ConfiguracaoPartida,
     jogadorIds: readonly string[],
     private readonly gerarAleatorio: GeradorAleatorio,
     private readonly cartasNaPrimeiraRodada: number | null,
   ) {
     this.valores = valoresEmJogo(configuracao.incluirOitoNoveDez);
-    this.jogadores = jogadorIds.map((id) => this.novoJogador(id, configuracao.vidasIniciais));
+    // Lugares sorteados a cada partida (e a cada reinício): a ordem de chegada na sala não decide
+    // quem senta ao lado de quem. O primeiro pé também é sorteado; a mão é sempre o seguinte.
+    this.jogadores = embaralhar(jogadorIds, gerarAleatorio).map((id) =>
+      this.novoJogador(id, configuracao.vidasIniciais),
+    );
     this.indiceDoPe = Math.floor(gerarAleatorio() * jogadorIds.length);
   }
 
@@ -332,7 +337,15 @@ export class Partida {
     return this.jogador(this.indiceDe(jogadorId)).mao;
   }
 
-  /** Visão sem nenhuma mão revelada: para espectadores ou para jogadores eliminados. */
+  /** Única opção que muda com a partida em andamento: não altera regra, só a visão dos eliminados. */
+  definirMortosVeemCartas(mortosVeemCartas: boolean): void {
+    this.configuracao = { ...this.configuracao, mortosVeemCartas };
+  }
+
+  /**
+   * Visão sem mão alheia revelada (salvo a carta na testa da rodada cega), para espectadores e
+   * jogadores. Exceção: com `mortosVeemCartas`, o eliminado vê a mão dos outros.
+   */
   visaoPara(jogadorId: string | null): VisaoDaPartida {
     const indiceObservador = jogadorId === null ? null : this.indiceDe(jogadorId);
     const observador = indiceObservador === null ? null : this.jogador(indiceObservador);
@@ -355,6 +368,7 @@ export class Partida {
         vazasGanhas: [...jogador.vazasGanhas],
         cartasNaMao: jogador.mao.length,
         cartaNaTesta: this.cartaNaTestaVistaPor(jogador, observador),
+        maoRevelada: this.maoReveladaPara(jogador, observador),
         saiAoFimDaRodada: this.saidasPendentes.has(jogador.id),
       })),
       idDoPe: this.fase === 'encerrada' ? null : this.jogador(this.indiceDoPe).id,
@@ -537,13 +551,27 @@ export class Partida {
     return jogador.mao[0] ?? null;
   }
 
-  /** Mão ordenada da mais forte para a mais fraca; empate de valor desempata pelo naipe. */
+  /** Eliminado não joga mais: ver a mão alheia não lhe dá vantagem, só diverte quem assiste. */
+  private maoReveladaPara(
+    jogador: JogadorNaPartida,
+    observador: JogadorNaPartida | null,
+  ): Carta[] | null {
+    const podeVer = this.configuracao.mortosVeemCartas && !!observador?.eliminado;
+    if (!podeVer || jogador === observador) return null;
+    return this.ordenarDaMaisForte(jogador.mao);
+  }
+
   private maoVistaPeloDono(dono: JogadorNaPartida): CartaNaMao[] {
     if (this.rodadaCega) return dono.mao.map((carta) => ({ id: carta.id, oculta: true as const }));
+    return this.ordenarDaMaisForte(dono.mao);
+  }
+
+  /** Da mais forte para a mais fraca; empate de valor desempata pelo naipe. */
+  private ordenarDaMaisForte(mao: readonly Carta[]): Carta[] {
     const forca = (carta: Carta) =>
       forcaDaCarta(carta, this.manilha as Valor, this.valores) * NAIPES.length +
       NAIPES.indexOf(carta.naipe);
-    return [...dono.mao].sort((a, b) => forca(b) - forca(a));
+    return [...mao].sort((a, b) => forca(b) - forca(a));
   }
 
   private exigirVez(jogadorId: string): number {

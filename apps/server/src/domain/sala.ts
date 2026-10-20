@@ -6,10 +6,11 @@ import {
   type VotacaoEspera,
 } from '@fodinha/shared';
 import type { GeradorAleatorio } from './aleatoriedade';
-import { validarConfiguracao } from './configuracao';
+import { validarConfiguracao, validarMortosVeemCartas } from './configuracao';
 import { ErroDeRegra } from './erros';
 import { Partida } from './partida';
 
+const MS_POR_SEGUNDO = 1000;
 export interface Participante {
   readonly id: string;
   readonly apelido: string;
@@ -64,6 +65,12 @@ export class Sala {
     this.anfitriaoId = criador.id;
     this.criadorId = criador.id;
     this.dispositivoDoCriador = criador.dispositivoId;
+  }
+
+  /** `null` = sem limite: ninguém age pelo humano que demora. */
+  get prazoDaVezMs(): number | null {
+    const segundos = this.configuracao.prazoDaVezSegundos;
+    return segundos === null ? null : segundos * MS_POR_SEGUNDO;
   }
 
   get partida(): Partida | null {
@@ -150,6 +157,14 @@ export class Sala {
     this.exigirAnfitriao(solicitanteId);
     this.exigirLobby();
     this.configuracao = validarConfiguracao(configuracao);
+  }
+
+  /** Diferente das outras opções, vale no meio da partida: só muda o que os eliminados enxergam. */
+  definirMortosVeemCartas(solicitanteId: string, permitir: unknown): void {
+    this.exigirAnfitriao(solicitanteId);
+    const mortosVeemCartas = validarMortosVeemCartas(permitir);
+    this.configuracao = { ...this.configuracao, mortosVeemCartas };
+    this.partidaAtual?.definirMortosVeemCartas(mortosVeemCartas);
   }
 
   iniciarPartida(

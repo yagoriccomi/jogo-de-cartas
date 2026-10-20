@@ -10,8 +10,14 @@ import { centroDe, ESCALONAMENTO_DA_REVELACAO_MS } from './mesa-voos';
 
 /** O servidor limpa a mesa no mesmo estado que fecha a vaza: seguramos as cartas para serem vistas. */
 const PAUSA_ANTES_DO_VOO_MS = 800;
-/** Na rodada cega as cartas chegam desvirando; depois de pousarem, todos precisam de um instante para ler. */
-const LEITURA_DA_REVELACAO_MS = 900;
+/**
+ * A última vaza decide o resultado da rodada e jogadores reclamaram que ela sumia rápido demais.
+ * As vazas do meio continuam curtas: com bots jogando a cada ~2 s, uma pausa maior seria
+ * atropelada pela próxima carta.
+ */
+const PAUSA_DA_ULTIMA_VAZA_MS = 3000;
+/** Na rodada cega as cartas chegam desvirando; todos precisam descobrir a própria carta. */
+const LEITURA_DA_REVELACAO_MS = 2500;
 const DURACAO_DO_VOO_MS = 950;
 /** Fração do voo gasta juntando as cartas num montinho antes de ele sair andando. */
 const FRACAO_JUNTANDO = 0.38;
@@ -29,6 +35,8 @@ interface Cena {
   readonly fase: FaseDaCena;
   /** Rodada cega: as cartas ainda estão chegando à mesa, então a espera é maior. */
   readonly revelacao: boolean;
+  /** Fechou a rodada: fica mais tempo na mesa antes de voar. */
+  readonly ultima: boolean;
 }
 
 export interface AnimacaoDeVaza {
@@ -60,6 +68,7 @@ export function useAnimacaoDeVaza(
   ultimaVaza: VazaResolvida | null,
   mesaVazia: boolean,
   rodadaCega: boolean,
+  fimDeRodada: boolean,
 ): AnimacaoDeVaza {
   const chave = chaveDaVaza(ultimaVaza);
   const [chaveVista, definirChaveVista] = useState(chave);
@@ -72,7 +81,11 @@ export function useAnimacaoDeVaza(
     definirChaveVista(chave);
     // Mesa já ocupada = a próxima vaza começou rápido; não há onde exibir a cena.
     const animar = ultimaVaza !== null && mesaVazia && !prefereMenosMovimento();
-    definirCena(animar ? { vaza: ultimaVaza, fase: 'espera', revelacao: rodadaCega } : null);
+    definirCena(
+      animar
+        ? { vaza: ultimaVaza, fase: 'espera', revelacao: rodadaCega, ultima: fimDeRodada }
+        : null,
+    );
   }
 
   // Se alguém jogou na vaza seguinte, a cena não cabe mais na mesa: derivada, sem efeito.
@@ -80,6 +93,7 @@ export function useAnimacaoDeVaza(
   const fase = ativa?.fase ?? null;
   const vazaAtiva = ativa?.vaza ?? null;
   const revelacao = ativa?.revelacao ?? false;
+  const ultima = ativa?.ultima ?? false;
 
   useEffect(() => {
     if (fase !== 'espera') return;
@@ -91,10 +105,10 @@ export function useAnimacaoDeVaza(
       : 0;
     const temporizador = setTimeout(
       () => definirCena((atual) => (atual ? { ...atual, fase: 'voo' } : atual)),
-      PAUSA_ANTES_DO_VOO_MS + tempoDeChegada,
+      (ultima ? PAUSA_DA_ULTIMA_VAZA_MS : PAUSA_ANTES_DO_VOO_MS) + tempoDeChegada,
     );
     return () => clearTimeout(temporizador);
-  }, [fase, vazaAtiva, revelacao]);
+  }, [fase, vazaAtiva, revelacao, ultima]);
 
   useEffect(() => {
     if (fase !== 'voo' || vazaAtiva === null) return;

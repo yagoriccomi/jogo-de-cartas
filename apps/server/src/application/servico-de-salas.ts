@@ -1,4 +1,5 @@
 import {
+  CONFIGURACAO_PADRAO,
   LIMITES,
   REACOES,
   type ConfiguracaoPartida,
@@ -28,6 +29,8 @@ const CONFIGURACAO_DE_CENARIO: ConfiguracaoPartida = {
   quantidadeBaralhos: LIMITES.maxBaralhos,
   vidasIniciais: LIMITES.maxVidas,
   incluirOitoNoveDez: false,
+  mortosVeemCartas: false,
+  prazoDaVezSegundos: CONFIGURACAO_PADRAO.prazoDaVezSegundos,
 };
 
 /** Evita que alguém inunde a mesa de emojis; vale por jogador, além do limitador do socket. */
@@ -166,6 +169,10 @@ export class ServicoDeSalas {
 
   configurar(ator: Ator, configuracao: unknown): void {
     this.alterar(ator, (sala) => sala.configurar(ator.jogadorId, configuracao));
+  }
+
+  definirMortosVeemCartas(ator: Ator, permitir: unknown): void {
+    this.alterar(ator, (sala) => sala.definirMortosVeemCartas(ator.jogadorId, permitir));
   }
 
   adicionarBot(ator: Ator): void {

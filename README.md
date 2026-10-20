@@ -16,30 +16,36 @@ Fodinha é um jogo de cartas multiplayer online, jogado direto no navegador. Cri
 - **Rodada cega:** na rodada de 1 carta, você não vê a sua, mas vê a dos outros jogadores (na testa). Assim que todos palpitam, as cartas vão sozinhas para a mesa, o resultado sai e o jogo segue.
 - **Vidas:** ao fim da rodada, cada jogador perde 1 vida por vaza de diferença entre o palpite e o que ganhou. Quem zera vidas é eliminado; vence o último de pé.
 - **Mesa:** até 10 participantes, com até 4 bots.
-- **Tempo da vez:** se o jogador não agir dentro do prazo, o servidor joga por ele automaticamente.
+- **Tempo da vez:** o dono escolhe, ao criar a sala ou no lobby, quanto tempo cada um tem para palpitar ou jogar: de 10 segundos a 2 minutos (padrão 30 s), ou sem limite. Estourado o prazo, o servidor joga pelo jogador e todos os bots da mesa reagem com um emoji sorteado.
 - **Queda de conexão:** se alguém fica mais de 10 segundos desconectado, a partida pausa e os jogadores votam "Deseja esperar o retorno de [apelido]?". Basta um SIM para continuar esperando; se todos votarem NÃO, um bot termina a rodada dele e ele é eliminado.
 - **Entrar no meio:** dá para entrar com a partida em andamento. Quem chega assiste até a próxima rodada e senta com a mesma quantidade de vidas do jogador vivo com mais vidas.
 - **Dono da sala:** quem criou a sala pode pausar e retomar a partida quando quiser, reiniciá-la (volta à rodada 1 com vidas cheias para todos) e expulsar pessoas. Quem é expulso não consegue voltar àquela sala pelo mesmo navegador. Se o dono sair, o posto passa para quem está há mais tempo na sala, e volta para o criador se ele retornar.
+- **Eliminados veem as cartas (opcional):** o dono decide, na criação da sala, no lobby ou no menu lateral (inclusive no meio da partida), se quem já foi eliminado pode ver a mão de quem ainda joga, tocando na placa do jogador. Vem desligada. Quem ainda está vivo nunca recebe as cartas dos outros.
 - **Saída no meio da rodada:** quem sai (ou é expulso) tem a rodada terminada por um bot e só então deixa a mesa.
 - **Mão organizada:** suas cartas aparecem sempre da mais forte (à esquerda) para a mais fraca (à direita), considerando a manilha da rodada.
-- **Mesa:** a carta que está ganhando fica sozinha à esquerda; as demais que valem formam uma pilha ao lado, da mais forte para a mais fraca. As que empataram e se anularam ficam na linha de baixo. Cada vaza ganha vira um montinho na frente de quem ganhou; vaza toda empatada vira um montinho no canto inferior direito da mesa.
+- **Mesa:** a carta que está ganhando fica sozinha à esquerda, com o nome de quem a jogou em cima; as demais que valem formam uma pilha ao lado, da mais forte para a mais fraca. Passe o mouse ou toque numa carta para ver quem a jogou. As que empataram e se anularam ficam na linha de baixo. Cada vaza ganha vira um montinho na frente de quem ganhou; as vazas todas empatadas vão para um monte abaixo da manilha (no celular, só o contador). Acima da vira, um contador mostra a vaza da rodada (ex.: 2/5).
+- **Ritmo:** a última vaza de cada rodada fica 3 segundos na mesa antes de ir para o montinho, e o resultado da rodada fica uns 6 segundos na tela (uns 4 a mais nas rodadas cegas, que se resolvem sozinhas). Quando a partida acaba, uma tela celebra o vencedor.
+- **Sua vez:** a faixa "Sua vez!" cruza a mesa, suas cartas pulsam em rosa, toca uma campainha própria, o título da aba muda e as placas de cima rolam acompanhando quem está jogando.
+- **Lugares e ordem:** a cada partida (e a cada reinício) os lugares na mesa são sorteados, assim como o primeiro pé; a mão é sempre quem vem depois dele. As placas de cima seguem a ordem de jogo: a mão à esquerda, o pé à direita.
+- **Painel de palpite:** mostra as cartas da rodada e o saldo (cartas menos a soma dos palpites já dados; pode ficar negativo). "Mostrar mais" abre quem já palpitou, em ordem, e quantos ainda palpitam depois de você.
 
 ## Features
 
 - Salas por código, sem cadastro: entre como convidado com um apelido.
-- Reações rápidas durante a partida: o botão 😀 abre 8 emojis que aparecem por uns 2,5 segundos sobre a placa de quem reagiu (no máximo uma a cada 1,5 segundo por jogador).
+- Reações rápidas durante a partida: o botão 😀 abre 8 emojis que aparecem por uns 2,5 segundos sobre a placa de quem reagiu (no máximo uma a cada 1,5 segundo por jogador). Os bots também reagem: a cada carta que jogam, há 10% de chance de mandarem um emoji sorteado. Cada emoji tem seu som, com volume próprio ("Reações") no menu de som. Cada emoji também tem uma animação própria, e 1 em cada 5 trevos 🍀 sai dourado. Se quem reagiu está fora da faixa de placas visível, um aviso com o emoji e o nome aparece na borda daquele lado; tocar nele leva até a placa.
+- Em jogo, tudo segue o mesmo gesto: 1 toque seleciona e 2 toques rápidos confirmam (cartas, palpite e reações; o palpite mantém o botão Confirmar). No celular a tela fica travada: arrastar não rola nem mostra a borda do site.
 - Convite por link com mensagem pronta: compartilhamento nativo do aparelho, botão direto do WhatsApp ou cópia do link; o link preenche o código da sala.
 - Site responsivo e instalável no celular (abre em tela cheia, com ícone na tela inicial).
 - Visual "Vice City": mesa de feltro com neon e cartas em pixel art; manilhas com brilho holográfico.
-- Anfitrião configura a partida (baralhos, vidas, 8-9-10), adiciona bots e inicia.
+- Anfitrião configura a partida (baralhos, vidas, 8-9-10, tempo da vez), adiciona bots e inicia.
 - Bots que palpitam pela força da mão (e, na rodada cega, pelas cartas que veem na testa dos outros) e jogam para acertar o palpite.
 - Servidor autoritativo: o cliente só recebe a própria mão, a vira, as cartas jogadas e, na rodada cega, a carta dos outros.
 - Reconexão por token após recarregar a página.
 - Prazo da vez com jogada automática, para a mesa nunca travar.
-- Tutorial interativo na tela inicial: uma rodada de 3 cartas e uma rodada cega roteiradas contra 2 bots, com cartas sempre iguais e balões de fala apontando cada parte da mesa. Funciona sem servidor.
+- Tutorial interativo na tela inicial: uma rodada de 3 cartas e uma rodada cega roteiradas contra 2 bots, com cartas sempre iguais e balões de fala apontando cada parte da mesa. Tem uma versão rápida, que pula os passos só explicativos. Funciona sem servidor.
 - Sons de fliperama (sintetizados, sem arquivos de áudio) e vibração na sua vez e ao perder vida.
 - Música de fundo tranquila no lobby e na mesa, no clima cassino anos 80: city pop com pé na bossa (piano elétrico, baixo sincopado, aro de caixa, chocalho e sinos com eco, sem vocais), gerada na hora pelo navegador com Web Audio: não há arquivo de música nem licença de terceiros. Começa depois do primeiro toque na tela (regra de autoplay dos navegadores) e pausa quando a aba fica oculta.
-- Menu lateral com o mudo geral (som, música e vibração) e volumes separados de música (começa em 50%) e de efeitos; as escolhas ficam salvas no aparelho.
+- Menu lateral com o mudo geral (som, música e vibração) e volumes separados de música (começa em 50%), de efeitos e de reações (começa em 70%); as escolhas ficam salvas no aparelho.
 - Placar a qualquer momento (vidas, palpite e vazas feitas de todos) e guia de regras ilustrado, passo a passo.
 - Partida sem rolar a tela: no celular o topo fica recolhido (toque na alça ou deslize para baixo a partir do topo para abrir) e o palpite aparece dentro da mesa, sem cobrir a mão nem as suas vidas.
 
@@ -110,7 +116,7 @@ Detalhes do ambiente Docker:
    npm run dev
    ```
 
-   Ou separadamente: `npm run dev:server` e `npm run dev:web`.
+   Ou separadamente: `npm run dev:server` e `npm run dev:web`. O servidor lê o `.env` da raiz (porta em `PORT`); o web aponta para `VITE_SERVER_URL`. Se os dois não baterem, a tela de conexão avisa que o servidor local não respondeu.
 
 ## Testes e Qualidade
 
@@ -131,16 +137,15 @@ A cada push e pull request, o GitHub Actions executa lint, typecheck, testes, bu
 
 Copie o `.env.example` para `.env`. Nada neste projeto exige segredos.
 
-| Variável               | Onde     | Para que serve                                                                                                                      |
-| ---------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `PORT`                 | servidor | Porta HTTP/WebSocket do servidor de jogo (padrão `3001`).                                                                           |
-| `CORS_ORIGINS`         | servidor | Origens autorizadas a conectar, separadas por vírgula (padrão `http://localhost:5173`).                                             |
-| `LOG_LEVEL`            | servidor | Nível de log: `debug`, `info`, `warn` ou `error`.                                                                                   |
-| `BOT_DELAY_MS`         | servidor | Milissegundos que o bot espera antes de jogar (padrão `2000`). Os testes de tela usam um valor baixo.                               |
-| `TURN_TIMEOUT_SECONDS` | servidor | Segundos que o jogador tem para agir antes da jogada automática (padrão `30`).                                                      |
-| `CENARIOS_DE_TESTE`    | servidor | Só desenvolvimento (padrão `false`; o Docker de dev liga). Libera a criação de salas de teste com bots. Nunca habilite em produção. |
-| `VITE_SERVER_URL`      | web      | URL pública do servidor de jogo. Fica exposta no navegador: nunca coloque nada sensível.                                            |
-| `WEB_PORT`             | Docker   | Opcional. Porta do frontend no host (padrão `5173`). Se mudar, inclua a nova origem em `CORS_ORIGINS`.                              |
+| Variável            | Onde     | Para que serve                                                                                                                      |
+| ------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`              | servidor | Porta HTTP/WebSocket do servidor de jogo (padrão `3001`).                                                                           |
+| `CORS_ORIGINS`      | servidor | Origens autorizadas a conectar, separadas por vírgula (padrão `http://localhost:5173`).                                             |
+| `LOG_LEVEL`         | servidor | Nível de log: `debug`, `info`, `warn` ou `error`.                                                                                   |
+| `BOT_DELAY_MS`      | servidor | Milissegundos que o bot espera antes de jogar (padrão `2000`). Os testes de tela usam um valor baixo.                               |
+| `CENARIOS_DE_TESTE` | servidor | Só desenvolvimento (padrão `false`; o Docker de dev liga). Libera a criação de salas de teste com bots. Nunca habilite em produção. |
+| `VITE_SERVER_URL`   | web      | URL pública do servidor de jogo. Fica exposta no navegador: nunca coloque nada sensível.                                            |
+| `WEB_PORT`          | Docker   | Opcional. Porta do frontend no host (padrão `5173`). Se mudar, inclua a nova origem em `CORS_ORIGINS`.                              |
 
 ### Testar com 10 jogadores
 
@@ -154,7 +159,7 @@ O frontend vai para a Vercel e o servidor de jogo para a Render.
 
 1. No painel da Render, crie um **Blueprint** apontando para este repositório; o arquivo `render.yaml` na raiz descreve o serviço (web service Node, plano grátis, verificação de saúde em `/health`).
 2. Defina `CORS_ORIGINS` com a URL do frontend na Vercel (por exemplo `https://fodinha.vercel.app`). Várias origens são separadas por vírgula.
-3. `LOG_LEVEL` e `TURN_TIMEOUT_SECONDS` já têm valores padrão no Blueprint.
+3. `LOG_LEVEL` já tem valor padrão no Blueprint.
 
 Também há um `Dockerfile` de produção em `apps/server/Dockerfile` (build multi-stage, usuário não-root). Para gerar a imagem, a partir da raiz: `docker build -f apps/server/Dockerfile -t fodinha-server .`
 

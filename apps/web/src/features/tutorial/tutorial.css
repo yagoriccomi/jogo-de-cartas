@@ -135,8 +135,14 @@
   line-height: 1.4;
 }
 
+.tutorial__botoes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .tutorial__proximo {
-  align-self: flex-end;
   min-height: 40px;
   padding: 0 18px;
 }

@@ -11,7 +11,7 @@ export type SocketJogo = Socket<EventosServidorParaCliente, EventosClienteParaSe
 /** Função que dispara um emit passando o callback de ack. */
 export type Envio<T> = (responder: (resposta: Resposta<T>) => void) => void;
 
-const URL_SERVIDOR = import.meta.env.VITE_SERVER_URL ?? 'http://localhost:3001';
+export const URL_SERVIDOR = import.meta.env.VITE_SERVER_URL ?? 'http://localhost:3001';
 const TEMPO_LIMITE_RESPOSTA_MS = 8000;
 
 // autoConnect desligado: a conexão só abre depois que os ouvintes do armazém estão registrados.

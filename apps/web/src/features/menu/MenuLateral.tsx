@@ -24,6 +24,7 @@ import { convidar } from '../../estado/convite';
 import { useAcao } from '../../lib/useAcao';
 import { OpcaoSom } from '../som/OpcaoSom';
 import { DialogoRegras } from './DialogoRegras';
+import { OpcaoMortosVeemCartas } from './OpcaoMortosVeemCartas';
 
 interface Props {
   readonly onFechar: () => void;
@@ -121,6 +122,11 @@ export function MenuLateral({ onFechar }: Props) {
           </button>
 
           <OpcaoSom />
+
+          {/* No tutorial não há servidor para guardar a opção. */}
+          {!tutorial && (
+            <OpcaoMortosVeemCartas ligada={sala.configuracao.mortosVeemCartas} souDono={souDono} />
+          )}
 
           {souDono && (
             <div className="menu__dono">

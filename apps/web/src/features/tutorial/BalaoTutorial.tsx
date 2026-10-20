@@ -2,7 +2,14 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useApp } from '../../estado/armazem';
 import { classes } from '../../lib/classes';
 import type { EstiloComVariaveis } from '../../lib/estiloComVariaveis';
-import { avancarTutorial, encerrarTutorial, passoAtual, totalDePassos } from './motor';
+import {
+  avancarTutorial,
+  avancarTutorialRapido,
+  encerrarTutorial,
+  passoAtual,
+  totalDePassos,
+} from './motor';
+import { verboDeToque } from './ponteiro';
 import type { Espera } from './roteiro';
 import './tutorial.css';
 
@@ -13,6 +20,10 @@ const DISTANCIA_DO_BALAO_PX = 16;
 const MARGEM_DA_TELA_PX = 12;
 /** A seta não chega nos cantos arredondados do balão. */
 const MARGEM_DA_SETA_PX = 22;
+/** As cartas da mão: o jogador precisa vê-las para decidir o palpite. */
+const SELETOR_DA_MAO = '.mao__leque';
+/** Cobrir mais que isso da mão faz o balão trocar de lado, se couber no outro. */
+const COBERTURA_TOLERADA_DA_MAO = 0.25;
 
 interface Medida {
   readonly topo: number;
@@ -66,7 +77,7 @@ function useMedidaDoAlvo(seletor: string | null): Medida | null {
 
 function dicaDaEspera(espera: Espera): string | null {
   if (espera.tipo === 'palpite') return `Escolha ${espera.valor} e confirme`;
-  if (espera.tipo === 'jogar') return 'Toque duas vezes na carta';
+  if (espera.tipo === 'jogar') return `${verboDeToque()} duas vezes na carta`;
   return null;
 }
 
@@ -77,22 +88,54 @@ interface Posicao {
   readonly lado: 'acima' | 'abaixo';
 }
 
-/** Lado com mais espaço (acima ou abaixo do alvo), centralizado nele e preso dentro da tela. */
-function posicionar(alvo: Medida, balao: { largura: number; altura: number }): Posicao {
-  const espacoAcima = alvo.topo;
-  const espacoAbaixo = window.innerHeight - (alvo.topo + alvo.altura);
-  const lado =
-    espacoAbaixo >= balao.altura + DISTANCIA_DO_BALAO_PX || espacoAbaixo >= espacoAcima
-      ? 'abaixo'
-      : 'acima';
+type Lado = Posicao['lado'];
+
+function topoNoLado(lado: Lado, alvo: Medida, alturaDoBalao: number): number {
   const topoDesejado =
     lado === 'abaixo'
       ? alvo.topo + alvo.altura + DISTANCIA_DO_BALAO_PX
-      : alvo.topo - DISTANCIA_DO_BALAO_PX - balao.altura;
-  const topo = Math.min(
+      : alvo.topo - DISTANCIA_DO_BALAO_PX - alturaDoBalao;
+  return Math.min(
     Math.max(topoDesejado, MARGEM_DA_TELA_PX),
-    window.innerHeight - balao.altura - MARGEM_DA_TELA_PX,
+    window.innerHeight - alturaDoBalao - MARGEM_DA_TELA_PX,
   );
+}
+
+/** Fração da altura da mão que o balão cobriria nesse topo (0 quando não há mão na tela). */
+function coberturaDaMao(topo: number, alturaDoBalao: number, mao: Medida | null): number {
+  if (mao === null) return 0;
+  const sobreposicao =
+    Math.min(topo + alturaDoBalao, mao.topo + mao.altura) - Math.max(topo, mao.topo);
+  return Math.max(sobreposicao, 0) / mao.altura;
+}
+
+/**
+ * Lado com mais espaço (acima ou abaixo do alvo), centralizado nele e preso dentro da tela. No
+ * celular o balão preso na borda acabava em cima das cartas: se o outro lado esconde menos a mão,
+ * ele vai para lá (exceto quando o alvo é a própria mão).
+ */
+function posicionar(alvo: Medida, balao: { largura: number; altura: number }): Posicao {
+  const espacoAcima = alvo.topo;
+  const espacoAbaixo = window.innerHeight - (alvo.topo + alvo.altura);
+  const preferido: Lado =
+    espacoAbaixo >= balao.altura + DISTANCIA_DO_BALAO_PX || espacoAbaixo >= espacoAcima
+      ? 'abaixo'
+      : 'acima';
+  const outro: Lado = preferido === 'abaixo' ? 'acima' : 'abaixo';
+  const medidaDaMao = medirAlvo(SELETOR_DA_MAO);
+  const alvoNaMao = medidaDaMao !== null && alvo.topo >= medidaDaMao.topo;
+  const mao = alvoNaMao ? null : medidaDaMao;
+  const coberturaPreferida = coberturaDaMao(
+    topoNoLado(preferido, alvo, balao.altura),
+    balao.altura,
+    mao,
+  );
+  const coberturaOutra = coberturaDaMao(topoNoLado(outro, alvo, balao.altura), balao.altura, mao);
+  const lado =
+    coberturaPreferida > COBERTURA_TOLERADA_DA_MAO && coberturaOutra < coberturaPreferida
+      ? outro
+      : preferido;
+  const topo = topoNoLado(lado, alvo, balao.altura);
   const centroDoAlvo = alvo.esquerda + alvo.largura / 2;
   const esquerda = Math.min(
     Math.max(centroDoAlvo - balao.largura / 2, MARGEM_DA_TELA_PX),
@@ -182,13 +225,24 @@ export function BalaoTutorial() {
         {balao.titulo && <h2 className="neon tutorial__titulo">{balao.titulo}</h2>}
         <p className="tutorial__texto">{balao.texto}</p>
         {espera.tipo === 'botao' && (
-          <button
-            type="button"
-            className="botao botao--primario tutorial__proximo"
-            onClick={avancarTutorial}
-          >
-            {espera.rotulo ?? 'Próximo'}
-          </button>
+          <div className="tutorial__botoes">
+            {espera.atalho && (
+              <button
+                type="button"
+                className="botao tutorial__proximo"
+                onClick={avancarTutorialRapido}
+              >
+                {espera.atalho}
+              </button>
+            )}
+            <button
+              type="button"
+              className="botao botao--primario tutorial__proximo"
+              onClick={avancarTutorial}
+            >
+              {espera.rotulo ?? 'Próximo'}
+            </button>
+          </div>
         )}
         {dica && <p className="tutorial__dica">👉 {dica}</p>}
       </div>

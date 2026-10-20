@@ -22,6 +22,7 @@ function jogador(id: string, extra: Partial<JogadorNaVisao> = {}): JogadorNaVisa
     vazasGanhas: [],
     cartasNaMao: 0,
     cartaNaTesta: null,
+    maoRevelada: null,
     saiAoFimDaRodada: false,
     ...extra,
   };

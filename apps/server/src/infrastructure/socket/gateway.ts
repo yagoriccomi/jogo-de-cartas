@@ -98,6 +98,11 @@ export class GatewayDoJogo {
         nulo(this.servico.configurar(this.ator(socket), objeto(dados).configuracao)),
       ),
     );
+    socket.on('sala:definirMortosVeemCartas', (dados, responder) =>
+      this.responder(socket, responder, () =>
+        nulo(this.servico.definirMortosVeemCartas(this.ator(socket), objeto(dados).permitir)),
+      ),
+    );
     socket.on('sala:adicionarBot', (responder) =>
       this.responder(socket, responder, () => nulo(this.servico.adicionarBot(this.ator(socket)))),
     );

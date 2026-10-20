@@ -134,6 +134,9 @@ export const ABANDONO_MS = 600_000;
 
 const silencioso = { info: () => {}, warn: () => {}, error: () => {} };
 
+/** Sorteio que nunca cai na chance de reação: deixa os bots calados nos testes que não tratam disso. */
+export const BOTS_CALADOS = (): number => 1;
+
 export interface Ator {
   readonly codigoSala: string;
   readonly jogadorId: string;
@@ -145,7 +148,10 @@ export const ator = (sessao: Ator): Ator => ({
 });
 
 /** Monta serviço + condutor + relógio falso, com identificadores e sorteio determinísticos. */
-export function montarCenario(temposExtras: Partial<TemposDoCondutor> = {}) {
+export function montarCenario(
+  temposExtras: Partial<TemposDoCondutor> = {},
+  sorteioDosBots: () => number = BOTS_CALADOS,
+) {
   const relogio = new RelogioFalso();
   const notificador = new NotificadorFalso();
   const repositorio = new RepositorioDeSalasEmMemoria();
@@ -155,10 +161,12 @@ export function montarCenario(temposExtras: Partial<TemposDoCondutor> = {}) {
     relogio,
     estrategia: new EstrategiaSimples(),
     registrador: silencioso,
+    gerarAleatorio: sorteioDosBots,
     tempos: {
-      prazoDaVezMs: PRAZO_MS,
       atrasoDoBotMs: ATRASO_BOT_MS,
       pausaFimDeRodadaMs: PAUSA_FIM_RODADA_MS,
+      // Zero por padrão: os testes contam a pausa sem saber se a rodada era cega.
+      pausaExtraRodadaCegaMs: 0,
       carenciaDeDesconexaoMs: CARENCIA_MS,
       ...temposExtras,
     },

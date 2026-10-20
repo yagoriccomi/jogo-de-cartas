@@ -14,19 +14,23 @@ import { DESTINO_DOS_EMPATES } from './animacao-compartilhada';
 import { Baralho } from './Baralho';
 import { Carta } from './Carta';
 import { ContagemRegressiva } from './ContagemRegressiva';
+import { DialogoMaoRevelada } from './DialogoMaoRevelada';
 import { DialogoPlacar } from './DialogoPlacar';
 import { Mao } from './Mao';
 import { MesaLinhas } from './MesaLinhas';
 import { Montinhos } from './Montinhos';
 import { NumerosDaRodada } from './NumerosDaRodada';
-import { PainelPalpite } from './PainelPalpite';
+import { emOrdemDeJogo } from './ordemDeJogo';
+import { PainelPalpite, type PalpiteAnterior } from './PainelPalpite';
 import { PainelPausa } from './PainelPausa';
 import { PainelResultado } from './PainelResultado';
 import { SimbolosMaoEPe } from './SimbolosMaoEPe';
 import { PlacaJogador } from './PlacaJogador';
 import { ReacoesDaMesa } from './ReacoesDaMesa';
 import { TelaFimDePartida } from './TelaFimDePartida';
+import { MonteDeEmpates } from './MonteDeEmpates';
 import { useAnimacaoDeVaza } from './useAnimacaoDeVaza';
+import { useRolarAtePlacaDaVez, useTituloDaVez } from './useSinaisDaVez';
 import { aberturaDaPartida, useBaralho } from './useBaralho';
 import { useMesaJogadas } from './useMesaJogadas';
 import './mesa.css';
@@ -39,15 +43,24 @@ export function TelaMesa() {
   const { jogo, sala, sessao, jogoRecebidoEm, tutorial } = useApp();
   const [ocupado, executar] = useAcao();
   const [consulta, definirConsulta] = useState<Consulta>(null);
+  const [maoAbertaDe, definirMaoAbertaDe] = useState<string | null>(null);
   const computador = useMediaQuery(CONSULTA_COMPUTADOR);
   // Hook antes dos retornos antecipados: a ordem dos hooks não pode depender do estado do jogo.
   const animacao = useAnimacaoDeVaza(
     jogo?.ultimaVaza ?? null,
     (jogo?.mesa.length ?? 0) === 0,
     jogo?.rodadaCega ?? false,
+    jogo?.fase === 'fim_de_rodada' || jogo?.fase === 'encerrada',
   );
   useSonsDaMesa(jogo, sessao?.jogadorId ?? null);
   const viraRef = useRef<HTMLDivElement>(null);
+  const adversariosRef = useRef<HTMLUListElement>(null);
+  // Hooks antes dos retornos antecipados; o cálculo completo de "minha vez" fica mais abaixo.
+  const vezEmRodada =
+    jogo !== null && (jogo.fase === 'palpites' || jogo.fase === 'jogando') && jogo.pausa === null;
+  const idDaVezAtivo = vezEmRodada ? jogo.idDaVez : null;
+  useTituloDaVez(idDaVezAtivo !== null && idDaVezAtivo === sessao?.jogadorId);
+  useRolarAtePlacaDaVez(adversariosRef, idDaVezAtivo);
   // Enquanto a vaza fechada está em cena, é ela que as linhas exibem (a mesa já foi limpa).
   const cartasNaMesa = animacao.vaza?.jogadas ?? jogo?.mesa ?? SEM_CARTAS;
   useBaralho({
@@ -67,14 +80,17 @@ export function TelaMesa() {
   if (!jogo || !sessao) return null;
 
   const meuId = sessao.jogadorId;
-  if (jogo.fase === 'encerrada') {
+  // A última vaza da partida ainda voa para o montinho antes de o vencedor ser celebrado.
+  if (jogo.fase === 'encerrada' && animacao.vaza === null) {
     return <TelaFimDePartida jogo={jogo} meuId={meuId} />;
   }
 
   const eu = jogo.jogadores.find((j) => j.id === meuId);
   const participante = sala?.participantes.find((p) => p.id === meuId);
   const aguardandoProximaRodada = participante?.aguardandoProximaRodada ?? eu === undefined;
-  const adversarios = jogo.jogadores.filter((j) => j.id !== meuId);
+  // Placas na ordem de jogo: a mão fica à esquerda e o pé à direita.
+  const ordemDeJogo = emOrdemDeJogo(jogo.jogadores, jogo.idDoPrimeiro, jogo.idDoPe);
+  const adversarios = ordemDeJogo.filter((j) => j.id !== meuId);
   const nomeDe = (id: string | null) => {
     if (id === null) return null;
     if (id === meuId) return 'Você';
@@ -86,6 +102,7 @@ export function TelaMesa() {
   const emRodada = jogo.fase === 'palpites' || jogo.fase === 'jogando';
   const souDaVez = emRodada && jogo.idDaVez === meuId && !pausado;
   const estouEliminado = eu?.eliminado ?? false;
+  const jogadorDaMaoAberta = jogo.jogadores.find((j) => j.id === maoAbertaDe);
   const palpitando = jogo.fase === 'palpites' && souDaVez && !estouEliminado;
   const podeJogar = jogo.fase === 'jogando' && souDaVez && !estouEliminado;
 
@@ -95,9 +112,16 @@ export function TelaMesa() {
       ? jogoRecebidoEm + jogo.prazoDaVezRestanteMs
       : null;
 
-  const palpitesDosOutros = adversarios.flatMap((j) =>
-    j.palpite === null || j.eliminado ? [] : [j.palpite],
-  );
+  const vivosEmOrdem = ordemDeJogo.filter((j) => !j.eliminado);
+  const minhaPosicao = vivosEmOrdem.findIndex((j) => j.id === meuId);
+  const palpitesAnteriores: PalpiteAnterior[] = vivosEmOrdem
+    .slice(0, Math.max(minhaPosicao, 0))
+    .flatMap((j) =>
+      j.palpite === null
+        ? []
+        : [{ id: j.id, nome: j.apelido, palpite: j.palpite, ehMao: j.id === jogo.idDoPrimeiro }],
+    );
+  const depoisDeVoce = minhaPosicao === -1 ? 0 : vivosEmOrdem.length - minhaPosicao - 1;
 
   let situacao: string;
   if (aguardandoProximaRodada) situacao = 'Você entra na próxima rodada';
@@ -114,10 +138,10 @@ export function TelaMesa() {
   // O montinho novo só aparece quando a animação chega; até lá fica reservado (invisível).
   const donoDoMonteOculto = vazaEmCena ? (vazaEmCena.vencedorId ?? DESTINO_DOS_EMPATES) : null;
   const cartasTexto = jogo.cartasPorJogador === 1 ? 'carta' : 'cartas';
-  const montinhosDeEmpate = jogo.vazasEmpatadas.map((vaza) => ({
-    cartaVencedora: vaza.cartaDoTopo,
-    quantidadeDeCartas: vaza.quantidadeDeCartas,
-  }));
+  // Vazas já decididas na rodada (ganhas por alguém ou todas anuladas); a da vez é a seguinte.
+  const vazasDecididas =
+    jogo.jogadores.reduce((soma, j) => soma + j.vazasFeitas, 0) + jogo.vazasEmpatadas.length;
+  const vazaAtual = Math.min(vazasDecididas + 1, jogo.cartasPorJogador);
   const minhasFeitas = (eu?.vazasFeitas ?? 0) - (eu && eu.id === donoDoMonteOculto ? 1 : 0);
 
   return (
@@ -152,7 +176,7 @@ export function TelaMesa() {
       </CabecalhoApp>
 
       <div className="adversarios-area">
-        <ul className="adversarios" aria-label="Adversários">
+        <ul ref={adversariosRef} className="adversarios" aria-label="Adversários">
           {adversarios.map((jogador) => {
             const ehDaVez = jogador.id === jogo.idDaVez && emRodada;
             return (
@@ -166,6 +190,7 @@ export function TelaMesa() {
                 manilha={jogo.manilha}
                 vidasIniciais={jogo.configuracao.vidasIniciais}
                 ocultarUltimoMonte={jogador.id === donoDoMonteOculto}
+                onVerMao={jogador.maoRevelada ? () => definirMaoAbertaDe(jogador.id) : undefined}
               />
             );
           })}
@@ -177,6 +202,13 @@ export function TelaMesa() {
           <div className="feltro__esquerda">
             <div className="feltro__monte">
               <div className="feltro__vira-bloco">
+                <span
+                  className="neon neon--ciano feltro__vaza"
+                  aria-label={`Vaza ${vazaAtual} de ${jogo.cartasPorJogador}`}
+                  title="Vaza da rodada"
+                >
+                  {vazaAtual}/{jogo.cartasPorJogador}
+                </span>
                 <span className="rotulo-pequeno feltro__rotulo">Vira</span>
                 <div ref={viraRef} className="feltro__vira">
                   <Carta carta={jogo.vira} manilha={jogo.manilha} rotulo="Vira" />
@@ -188,6 +220,11 @@ export function TelaMesa() {
               <span className="rotulo-pequeno feltro__rotulo">Manilha</span>
               <strong className="feltro__manilha-valor">{jogo.manilha ?? '–'}</strong>
             </div>
+            <MonteDeEmpates
+              vazas={jogo.vazasEmpatadas}
+              manilha={jogo.manilha}
+              ocultarUltimo={donoDoMonteOculto === DESTINO_DOS_EMPATES}
+            />
           </div>
 
           <div className="feltro__jogadas">
@@ -210,6 +247,17 @@ export function TelaMesa() {
             />
           </div>
 
+          {/* Chamada de atenção a cada vez nova; a chave remonta o elemento e reinicia a animação. */}
+          {souDaVez && !estouEliminado && (
+            <p
+              key={`${jogo.numeroRodada}-${jogo.fase}-${jogo.mesa.length}`}
+              className="faixa-da-vez"
+              aria-hidden="true"
+            >
+              Sua vez!
+            </p>
+          )}
+
           {/* Filho do feltro (não das jogadas): no celular cobre a mesa toda, vira inclusa. */}
           {palpitando && (
             <PainelPalpite
@@ -219,27 +267,22 @@ export function TelaMesa() {
               souOPe={jogo.idDoPe === meuId}
               vira={jogo.vira}
               manilha={jogo.manilha}
-              palpitesDosOutros={palpitesDosOutros}
+              palpitesAnteriores={palpitesAnteriores}
+              depoisDeVoce={depoisDeVoce}
               prazoFinal={prazoFinal}
               ocupado={ocupado}
               onConfirmar={(quantidade) => void executar(() => palpitar(quantidade))}
             />
           )}
-
-          <Montinhos
-            jogadorId={DESTINO_DOS_EMPATES}
-            vazas={montinhosDeEmpate}
-            manilha={jogo.manilha}
-            ocultarUltimo={donoDoMonteOculto === DESTINO_DOS_EMPATES}
-            className="montes--empates"
-            rotulo={`Vazas empatadas: ${montinhosDeEmpate.length}`}
-          />
         </section>
       </div>
 
-      <section className="minha" aria-label="Minha área">
+      <section
+        className={classes('minha', podeJogar && !ocupado && 'minha--jogar')}
+        aria-label="Minha área"
+      >
         {/* O tutorial roda sem sala no servidor: não há para quem reagir. */}
-        {tutorial === null && <ReacoesDaMesa meuId={meuId} />}
+        {tutorial === null && <ReacoesDaMesa meuId={meuId} jogadores={jogo.jogadores} />}
         <div className="minha__barra">
           <div className="minha__dados">
             <SimbolosMaoEPe
@@ -333,6 +376,13 @@ export function TelaMesa() {
         <DialogoPlacar jogo={jogo} meuId={meuId} onFechar={() => definirConsulta(null)} />
       )}
       {consulta === 'regras' && <DialogoRegras onFechar={() => definirConsulta(null)} />}
+      {jogadorDaMaoAberta && (
+        <DialogoMaoRevelada
+          jogador={jogadorDaMaoAberta}
+          manilha={jogo.manilha}
+          onFechar={() => definirMaoAbertaDe(null)}
+        />
+      )}
     </div>
   );
 }

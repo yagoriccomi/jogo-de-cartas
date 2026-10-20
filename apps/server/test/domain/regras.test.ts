@@ -1,3 +1,4 @@
+import { CONFIGURACAO_PADRAO } from '@fodinha/shared';
 import { describe, expect, it } from 'vitest';
 import { montarBaralhoEmbaralhado, totalDeCartas, valoresEmJogo } from '../../src/domain/baralho';
 import { validarConfiguracao } from '../../src/domain/configuracao';
@@ -16,19 +17,37 @@ const TRUCO = valoresEmJogo(false);
 describe('baralho', () => {
   it('deveTer40CartasPorBaralhoSemOitoNoveDez', () => {
     expect(
-      totalDeCartas({ quantidadeBaralhos: 1, vidasIniciais: 5, incluirOitoNoveDez: false }),
+      totalDeCartas({
+        quantidadeBaralhos: 1,
+        vidasIniciais: 5,
+        incluirOitoNoveDez: false,
+        mortosVeemCartas: false,
+        prazoDaVezSegundos: 30,
+      }),
     ).toBe(40);
   });
 
   it('deveTer52CartasPorBaralhoComOitoNoveDezEMultiplicarPelosBaralhos', () => {
     expect(
-      totalDeCartas({ quantidadeBaralhos: 4, vidasIniciais: 5, incluirOitoNoveDez: true }),
+      totalDeCartas({
+        quantidadeBaralhos: 4,
+        vidasIniciais: 5,
+        incluirOitoNoveDez: true,
+        mortosVeemCartas: false,
+        prazoDaVezSegundos: 30,
+      }),
     ).toBe(208);
   });
 
   it('deveGerarIdsUnicosEOpacosMesmoComVariosBaralhos', () => {
     const cartas = montarBaralhoEmbaralhado(
-      { quantidadeBaralhos: 2, vidasIniciais: 5, incluirOitoNoveDez: false },
+      {
+        quantidadeBaralhos: 2,
+        vidasIniciais: 5,
+        incluirOitoNoveDez: false,
+        mortosVeemCartas: false,
+        prazoDaVezSegundos: 30,
+      },
       geradorComSemente(1),
     );
     expect(cartas).toHaveLength(80);
@@ -39,13 +58,43 @@ describe('baralho', () => {
 
 describe('configuração', () => {
   it.each([
-    { quantidadeBaralhos: 0, vidasIniciais: 5, incluirOitoNoveDez: false },
-    { quantidadeBaralhos: 5, vidasIniciais: 5, incluirOitoNoveDez: false },
-    { quantidadeBaralhos: 1, vidasIniciais: 4, incluirOitoNoveDez: false },
-    { quantidadeBaralhos: 1, vidasIniciais: 11, incluirOitoNoveDez: false },
-    { quantidadeBaralhos: 1.5, vidasIniciais: 5, incluirOitoNoveDez: false },
+    { quantidadeBaralhos: 0, vidasIniciais: 5, incluirOitoNoveDez: false, mortosVeemCartas: false },
+    { quantidadeBaralhos: 5, vidasIniciais: 5, incluirOitoNoveDez: false, mortosVeemCartas: false },
+    { quantidadeBaralhos: 1, vidasIniciais: 4, incluirOitoNoveDez: false, mortosVeemCartas: false },
+    {
+      quantidadeBaralhos: 1,
+      vidasIniciais: 11,
+      incluirOitoNoveDez: false,
+      mortosVeemCartas: false,
+      prazoDaVezSegundos: 30,
+    },
+    {
+      quantidadeBaralhos: 1.5,
+      vidasIniciais: 5,
+      incluirOitoNoveDez: false,
+      mortosVeemCartas: false,
+      prazoDaVezSegundos: 30,
+    },
+    { quantidadeBaralhos: 1, vidasIniciais: 5, incluirOitoNoveDez: false, mortosVeemCartas: 'sim' },
   ])('deveRejeitarConfiguracaoForaDosLimites %o', (configuracao) => {
     expect(() => validarConfiguracao(configuracao)).toThrow();
+  });
+
+  it.each([9, 121, 30.5, '30'])('deveRejeitarTempoDaVezInvalido %o', (prazoDaVezSegundos) => {
+    expect(() => validarConfiguracao({ ...CONFIGURACAO_PADRAO, prazoDaVezSegundos })).toThrow();
+  });
+
+  it.each([10, 120, null])('deveAceitarTempoDaVez %o', (prazoDaVezSegundos) => {
+    const validada = validarConfiguracao({ ...CONFIGURACAO_PADRAO, prazoDaVezSegundos });
+    expect(validada.prazoDaVezSegundos).toBe(prazoDaVezSegundos);
+  });
+
+  it('deveUsarOTempoPadraoQuandoOClienteNaoInforma', () => {
+    const semPrazo: Record<string, unknown> = { ...CONFIGURACAO_PADRAO };
+    delete semPrazo.prazoDaVezSegundos;
+    expect(validarConfiguracao(semPrazo).prazoDaVezSegundos).toBe(
+      CONFIGURACAO_PADRAO.prazoDaVezSegundos,
+    );
   });
 });
 
