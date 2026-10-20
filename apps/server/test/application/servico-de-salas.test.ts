@@ -311,12 +311,15 @@ describe('ServicoDeSalas — partida', () => {
     servico.iniciarPartida(ator(dono));
     const estado = partidaDe(dono);
     expect(estado?.fase).toBe('palpites');
-    expect(estado?.jogadores[0]?.apelido).toBe('Ana');
-    expect(estado?.jogadores[1]?.ehBot).toBe(true);
+    // Os lugares são sorteados: procura cada um pelo id, não pela posição.
+    const ana = estado?.jogadores.find((j) => j.id === dono.jogadorId);
+    const bot = estado?.jogadores.find((j) => j.ehBot);
+    expect(ana?.apelido).toBe('Ana');
+    expect(bot).toBeDefined();
     expect(estado?.idDoPrimeiro).not.toBeNull();
     // Rodada cega: o humano vê a carta do bot, mas não a própria.
-    expect(estado?.jogadores[1]?.cartaNaTesta).not.toBeNull();
-    expect(estado?.jogadores[0]?.cartaNaTesta).toBeNull();
+    expect(bot?.cartaNaTesta).not.toBeNull();
+    expect(ana?.cartaNaTesta).toBeNull();
   });
 
   it('deveJogarPeloHumanoQuandoOPrazoEstouraEInformarOTempoRestante', () => {
@@ -526,7 +529,9 @@ describe('ServicoDeSalas — pausa pelo dono', () => {
 
     servico.retomar(ator(dono));
     expect(partidaDe(dono)?.pausa).toBeNull();
-    expect(partidaDe(dono)?.prazoDaVezEm ?? 0).toBeGreaterThan(0);
+    // Retomada, a mesa volta a andar: o bot joga ou o prazo do humano estoura e o servidor joga.
+    relogio.avancar(PRAZO_MS + ATRASO_BOT_MS);
+    expect(JSON.stringify(partidaDe(dono)?.jogadores)).not.toBe(fotografia);
   });
 
   it('deveRecusarJogadasEnquantoPausada', () => {

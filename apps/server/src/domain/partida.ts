@@ -12,7 +12,7 @@ import type {
   VazaResolvida,
 } from '@fodinha/shared';
 import { LIMITES, NAIPES } from '@fodinha/shared';
-import type { GeradorAleatorio } from './aleatoriedade';
+import { embaralhar, type GeradorAleatorio } from './aleatoriedade';
 import { montarBaralhoEmbaralhado, totalDeCartas, valoresEmJogo } from './baralho';
 import { validarConfiguracao } from './configuracao';
 import { ErroDeRegra } from './erros';
@@ -119,7 +119,11 @@ export class Partida {
     private readonly cartasNaPrimeiraRodada: number | null,
   ) {
     this.valores = valoresEmJogo(configuracao.incluirOitoNoveDez);
-    this.jogadores = jogadorIds.map((id) => this.novoJogador(id, configuracao.vidasIniciais));
+    // Lugares sorteados a cada partida (e a cada reinício): a ordem de chegada na sala não decide
+    // quem senta ao lado de quem. O primeiro pé também é sorteado; a mão é sempre o seguinte.
+    this.jogadores = embaralhar(jogadorIds, gerarAleatorio).map((id) =>
+      this.novoJogador(id, configuracao.vidasIniciais),
+    );
     this.indiceDoPe = Math.floor(gerarAleatorio() * jogadorIds.length);
   }
 

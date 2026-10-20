@@ -163,6 +163,18 @@ describe('Partida — mão, saídas e entradas', () => {
     }
   });
 
+  it('deveSortearOsLugaresACadaPartida', () => {
+    const ordens = new Set(
+      [1, 2, 3, 4, 5].map((semente) =>
+        novaPartida(4, semente)
+          .visaoPara(null)
+          .jogadores.map((j) => j.id)
+          .join(','),
+      ),
+    );
+    expect(ordens.size).toBeGreaterThan(1);
+  });
+
   it('deveMarcarQuemAbreARodadaAEsquerdaDoPe', () => {
     const partida = novaPartida(4, 5);
     const visao = partida.visaoPara(null);
@@ -185,7 +197,7 @@ describe('Partida — mão, saídas e entradas', () => {
 
     partida.iniciarProximaRodada();
     const seguinte = partida.visaoPara(null);
-    expect(seguinte.jogadores.map((j) => j.id)).toEqual(['j0', 'j1', 'j3']);
+    expect(seguinte.jogadores.map((j) => j.id).sort()).toEqual(['j0', 'j1', 'j3']);
     expect(seguinte.cartasPorJogador).toBe(2);
   });
 
