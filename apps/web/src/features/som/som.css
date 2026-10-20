@@ -1,0 +1,95 @@
+.opcao-som {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--linha-suave);
+}
+
+/* O separador passa a ser do bloco inteiro, abaixo dos volumes. */
+.opcao-som > .menu__item {
+  border-bottom: 0;
+}
+
+.volume {
+  display: grid;
+  grid-template-columns: 64px 1fr 44px;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--alvo-minimo);
+  padding-left: 36px;
+}
+
+.volume__rotulo {
+  font-size: 0.9rem;
+  color: var(--texto-suave);
+}
+
+.volume__valor {
+  font-family: var(--fonte-numeros);
+  font-size: 1.15rem;
+  text-align: right;
+  color: var(--ciano-claro);
+}
+
+.volume__barra {
+  width: 100%;
+  height: var(--alvo-minimo);
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  appearance: none;
+}
+
+.volume__barra:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.volume__barra::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--rosa) 0 var(--volume, 50%),
+    var(--linha) var(--volume, 50%) 100%
+  );
+}
+
+.volume__barra::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--linha);
+}
+
+.volume__barra::-moz-range-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--rosa);
+}
+
+.volume__barra::-webkit-slider-thumb {
+  width: 20px;
+  height: 20px;
+  margin-top: -7px;
+  border: 2px solid var(--ciano);
+  border-radius: 50%;
+  background: var(--superficie-funda);
+  box-shadow: var(--brilho-ciano);
+  appearance: none;
+}
+
+.volume__barra::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--ciano);
+  border-radius: 50%;
+  background: var(--superficie-funda);
+  box-shadow: var(--brilho-ciano);
+}
+
+.volume__barra:focus-visible {
+  outline: 2px solid var(--ciano);
+  outline-offset: 2px;
+  border-radius: 8px;
+}

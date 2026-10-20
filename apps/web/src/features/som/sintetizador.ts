@@ -1,4 +1,6 @@
+import { obterContexto } from './contextoDeAudio';
 import type { EventoDaMesa } from './eventos';
+import { obterVolumeEfeitos, volumeParaGanho } from './preferencia';
 
 /** Volume geral: chiptune em onda quadrada é estridente, então fica bem abaixo do máximo. */
 const VOLUME_MESTRE = 0.16;
@@ -39,30 +41,17 @@ const NOTA = {
   mi6: 1319,
 } as const;
 
-interface WindowComWebkit extends Window {
-  readonly webkitAudioContext?: typeof AudioContext;
-}
-
-let contexto: AudioContext | null = null;
 let buferDeRuido: AudioBuffer | null = null;
+let saidaDosEfeitos: GainNode | null = null;
 
-function obterContexto(): AudioContext | null {
-  if (contexto !== null) return contexto;
-  const Construtor = window.AudioContext ?? (window as WindowComWebkit).webkitAudioContext;
-  if (Construtor === undefined) return null;
-  contexto = new Construtor();
-  return contexto;
-}
-
-/** Navegadores só liberam áudio após um gesto do usuário; o primeiro toque destrava o contexto. */
-export function destravarAudioNoPrimeiroGesto(): () => void {
-  const destravar = () => {
-    const ctx = obterContexto();
-    if (ctx !== null && ctx.state === 'suspended') void ctx.resume();
-  };
-  const tipos = ['pointerdown', 'keydown', 'touchstart'] as const;
-  tipos.forEach((tipo) => window.addEventListener(tipo, destravar, { passive: true }));
-  return () => tipos.forEach((tipo) => window.removeEventListener(tipo, destravar));
+/** Todos os efeitos passam por um ganho único, ajustado pelo volume de efeitos do menu. */
+function obterSaida(ctx: AudioContext): GainNode {
+  if (saidaDosEfeitos === null) {
+    saidaDosEfeitos = ctx.createGain();
+    saidaDosEfeitos.connect(ctx.destination);
+  }
+  saidaDosEfeitos.gain.setValueAtTime(volumeParaGanho(obterVolumeEfeitos()), ctx.currentTime);
+  return saidaDosEfeitos;
 }
 
 function tocarTom(ctx: AudioContext, base: number, tom: Tom): void {
@@ -76,7 +65,7 @@ function tocarTom(ctx: AudioContext, base: number, tom: Tom): void {
   ganho.gain.setValueAtTime(SILENCIO, inicio);
   ganho.gain.linearRampToValueAtTime((tom.volume ?? 1) * VOLUME_MESTRE, inicio + ATAQUE_S);
   ganho.gain.exponentialRampToValueAtTime(SILENCIO, fim);
-  oscilador.connect(ganho).connect(ctx.destination);
+  oscilador.connect(ganho).connect(obterSaida(ctx));
   oscilador.start(inicio);
   oscilador.stop(fim + ATAQUE_S);
 }
@@ -94,7 +83,7 @@ function tocarRuido(ctx: AudioContext, base: number, inicio: number, duracao: nu
   ganho.gain.setValueAtTime(SILENCIO, comeco);
   ganho.gain.linearRampToValueAtTime(VOLUME_MESTRE * VOLUME_DO_RUIDO, comeco + ATAQUE_S);
   ganho.gain.exponentialRampToValueAtTime(SILENCIO, comeco + duracao);
-  fonte.connect(ganho).connect(ctx.destination);
+  fonte.connect(ganho).connect(obterSaida(ctx));
   fonte.start(comeco, 0, duracao);
 }
 
@@ -170,7 +159,7 @@ const EVENTOS_DE_RESULTADO: ReadonlySet<EventoDaMesa> = new Set([
 
 export function tocarEvento(evento: EventoDaMesa): void {
   const ctx = obterContexto();
-  if (ctx === null || ctx.state !== 'running') return;
+  if (ctx === null || ctx.state !== 'running' || obterVolumeEfeitos() === 0) return;
   const atraso = EVENTOS_DE_RESULTADO.has(evento) ? ATRASO_DO_RESULTADO_S : 0;
   EFEITOS[evento](ctx, ctx.currentTime + atraso);
 }
