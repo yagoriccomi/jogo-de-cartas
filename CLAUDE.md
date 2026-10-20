@@ -22,6 +22,7 @@
 - Desconexão > 10 s (carência) pausa a partida e abre votação de espera por ausente; todos NÃO → eliminado (bot termina a rodada). Pausa congela prazos e bots.
 - Entrada no meio da partida: senta na próxima rodada com a maior vida entre os vivos.
 - Dono (criador; passa ao humano mais antigo e volta ao criador pelo mesmo `dispositivoId`): pausa/retoma a partida a qualquer momento (congela prazos e bots), reinicia a sala e expulsa (humano expulso fica banido pelo `dispositivoId`).
+- Opção da sala `mortosVeemCartas` (padrão desligada; só o dono muda, também no meio da partida por `sala:definirMortosVeemCartas`): eliminado recebe a mão dos outros em `maoRevelada` e a vê tocando na placa. Vivo nunca recebe mão alheia.
 - Saída/expulsão no meio da rodada: efetiva-se entre rodadas (`Partida.agendarSaida`), para não desfazer palpites e vazas.
 - A mão vai ao cliente ordenada da mais forte para a mais fraca (o cliente não reordena).
 - Plano dessas regras: `docs/planos/PLANO-pausa-entrada-moderacao.md`.
