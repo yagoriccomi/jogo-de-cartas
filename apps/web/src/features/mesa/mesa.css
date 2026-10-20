@@ -721,10 +721,6 @@
   font-size: 0.68rem;
 }
 
-.palpite__topo .pilula {
-  flex: none;
-}
-
 .palpite__grade {
   display: grid;
   grid-template-columns: repeat(var(--colunas, 4), minmax(0, 1fr));
@@ -796,9 +792,6 @@
 }
 
 .palpite__resumo {
-  display: flex;
-  align-items: baseline;
-  gap: 0 6px;
   margin: 0;
   font-size: 0.8rem;
   line-height: 1.2;
@@ -806,21 +799,18 @@
   color: var(--texto-suave);
 }
 
-.palpite__resumo strong {
-  font-family: var(--fonte-numeros);
-  font-size: 1.25rem;
+.palpite__saldo {
+  font-weight: 700;
   color: #fff;
 }
 
-.palpite__resumo .palpite__saldo--negativo {
+.palpite__saldo--negativo {
   color: var(--rosa-suave);
 }
 
-.palpite__divisor {
-  color: var(--ciano);
-}
-
+/* Link pequeno com alvo de toque de 44px (o ::after cresce sem empurrar o painel). */
 .palpite__mais {
+  position: relative;
   padding: 2px 0;
   border: none;
   background: none;
@@ -830,6 +820,29 @@
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
+}
+
+.palpite__mais::after {
+  content: '';
+  position: absolute;
+  inset: calc((100% - var(--alvo-minimo)) / 2) -8px;
+}
+
+/* Uma linha só ("Toque num número"): quebrado em três, o botão empurrava o painel a rolar. */
+.palpite__confirmar {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  padding-inline: 10px;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.palpite__gesto {
+  font-size: 0.68rem;
+  font-weight: 600;
+  opacity: 0.85;
 }
 
 /* Rola por dentro: com 9 adversários a lista não pode empurrar o Confirmar para longe. */
@@ -926,6 +939,25 @@
 @keyframes pulsar {
   50% {
     opacity: 0.55;
+  }
+}
+
+/* Meu prazo acabando: escala, brilho e ritmo crescem com --urgencia (0 aos 10 s, 1 no zero). */
+.contagem--pulsando {
+  animation: pulso-do-prazo calc(1s - 0.55s * var(--urgencia, 0)) ease-in-out infinite;
+}
+
+@keyframes pulso-do-prazo {
+  50% {
+    transform: scale(calc(1.08 + 0.3 * var(--urgencia, 0)));
+    box-shadow: 0 0 calc(6px + 18px * var(--urgencia, 0)) var(--dourado);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contagem--urgente,
+  .contagem--pulsando {
+    animation: none;
   }
 }
 
@@ -1051,7 +1083,10 @@
   text-align: center;
 }
 
+/* Uma linha só: "SUA VEZ 23s" quebrado em dois encolhia o feltro e fazia o palpite rolar. */
 .vez--minha {
+  flex: none;
+  white-space: nowrap;
   border-color: var(--rosa);
   background: var(--rosa-forte);
   color: #fff;
@@ -1839,15 +1874,13 @@
 
   /* Com até 10 vidas, os corações encolheriam a 5px ao lado do aviso da vez: no celular quebram
      em duas fileiras de 5, sem encolher. */
+  /* Linhas iguais (ver colunasDosCoracoes): a altura da minha área não varia com a mão. */
   .minha__vidas {
     --l-coracao: 12px;
-    flex-wrap: wrap;
-    row-gap: 2px;
-    width: calc(min(var(--total, 1), 5) * (var(--l-coracao) + 2px));
-  }
-
-  .minha__vidas .coracao {
-    flex: 0 0 var(--l-coracao);
+    display: grid;
+    grid-template-columns: repeat(var(--colunas-coracoes, 5), var(--l-coracao));
+    gap: 2px;
+    width: auto;
   }
 
   .simbolos--placa {
@@ -2028,12 +2061,8 @@
     display: none;
   }
 
-  /* "13 cartas | Saldo 7" cabe numa linha ao lado do Confirmar; com "Rodada de" quebraria. */
-  .palpite__rodada-de {
-    display: none;
-  }
-
   .palpite__rodape .botao {
     min-height: 36px;
+    font-size: 0.82rem;
   }
 }

@@ -27,6 +27,14 @@ function montarCaminho(linhas: readonly string[]): string {
 
 const CAMINHO_DO_CORACAO = montarCaminho(DESENHO_DO_CORACAO);
 
+/** Até aqui os corações cabem numa linha; acima, quebram em duas linhas iguais. */
+const CORACOES_EM_UMA_LINHA = 5;
+
+/** 6 = 3+3, 8 = 4+4, 10 = 5+5; com ímpar a linha de cima leva o a mais (7 = 4+3, 9 = 5+4). */
+export function colunasDosCoracoes(total: number): number {
+  return total <= CORACOES_EM_UMA_LINHA ? total : Math.ceil(total / 2);
+}
+
 interface Props {
   readonly vidas: number;
   readonly vidasIniciais: number;
@@ -52,7 +60,10 @@ export function Coracoes({ vidas, vidasIniciais, className }: Props) {
   }
 
   const descricao = `${acesos} de ${total} ${total === 1 ? 'vida' : 'vidas'}`;
-  const estilo: EstiloComVariaveis = { '--total': total };
+  const estilo: EstiloComVariaveis = {
+    '--total': total,
+    '--colunas-coracoes': colunasDosCoracoes(total),
+  };
 
   return (
     <span

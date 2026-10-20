@@ -269,7 +269,6 @@ export function TelaMesa() {
               manilha={jogo.manilha}
               palpitesAnteriores={palpitesAnteriores}
               depoisDeVoce={depoisDeVoce}
-              prazoFinal={prazoFinal}
               ocupado={ocupado}
               onConfirmar={(quantidade) => void executar(() => palpitar(quantidade))}
             />
@@ -332,7 +331,11 @@ export function TelaMesa() {
           >
             {souDaVez ? 'Sua vez' : situacao}
             {souDaVez && prazoFinal !== null && (
-              <ContagemRegressiva prazoFinal={prazoFinal} className="pilula pilula--escura" />
+              <ContagemRegressiva
+                prazoFinal={prazoFinal}
+                className="pilula pilula--escura"
+                alertar
+              />
             )}
           </span>
         </div>

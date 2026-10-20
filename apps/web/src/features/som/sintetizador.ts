@@ -221,3 +221,15 @@ export function tocarReacao(reacao: Reacao): void {
   const saida = obterSaidaDasReacoes(ctx);
   for (const tom of SONS_DAS_REACOES[reacao]) tocarTom(ctx, ctx.currentTime, tom, saida);
 }
+
+/** Relógio de fliperama nos últimos segundos da vez: bip curto, agudo no "tic" e grave no "tac". */
+export function tocarTicTac(tic: boolean): void {
+  const ctx = obterContexto();
+  if (ctx === null || ctx.state !== 'running' || obterVolumeEfeitos() === 0) return;
+  tocarTom(ctx, ctx.currentTime, {
+    freq: tic ? NOTA.si5 : NOTA.mi5,
+    duracao: 0.05,
+    onda: 'square',
+    volume: 0.7,
+  });
+}

@@ -74,31 +74,6 @@
   box-shadow: var(--brilho-rosa);
 }
 
-.abas {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  padding: 4px;
-  border: 1px solid var(--linha);
-  border-radius: 14px;
-  background: var(--superficie);
-}
-
-.aba {
-  min-height: var(--alvo-minimo);
-  border: 0;
-  border-radius: 11px;
-  background: transparent;
-  color: var(--texto-suave);
-  font-weight: 500;
-}
-
-.aba--ativa {
-  background: var(--rosa-forte);
-  color: #fff;
-  font-weight: 700;
-  box-shadow: 0 0 12px var(--rosa);
-}
-
 .entrada__codigo {
   height: 64px;
   color: var(--texto-neon);
@@ -209,4 +184,8 @@
 .entrada__tutorial {
   border-color: var(--ciano);
   color: var(--ciano-branco);
+}
+
+.entrada__trocar {
+  align-self: center;
 }
