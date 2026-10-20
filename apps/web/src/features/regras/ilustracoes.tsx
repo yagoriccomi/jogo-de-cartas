@@ -4,7 +4,7 @@ import { Coracoes } from '../../componentes/Coracoes';
 import type { EstiloComVariaveis } from '../../lib/estiloComVariaveis';
 import { classes } from '../../lib/classes';
 import { Carta } from '../mesa/Carta';
-import { INTERVALO_DUPLO_CLIQUE_MS } from '../mesa/Mao';
+import { INTERVALO_DUPLO_CLIQUE_MS } from '../../lib/useDuploToque';
 import { SimbolosMaoEPe } from '../mesa/SimbolosMaoEPe';
 
 const LARGURA_PEQUENA = 36;

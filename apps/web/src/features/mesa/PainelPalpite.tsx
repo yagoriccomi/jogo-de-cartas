@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Carta as DadosDaCarta, Valor } from '@fodinha/shared';
 import { classes } from '../../lib/classes';
+import { useDuploToque } from '../../lib/useDuploToque';
 import type { EstiloComVariaveis } from '../../lib/estiloComVariaveis';
 import { Carta } from './Carta';
 import { ContagemRegressiva } from './ContagemRegressiva';
@@ -53,6 +54,10 @@ export function PainelPalpite({
   onConfirmar,
 }: Props) {
   const [escolhido, definirEscolhido] = useState<number | null>(null);
+  // Mesmo padrão das cartas: 1 toque escolhe, 2 rápidos confirmam (o botão Confirmar continua).
+  const toqueNoPalpite = useDuploToque<number>(definirEscolhido, (quantidade) =>
+    onConfirmar(quantidade),
+  );
   const [detalhesAbertos, definirDetalhesAbertos] = useState(false);
   const opcoes = Array.from({ length: cartasNaRodada + 1 }, (_, quantidade) => quantidade);
   const soma = palpitesAnteriores.reduce((total, anterior) => total + anterior.palpite, 0);
@@ -99,7 +104,7 @@ export function PainelPalpite({
               aria-pressed={escolhido === quantidade}
               aria-label={proibido ? `${quantidade}, bloqueado` : String(quantidade)}
               disabled={proibido || ocupado}
-              onClick={() => definirEscolhido(quantidade)}
+              onClick={(evento) => toqueNoPalpite.tocar(quantidade, evento)}
             >
               {quantidade}
             </button>
