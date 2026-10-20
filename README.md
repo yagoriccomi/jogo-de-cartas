@@ -4,6 +4,8 @@
 ![Node](https://img.shields.io/badge/node-24-339933)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6)
 
+**Jogue agora:** https://game.yagoriccomi.com.br
+
 Fodinha é um jogo de cartas multiplayer online, jogado direto no navegador. Crie uma sala, compartilhe o código com os amigos, complete a mesa com bots se faltar gente e jogue uma partida inteira. O servidor é a única autoridade do jogo: cada jogador recebe apenas o que pode ver, então não há como espiar cartas dos outros.
 
 ## Regras resumidas
@@ -158,7 +160,7 @@ O frontend vai para a Vercel e o servidor de jogo para a Render.
 ### Backend na Render
 
 1. No painel da Render, crie um **Blueprint** apontando para este repositório; o arquivo `render.yaml` na raiz descreve o serviço (web service Node, plano grátis, verificação de saúde em `/health`).
-2. Defina `CORS_ORIGINS` com a URL do frontend na Vercel (por exemplo `https://fodinha.vercel.app`). Várias origens são separadas por vírgula.
+2. Defina `CORS_ORIGINS` com a URL do frontend na Vercel (por exemplo `https://game.yagoriccomi.com.br`). Várias origens são separadas por vírgula.
 3. `LOG_LEVEL` já tem valor padrão no Blueprint.
 
 Também há um `Dockerfile` de produção em `apps/server/Dockerfile` (build multi-stage, usuário não-root). Para gerar a imagem, a partir da raiz: `docker build -f apps/server/Dockerfile -t fodinha-server .`
