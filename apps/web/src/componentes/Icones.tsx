@@ -94,6 +94,14 @@ export const IconeInstalar = (p: Props) => (
   </Icone>
 );
 
+/** O "Compartilhar" do Safari (quadrado com seta para cima), para o aviso de instalação no iPhone. */
+export const IconeCompartilhar = (p: Props) => (
+  <Icone {...p}>
+    <path d="M8 10H6v11h12V10h-2" />
+    <path d="M12 3v12M8.5 6.5 12 3l3.5 3.5" />
+  </Icone>
+);
+
 export const IconeCoracao = ({ className = 'icone' }: Props) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <path d="M12 21s-8-5.5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.5-8 11-8 11z" />

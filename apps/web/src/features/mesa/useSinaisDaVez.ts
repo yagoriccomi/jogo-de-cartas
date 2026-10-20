@@ -33,9 +33,14 @@ export function useRolarAtePlacaDaVez(
       `[${MARCADORES.placaDoJogador}="${CSS.escape(idDaVez)}"]`,
     );
     if (placa === null) return;
-    const r = placa.getBoundingClientRect();
-    const deslocamento = r.left - lista.getBoundingClientRect().left + lista.scrollLeft;
-    const centro = deslocamento + r.width / 2 - lista.clientWidth / 2;
-    lista.scrollTo({ left: centro, behavior: prefereMenosMovimento() ? 'auto' : 'smooth' });
+    rolarFaixaAtePlaca(lista, placa);
   }, [faixa, idDaVez]);
+}
+
+/** Centraliza a placa na faixa rolável, sem rolar a página. */
+export function rolarFaixaAtePlaca(lista: HTMLElement, placa: HTMLElement): void {
+  const r = placa.getBoundingClientRect();
+  const deslocamento = r.left - lista.getBoundingClientRect().left + lista.scrollLeft;
+  const centro = deslocamento + r.width / 2 - lista.clientWidth / 2;
+  lista.scrollTo({ left: centro, behavior: prefereMenosMovimento() ? 'auto' : 'smooth' });
 }

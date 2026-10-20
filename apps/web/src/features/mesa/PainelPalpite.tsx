@@ -1,12 +1,12 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import type { Carta as DadosDaCarta, Valor } from '@fodinha/shared';
 import { classes } from '../../lib/classes';
+import { useDuploToque } from '../../lib/useDuploToque';
 import type { EstiloComVariaveis } from '../../lib/estiloComVariaveis';
 import { verboDeToque } from '../tutorial/ponteiro';
 import { descreverSaldo } from './AndamentoDosPalpites';
 import { Carta } from './Carta';
 import { useDicaDoGesto } from './dicaDoGesto';
-import { INTERVALO_DUPLO_CLIQUE_MS } from './Mao';
 import { SimbolosMaoEPe } from './SimbolosMaoEPe';
 
 /** Até esta quantidade de opções os botões são grandes e ocupam uma linha. */
@@ -55,8 +55,11 @@ export function PainelPalpite({
   onConfirmar,
 }: Props) {
   const [escolhido, definirEscolhido] = useState<number | null>(null);
+  // Mesmo padrão das cartas: 1 toque escolhe, 2 rápidos confirmam (o botão Confirmar continua).
+  const toqueNoPalpite = useDuploToque<number>(definirEscolhido, (quantidade) =>
+    confirmar(quantidade),
+  );
   const [detalhesAbertos, definirDetalhesAbertos] = useState(false);
-  const ultimoToque = useRef<{ quantidade: number; em: number } | null>(null);
   const verbo = verboDeToque();
   const dicaDoGesto = useDicaDoGesto('palpite');
   const opcoes = Array.from({ length: cartasNaRodada + 1 }, (_, quantidade) => quantidade);
@@ -69,20 +72,6 @@ export function PainelPalpite({
   function confirmar(quantidade: number) {
     dicaDoGesto.aprendeu();
     onConfirmar(quantidade);
-  }
-
-  // Um toque escolhe; o segundo no mesmo número confirma, como jogar carta na mão.
-  function tocar(quantidade: number) {
-    const agora = performance.now();
-    const anterior = ultimoToque.current;
-    ultimoToque.current = { quantidade, em: agora };
-    const duplo =
-      anterior?.quantidade === quantidade && agora - anterior.em <= INTERVALO_DUPLO_CLIQUE_MS;
-    if (duplo) {
-      confirmar(quantidade);
-      return;
-    }
-    definirEscolhido(quantidade);
   }
 
   return (
@@ -125,7 +114,7 @@ export function PainelPalpite({
               aria-pressed={escolhido === quantidade}
               aria-label={proibido ? `${quantidade}, bloqueado` : String(quantidade)}
               disabled={proibido || ocupado}
-              onClick={() => tocar(quantidade)}
+              onClick={(evento) => toqueNoPalpite.tocar(quantidade, evento)}
             >
               {quantidade}
             </button>

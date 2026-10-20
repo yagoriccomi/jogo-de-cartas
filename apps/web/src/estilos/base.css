@@ -7,10 +7,13 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  /* Arrastar além do topo/fim não puxa a página (sem "puxar para atualizar" nem borda à mostra). */
+  overscroll-behavior: none;
 }
 
 body {
   margin: 0;
+  overscroll-behavior: none;
   min-height: 100dvh;
   background-color: var(--fundo);
   color: var(--texto);
@@ -559,4 +562,29 @@ button:disabled {
   .so-celular {
     display: none;
   }
+}
+
+/* Passo a passo de instalação no iPhone, onde o site não pode oferecer o botão. */
+.aviso-instalar {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--texto-suave);
+  border: 1px dashed var(--linha);
+  border-radius: 12px;
+}
+
+.aviso-instalar strong {
+  color: var(--texto);
+}
+
+.aviso-instalar__compartilhar {
+  width: 1.1em;
+  height: 1.1em;
+  vertical-align: -0.2em;
+  color: var(--ciano);
 }

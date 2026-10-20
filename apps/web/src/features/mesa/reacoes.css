@@ -76,6 +76,20 @@
   background: var(--linha-suave);
 }
 
+.reacoes__opcao[aria-pressed='true'] {
+  background: var(--rosa-forte);
+  border-color: var(--rosa);
+  box-shadow: var(--brilho-rosa);
+}
+
+.reacoes__dica {
+  grid-column: 1 / -1;
+  margin: 2px 0 0;
+  font-size: 0.72rem;
+  text-align: center;
+  color: var(--texto-suave);
+}
+
 .reacoes__opcao:disabled {
   opacity: 0.5;
   cursor: default;
@@ -123,6 +137,180 @@
   }
 }
 
+/* Aviso de reação de quem está fora da faixa visível: abaixo dela, na borda daquele lado. */
+.reacao-aviso {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 2px 12px;
+  font: inherit;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: var(--texto);
+  white-space: nowrap;
+  background: var(--superficie);
+  border: 2px solid var(--rosa);
+  border-radius: 999px;
+  cursor: pointer;
+  animation:
+    reacao-aviso-chega 0.4s ease-out,
+    reacao-aviso-pulsa 1.2s ease-in-out infinite;
+}
+
+.reacao-aviso .emoji-animado {
+  font-size: 1.4rem;
+}
+
+.reacao-aviso > span[aria-hidden='true']:not(.emoji-animado) {
+  font-size: 1.3rem;
+  color: var(--rosa);
+}
+
+.reacao-aviso:focus-visible {
+  outline: 2px solid var(--rosa-claro);
+  outline-offset: 2px;
+}
+
+@keyframes reacao-aviso-chega {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+@keyframes reacao-aviso-pulsa {
+  50% {
+    box-shadow: var(--brilho-rosa);
+  }
+}
+
+/* Cada emoji com o seu movimento (emojiAnimado.tsx), repetido enquanto aparece. */
+.emoji-animado {
+  display: inline-block;
+  line-height: 1;
+  animation: 0.7s ease-in-out infinite;
+}
+
+.emoji-animado--balanco {
+  animation-name: emoji-balanco;
+}
+.emoji-animado--chama {
+  animation-name: emoji-chama;
+  animation-duration: 0.6s;
+}
+.emoji-animado--tremor {
+  animation-name: emoji-tremor;
+  animation-duration: 0.5s;
+}
+.emoji-animado--palmas {
+  animation-name: emoji-palmas;
+}
+.emoji-animado--giro {
+  animation-name: emoji-giro;
+  animation-duration: 0.8s;
+}
+.emoji-animado--carimbo {
+  animation-name: emoji-carimbo;
+  animation-duration: 0.6s;
+}
+.emoji-animado--choro {
+  animation-name: emoji-choro;
+  animation-duration: 0.6s;
+}
+.emoji-animado--reza {
+  animation-name: emoji-reza;
+  animation-duration: 0.9s;
+}
+
+/* Trevo dourado (1 em 5): o verde vira ouro com brilho. */
+.emoji-animado--dourado {
+  filter: sepia(1) saturate(6) hue-rotate(5deg) brightness(1.15)
+    drop-shadow(0 0 6px rgb(255 209 102 / 90%));
+}
+
+@keyframes emoji-balanco {
+  25% {
+    transform: rotate(-18deg) scale(1.15);
+  }
+  75% {
+    transform: rotate(18deg) scale(1.15);
+  }
+}
+
+@keyframes emoji-chama {
+  25% {
+    transform: scale(1.1, 1.25) skewX(-6deg);
+  }
+  50% {
+    transform: scale(0.95, 1.05) skewX(5deg);
+  }
+  75% {
+    transform: scale(1.12, 1.3) skewX(-3deg);
+  }
+}
+
+@keyframes emoji-tremor {
+  20%,
+  60% {
+    transform: translateX(-4px) rotate(-8deg) scale(1.15);
+  }
+  40%,
+  80% {
+    transform: translateX(4px) rotate(8deg) scale(1.15);
+  }
+}
+
+@keyframes emoji-palmas {
+  15%,
+  45%,
+  75% {
+    transform: scale(0.78, 1.12);
+  }
+  30%,
+  60% {
+    transform: scale(1);
+  }
+}
+
+@keyframes emoji-giro {
+  50% {
+    transform: rotate(200deg) scale(1.35);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes emoji-carimbo {
+  0% {
+    transform: scale(0.4) rotate(-30deg);
+  }
+  60% {
+    transform: scale(1.4) rotate(10deg);
+  }
+}
+
+@keyframes emoji-choro {
+  30% {
+    transform: translateY(3px) scale(1.08, 0.9);
+  }
+  60% {
+    transform: translateY(-3px) scale(0.95, 1.08);
+  }
+}
+
+@keyframes emoji-reza {
+  35% {
+    transform: translateY(4px) rotate(14deg) scale(0.95);
+  }
+  55% {
+    transform: translateY(-5px) scale(1.2);
+  }
+}
+
 @keyframes reacoes-painel {
   from {
     opacity: 0;
@@ -137,15 +325,9 @@
     transform: translate(-50%, -60%);
   }
 
-  .reacoes__painel {
+  .reacoes__painel,
+  .reacao-aviso,
+  .emoji-animado {
     animation: none;
   }
-}
-
-.reacoes__dica {
-  grid-column: 1 / -1;
-  max-width: calc(4 * var(--alvo-minimo) + 12px);
-  margin: 0 0 4px;
-  font-size: 0.75rem;
-  line-height: 1.25;
 }

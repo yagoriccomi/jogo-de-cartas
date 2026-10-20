@@ -296,7 +296,7 @@ export function TelaMesa() {
         aria-label="Minha área"
       >
         {/* O tutorial roda sem sala no servidor: não há para quem reagir. */}
-        {tutorial === null && <ReacoesDaMesa meuId={meuId} />}
+        {tutorial === null && <ReacoesDaMesa meuId={meuId} jogadores={jogo.jogadores} />}
         <div className="minha__barra">
           <div className="minha__dados">
             <SimbolosMaoEPe

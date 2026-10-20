@@ -23,7 +23,7 @@
 | 11. Botão de emoji                 | Continua visível, com folga mínima de 8 px dos números do palpite em todos os tamanhos (coberto por teste de tela).                                                                                                                      | `df06b53`                              |
 | 5. Feltro durante os palpites      | O centro mostra quem está palpitando, o saldo em palavras e quantos já palpitaram.                                                                                                                                                       | `e7918a0`                              |
 | 2. Ajuda na primeira partida       | "Regras em 1 minuto" abre no começo de cada partida até o jogador tocar "Não perguntar novamente neste computador". Enquanto lê, a mesa pausa e os outros veem "Jogador noob lendo as regras!": até 60 s, 1 vez por jogador por partida. | `7732b19`                              |
-| Menor. Gesto de 1 e 2 toques       | No primeiro uso de cada seletor do aparelho a dica fica em destaque (carta, palpite) e o painel de reações avisa que um toque já envia. O guia de regras, o tutorial e o resumo citam o gesto.                                           | `6b0dda2`                              |
+| Menor. Gesto de 1 e 2 toques       | No primeiro uso de cada seletor do aparelho a dica fica em destaque (carta, palpite) e a dica das reações (prévia com 1 toque, envio com 2) ganham destaque. O guia de regras, o tutorial e o resumo citam o gesto.                      | `6b0dda2`                              |
 
 Achados no caminho, corrigidos:
 
@@ -58,7 +58,7 @@ No navegador (dev): `http://localhost:5173/?cenario=10x13` em 360×640, 375×812
 | P2  | Prazo da vez: 15, 30, 45, 60, 90 s ou sem limite, padrão 30 s.                                                               | `ConfiguracaoControles.tsx`.                                            |
 | P3  | O resumo das regras abre em toda partida até ser dispensado ("Entendi" fecha só nesta partida).                              | `ResumoDasRegras.tsx`: gravar a preferência também no "Entendi".        |
 | P4  | A pausa de leitura é da mesa inteira, 60 s, 1 vez por jogador por partida e um leitor por vez; quem entra no meio não a usa. | `LIMITES.maxLeituraDasRegrasSegundos` e `Sala.comecarLeituraDasRegras`. |
-| P5  | A reação não tem gesto de dois toques (um toque no emoji já envia); a dica dela explica isso em vez de ensinar o 2×.         | `ReacoesDaMesa.tsx`.                                                    |
+| P5  | Com a main, a reação passou a ter 1 toque de prévia e 2 para enviar; a dica dela usa o mesmo destaque da carta e do palpite. | `ReacoesDaMesa.tsx`.                                                    |
 | P6  | Sem mockup: ajustes dentro da identidade visual aprovada.                                                                    | —                                                                       |
 
 ## Pendências

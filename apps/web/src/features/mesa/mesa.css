@@ -1,3 +1,19 @@
+/*
+ * Em jogo o documento fica preso à janela: no celular, arrastar para baixo não pode revelar a
+ * borda do site (o "quique" do iOS e o puxar-para-atualizar do Android). O que precisar aparecer
+ * se sobrepõe à mesa.
+ */
+html:has(.mesa:not(.mesa--fim)),
+body:has(.mesa:not(.mesa--fim)) {
+  height: 100%;
+  overflow: hidden;
+}
+
+body:has(.mesa:not(.mesa--fim)) {
+  position: fixed;
+  inset: 0;
+}
+
 /* Em jogo a página nunca rola: a mesa ocupa exatamente a tela e as áreas internas se ajustam. */
 .app:has(.mesa:not(.mesa--fim)) {
   height: 100dvh;

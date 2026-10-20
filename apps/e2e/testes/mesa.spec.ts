@@ -139,18 +139,20 @@ test.describe('Mesa cheia (10 jogadores, 13 cartas)', () => {
     }
   });
 
-  test('a dica das reações aparece só até a primeira reação do aparelho', async ({ page }) => {
+  test('a dica das reações fica em destaque só até a primeira reação do aparelho', async ({
+    page,
+  }) => {
     await abrirCenario(page);
     const botao = page.locator('.reacoes__botao');
-    const dica = page.locator('.reacoes__dica');
+    const destaque = page.locator('.reacoes__dica.dica-do-gesto');
     await botao.click();
-    await expect(dica).toBeVisible();
+    await expect(destaque).toBeVisible();
     expect(contem(telaDe(page), await medir(page.locator('.reacoes__painel')))).toBe(true);
 
-    await page.locator('.reacoes__opcao').first().click();
+    await page.locator('.reacoes__opcao').first().dblclick();
     await botao.click();
-    await expect(page.locator('.reacoes__painel')).toBeVisible();
-    await expect(dica).toHaveCount(0);
+    await expect(page.locator('.reacoes__dica')).toBeVisible();
+    await expect(destaque).toHaveCount(0);
   });
 
   test('placar e regras abrem a qualquer momento e cabem na tela', async ({ page }, info) => {

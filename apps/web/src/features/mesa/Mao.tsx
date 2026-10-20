@@ -10,6 +10,7 @@ import { ehCartaOculta, type CartaNaMao, type Valor } from '@fodinha/shared';
 import { classes } from '../../lib/classes';
 import type { EstiloComVariaveis } from '../../lib/estiloComVariaveis';
 import { CONSULTA_COMPUTADOR, CONSULTA_TOQUE, useMediaQuery } from '../../lib/useMediaQuery';
+import { useDuploToque } from '../../lib/useDuploToque';
 import { useLargura } from '../../lib/useLargura';
 import {
   MARCADORES,
@@ -21,8 +22,6 @@ import { useDicaDoGesto } from './dicaDoGesto';
 import { calcularLeque } from './leque';
 import { animarDistribuicao } from './mao-animacoes';
 
-/** Dois cliques na mesma carta dentro deste intervalo jogam a carta (o `dblclick` nativo varia por sistema). */
-export const INTERVALO_DUPLO_CLIQUE_MS = 700;
 const JOGADORES_PADRAO_NA_MESA = 4;
 
 interface Props {
@@ -75,8 +74,11 @@ export function Mao({
   const [referencia, largura] = useLargura<HTMLDivElement>();
   const lequeRef = useRef<HTMLUListElement>(null);
   const itensRef = useRef(new Map<string, HTMLLIElement>());
-  const ultimoCliqueRef = useRef<{ id: string; em: number } | null>(null);
   const [selecionadaId, definirSelecionadaId] = useState<string | null>(null);
+  // `jogar` é declaração de função (içada): pode ser usada aqui, antes de aparecer no corpo.
+  const toqueNaCarta = useDuploToque<string>(definirSelecionadaId, (id, evento) =>
+    jogar(id, evento.currentTarget),
+  );
 
   const comecaAnimando = animarAoMontar && cartas.length > 0 && !prefereMenosMovimento();
   const [registro, definirRegistro] = useState<Registro>(() => registrar(cartas, numeroRodada));
@@ -191,7 +193,6 @@ export function Mao({
   function jogar(cartaId: string, elemento: HTMLElement) {
     // A mesa usa este retângulo para animar o voo da mão até o centro.
     registrarOrigemDaJogada(cartaId, elemento.getBoundingClientRect());
-    ultimoCliqueRef.current = null;
     definirSelecionadaId(null);
     dicaDoGesto.aprendeu();
     onJogar(cartaId);
@@ -199,25 +200,13 @@ export function Mao({
 
   function aoClicar(cartaId: string, evento: EventoDeMouse<HTMLButtonElement>) {
     if (!podeJogar || bloqueada) return;
-    // `detail === 0` é o clique sintético do teclado (Enter/Espaço): atalho que joga direto.
-    if (evento.detail === 0) {
-      jogar(cartaId, evento.currentTarget);
-      return;
-    }
-    const agora = Date.now();
-    const anterior = ultimoCliqueRef.current;
-    if (anterior && anterior.id === cartaId && agora - anterior.em < INTERVALO_DUPLO_CLIQUE_MS) {
-      jogar(cartaId, evento.currentTarget);
-      return;
-    }
-    ultimoCliqueRef.current = { id: cartaId, em: agora };
-    definirSelecionadaId(cartaId);
+    toqueNaCarta.tocar(cartaId, evento);
   }
 
   function aoCancelar(evento: EventoDeMouse<HTMLDivElement>) {
     // Botão direito cancela a seleção em vez de abrir o menu do navegador sobre a mão.
     evento.preventDefault();
-    ultimoCliqueRef.current = null;
+    toqueNaCarta.esquecer();
     definirSelecionadaId(null);
   }
 

@@ -37,7 +37,29 @@ describe('reação dos bots', () => {
     expect(c.notificador.reacoes).toHaveLength(0);
   });
 
-  it('naoDeveReagirPorHumanoQueEstourouOPrazo', () => {
+  it('deveFazerTodosOsBotsReagiremQuandoUmHumanoEstouraOPrazo', () => {
+    // Fora da chance de reação por carta, mas dentro da lista de emojis: só o estouro fala.
+    const c = montarCenario({}, () => 0.5);
+    const ana = c.criarSala();
+    c.servico.adicionarBot(ator(ana));
+    c.servico.adicionarBot(ator(ana));
+    c.servico.iniciarPartida(ator(ana));
+    for (let i = 0; i < PASSOS_DE_JOGO && c.partidaDe(ana)?.idDaVez !== ana.jogadorId; i++) {
+      c.relogio.avancar(ATRASO_BOT_MS);
+    }
+    expect(c.notificador.reacoes).toHaveLength(0);
+
+    c.relogio.avancar(PRAZO_MS);
+    const bots = c
+      .partidaDe(ana)
+      ?.jogadores.filter((j) => j.ehBot)
+      .map((j) => j.id);
+    expect(c.notificador.reacoes.map(({ reacao }) => reacao.jogadorId).sort()).toEqual(
+      bots?.sort(),
+    );
+  });
+
+  it('naoDeveReagirPorHumanoQueEstourouOPrazoSemBotsNaMesa', () => {
     const c = montarCenario({}, BOTS_FALANTES);
     const ana = c.criarSala();
     c.entrar(ana, 'Bia');
