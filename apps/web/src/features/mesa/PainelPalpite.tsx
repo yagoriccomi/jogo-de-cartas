@@ -5,6 +5,7 @@ import type { EstiloComVariaveis } from '../../lib/estiloComVariaveis';
 import { verboDeToque } from '../tutorial/ponteiro';
 import { descreverSaldo } from './AndamentoDosPalpites';
 import { Carta } from './Carta';
+import { useDicaDoGesto } from './dicaDoGesto';
 import { INTERVALO_DUPLO_CLIQUE_MS } from './Mao';
 import { SimbolosMaoEPe } from './SimbolosMaoEPe';
 
@@ -41,6 +42,7 @@ function tamanhoDaGrade(opcoes: number): 'grande' | 'media' | 'pequena' {
   return 'pequena';
 }
 
+/** O primeiro palpite do aparelho ensina o gesto: o "2× no número" ganha destaque até ser usado. */
 export function PainelPalpite({
   cartasNaRodada,
   palpiteProibido,
@@ -56,12 +58,18 @@ export function PainelPalpite({
   const [detalhesAbertos, definirDetalhesAbertos] = useState(false);
   const ultimoToque = useRef<{ quantidade: number; em: number } | null>(null);
   const verbo = verboDeToque();
+  const dicaDoGesto = useDicaDoGesto('palpite');
   const opcoes = Array.from({ length: cartasNaRodada + 1 }, (_, quantidade) => quantidade);
   const soma = palpitesAnteriores.reduce((total, anterior) => total + anterior.palpite, 0);
   // Vazas ainda "sem dono" nos palpites: negativo quando a mesa já pediu mais do que há.
   const saldo = cartasNaRodada - soma;
   const colunas = Math.min(opcoes.length, COLUNAS_DA_GRADE_LONGA);
   const estiloGrade: EstiloComVariaveis = { '--colunas': colunas };
+
+  function confirmar(quantidade: number) {
+    dicaDoGesto.aprendeu();
+    onConfirmar(quantidade);
+  }
 
   // Um toque escolhe; o segundo no mesmo número confirma, como jogar carta na mão.
   function tocar(quantidade: number) {
@@ -71,7 +79,7 @@ export function PainelPalpite({
     const duplo =
       anterior?.quantidade === quantidade && agora - anterior.em <= INTERVALO_DUPLO_CLIQUE_MS;
     if (duplo) {
-      onConfirmar(quantidade);
+      confirmar(quantidade);
       return;
     }
     definirEscolhido(quantidade);
@@ -146,14 +154,21 @@ export function PainelPalpite({
           type="button"
           className="botao botao--primario palpite__confirmar"
           disabled={escolhido === null || ocupado}
-          onClick={() => escolhido !== null && onConfirmar(escolhido)}
+          onClick={() => escolhido !== null && confirmar(escolhido)}
         >
           {escolhido === null ? (
             `${verbo} num número`
           ) : (
             <>
               <span>Confirmar {escolhido}</span>
-              <span className="palpite__gesto">ou {verbo.toLowerCase()} 2× no número</span>
+              <span
+                className={classes(
+                  'palpite__gesto',
+                  dicaDoGesto.destacar && 'palpite__gesto--destaque',
+                )}
+              >
+                ou {verbo.toLowerCase()} 2× no número
+              </span>
             </>
           )}
         </button>

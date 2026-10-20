@@ -101,6 +101,11 @@ test.describe('Mesa cheia (10 jogadores, 13 cartas)', () => {
       expect(contem(caixaDoPainel, caixa)).toBe(true);
     }
     await expect(page.locator('.palpite__rodape .botao')).toBeInViewport();
+    // Com um número escolhido o botão ganha a segunda linha ("ou toque 2×"), que já vazou dele.
+    await opcoes.nth(1).click();
+    const confirmar = page.locator('.palpite__confirmar');
+    await expect(confirmar).toContainText('2×');
+    expect(await confirmar.evaluate((b) => b.scrollWidth - b.clientWidth)).toBeLessThanOrEqual(1);
     // As vidas continuam visíveis durante o palpite (já ficaram cobertas por ele).
     await expect(page.locator('.minha__vidas')).toBeInViewport();
   });
@@ -132,6 +137,20 @@ test.describe('Mesa cheia (10 jogadores, 13 cartas)', () => {
     for (const caixa of pousadas) {
       expect(contem(feltro, caixa), 'carta da mesa vazando do feltro').toBe(true);
     }
+  });
+
+  test('a dica das reações aparece só até a primeira reação do aparelho', async ({ page }) => {
+    await abrirCenario(page);
+    const botao = page.locator('.reacoes__botao');
+    const dica = page.locator('.reacoes__dica');
+    await botao.click();
+    await expect(dica).toBeVisible();
+    expect(contem(telaDe(page), await medir(page.locator('.reacoes__painel')))).toBe(true);
+
+    await page.locator('.reacoes__opcao').first().click();
+    await botao.click();
+    await expect(page.locator('.reacoes__painel')).toBeVisible();
+    await expect(dica).toHaveCount(0);
   });
 
   test('placar e regras abrem a qualquer momento e cabem na tela', async ({ page }, info) => {

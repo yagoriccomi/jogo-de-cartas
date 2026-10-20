@@ -141,3 +141,11 @@
     animation: none;
   }
 }
+
+.reacoes__dica {
+  grid-column: 1 / -1;
+  max-width: calc(4 * var(--alvo-minimo) + 12px);
+  margin: 0 0 4px;
+  font-size: 0.75rem;
+  line-height: 1.25;
+}

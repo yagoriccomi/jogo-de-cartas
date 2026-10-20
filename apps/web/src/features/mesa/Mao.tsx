@@ -17,6 +17,7 @@ import {
   registrarOrigemDaJogada,
 } from './animacao-compartilhada';
 import { Carta } from './Carta';
+import { useDicaDoGesto } from './dicaDoGesto';
 import { calcularLeque } from './leque';
 import { animarDistribuicao } from './mao-animacoes';
 
@@ -70,6 +71,7 @@ export function Mao({
 }: Props) {
   const computador = useMediaQuery(CONSULTA_COMPUTADOR);
   const toque = useMediaQuery(CONSULTA_TOQUE);
+  const dicaDoGesto = useDicaDoGesto('carta');
   const [referencia, largura] = useLargura<HTMLDivElement>();
   const lequeRef = useRef<HTMLUListElement>(null);
   const itensRef = useRef(new Map<string, HTMLLIElement>());
@@ -191,6 +193,7 @@ export function Mao({
     registrarOrigemDaJogada(cartaId, elemento.getBoundingClientRect());
     ultimoCliqueRef.current = null;
     definirSelecionadaId(null);
+    dicaDoGesto.aprendeu();
     onJogar(cartaId);
   }
 
@@ -220,6 +223,7 @@ export function Mao({
 
   const contagem = `Sua mão · ${cartas.length} ${cartas.length === 1 ? 'carta' : 'cartas'}`;
   let dica = contagem;
+  const ensinandoGesto = podeJogar && !bloqueada && dicaDoGesto.destacar;
   if (todasOcultas) dica = 'Rodada cega · sua carta fica virada e é revelada na mesa';
   else if (podeJogar && !bloqueada) {
     dica = toque
@@ -229,7 +233,8 @@ export function Mao({
 
   return (
     <div className="mao" ref={referencia} onContextMenu={aoCancelar}>
-      <p className="mao__dica" aria-live="polite">
+      <p className={classes('mao__dica', ensinandoGesto && 'dica-do-gesto')} aria-live="polite">
+        {ensinandoGesto && <strong className="dica-do-gesto__rotulo">Dica</strong>}
         {dica}
       </p>
       <ul

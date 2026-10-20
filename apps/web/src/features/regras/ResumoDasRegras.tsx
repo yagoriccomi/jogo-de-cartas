@@ -92,7 +92,7 @@ export function ResumoDasRegras({ jogo, meuId, recebidoEm, ativo }: Props) {
           de cartas.
         </li>
         <li>
-          <strong>{verbo} 1× escolhe, 2× confirma:</strong> vale para carta, palpite e reação.
+          <strong>{verbo} 1× escolhe, 2× confirma:</strong> vale para a carta e o palpite.
         </li>
       </ul>
       <p className="resumo__guia">O guia completo fica em Regras, no topo da mesa.</p>

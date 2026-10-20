@@ -42,6 +42,7 @@ Fodinha é um jogo de cartas multiplayer online, jogado direto no navegador. Cri
 - Servidor autoritativo: o cliente só recebe a própria mão, a vira, as cartas jogadas e, na rodada cega, a carta dos outros.
 - Reconexão por token após recarregar a página.
 - Prazo da vez com jogada automática, para a mesa nunca travar (salvo quando o dono escolhe "sem limite").
+- Dica do gesto: na primeira vez que alguém joga uma carta, palpita ou reage naquele aparelho, a dica de como tocar fica em destaque (1 toque escolhe, 2 confirmam; na reação, 1 toque já envia) e depois some.
 - Tutorial interativo na tela inicial: uma rodada de 3 cartas e uma rodada cega roteiradas contra 2 bots, com cartas sempre iguais e balões de fala apontando cada parte da mesa. Tem uma versão rápida, que pula os passos só explicativos. Funciona sem servidor.
 - Sons de fliperama (sintetizados, sem arquivos de áudio) e vibração na sua vez e ao perder vida.
 - Música de fundo tranquila no lobby e na mesa, no clima cassino anos 80: city pop com pé na bossa (piano elétrico, baixo sincopado, aro de caixa, chocalho e sinos com eco, sem vocais), gerada na hora pelo navegador com Web Audio: não há arquivo de música nem licença de terceiros. Começa depois do primeiro toque na tela (regra de autoplay dos navegadores) e pausa quando a aba fica oculta.
@@ -129,7 +130,7 @@ npm run format      # formata com Prettier
 npm run test:e2e    # testes de tela (Playwright)
 ```
 
-Os **testes de tela** abrem o jogo de verdade num Chromium em 5 tamanhos (de 360×640 a 1920×1080) e conferem o que já quebrou antes: a mesa cheia (10 jogadores, 13 cartas) sem rolar a página, o palpite cabendo no feltro, as cartas dentro da mesa, placar e regras, e o tutorial inteiro, com todo balão apontando para algo visível. Eles sobem sozinhos um servidor e um web de teste nas portas 3101 e 5199, então funcionam com o Docker de desenvolvimento ligado. Na primeira vez, instale o navegador: `npx playwright install chromium` (dentro de `apps/e2e`).
+Os **testes de tela** abrem o jogo de verdade num Chromium em 5 tamanhos (de 360×640 a 1920×1080) e conferem o que já quebrou antes: a mesa cheia (10 jogadores, 13 cartas) sem rolar a página, o palpite cabendo no feltro, o resumo das regras e a dica das reações, as cartas dentro da mesa, placar e regras, e o tutorial inteiro, com todo balão apontando para algo visível. Eles sobem sozinhos um servidor e um web de teste nas portas 3101 e 5199, então funcionam com o Docker de desenvolvimento ligado. Na primeira vez, instale o navegador: `npx playwright install chromium` (dentro de `apps/e2e`).
 
 A cada push e pull request, o GitHub Actions executa lint, typecheck, testes, build e os testes de tela.
 

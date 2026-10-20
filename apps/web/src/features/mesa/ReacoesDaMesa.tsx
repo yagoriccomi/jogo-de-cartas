@@ -5,7 +5,9 @@ import { useApp } from '../../estado/armazem';
 import { useAcao } from '../../lib/useAcao';
 import { somEstaLigado } from '../som/preferencia';
 import { tocarReacao } from '../som/sintetizador';
+import { verboDeToque } from '../tutorial/ponteiro';
 import { MARCADORES, seletor } from './animacao-compartilhada';
+import { useDicaDoGesto } from './dicaDoGesto';
 import './reacoes.css';
 
 /** Meu status não é uma placa: a reação aparece sobre a área com meu nome e minhas vidas. */
@@ -77,6 +79,7 @@ function BolhaDeReacao({ reacao, meuId }: PropsBolha) {
 export function ReacoesDaMesa({ meuId }: { readonly meuId: string }) {
   const { reacoes } = useApp();
   const [aberto, definirAberto] = useState(false);
+  const dicaDoGesto = useDicaDoGesto('reacao');
   const [ocupado, executar] = useAcao();
   const raiz = useRef<HTMLDivElement>(null);
   useSomDasReacoes(reacoes);
@@ -100,6 +103,7 @@ export function ReacoesDaMesa({ meuId }: { readonly meuId: string }) {
 
   const escolher = (reacao: Reacao) => {
     definirAberto(false);
+    dicaDoGesto.aprendeu();
     void executar(() => reagir(reacao));
   };
 
@@ -118,6 +122,13 @@ export function ReacoesDaMesa({ meuId }: { readonly meuId: string }) {
         </button>
         {aberto && (
           <div className="reacoes__painel" role="group" aria-label="Escolha uma reação">
+            {/* Aqui um toque só já envia: diferente da carta e do palpite, vale avisar. */}
+            {dicaDoGesto.destacar && (
+              <p className="reacoes__dica dica-do-gesto">
+                <strong className="dica-do-gesto__rotulo">Dica</strong>
+                {verboDeToque()} num emoji: todos na mesa veem
+              </p>
+            )}
             {REACOES.map((reacao) => (
               <button
                 key={reacao}

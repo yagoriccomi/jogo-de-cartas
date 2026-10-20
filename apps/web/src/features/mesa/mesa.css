@@ -867,6 +867,11 @@
   min-height: 42px;
 }
 
+/* O padding do .botao base vence o do .palpite__confirmar e empurrava o "ou toque 2×" para fora. */
+.palpite__rodape .palpite__confirmar {
+  padding-inline: 10px;
+}
+
 .palpite__opcao[aria-pressed='true'] {
   border-color: var(--rosa-palido);
   background: var(--rosa-forte);
@@ -947,7 +952,15 @@
 .palpite__gesto {
   font-size: 0.68rem;
   font-weight: 600;
+  letter-spacing: 0;
   opacity: 0.85;
+}
+
+/* Primeiro palpite do aparelho: o atalho de dois toques aparece por inteiro, não como nota. */
+.palpite__gesto--destaque {
+  opacity: 1;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
 }
 
 /* Rola por dentro: com 9 adversários a lista não pode empurrar o Confirmar para longe. */
@@ -1391,6 +1404,25 @@
   .folha__alca {
     display: none;
   }
+}
+
+/* ---------- Dica do gesto (primeiro uso de cada seletor, uma vez por aparelho) ---------- */
+
+.dica-do-gesto {
+  color: var(--ciano);
+  font-weight: 700;
+  text-shadow: 0 0 8px rgb(45 226 230 / 0.55);
+}
+
+.dica-do-gesto__rotulo {
+  margin-right: 6px;
+  padding: 0 5px;
+  border-radius: 6px;
+  background: var(--ciano);
+  color: var(--fundo);
+  font-size: 0.85em;
+  text-transform: uppercase;
+  text-shadow: none;
 }
 
 /* ---------- Pausa (votação) ---------- */

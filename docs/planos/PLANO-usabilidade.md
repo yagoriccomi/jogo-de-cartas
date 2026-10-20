@@ -46,7 +46,7 @@ Modo: Loop (sem confirmação). Branch: `feature/feedback-jogadores`. Origem: `H
 
 ## Progresso
 
-- [x] 1 · [x] 2 (com 9, 12 e 13, adiantados: o painel só parou de rolar em 360×640 com o contador único e os corações em linhas iguais) · [x] 3 · [x] 4 (achado no caminho: quem era o pé perdia o Confirmar para fora do painel no notebook; a linha de bloqueio saiu e o selo foi para o lado do título) · [x] 5 (rótulo MÃO/PÉ por extenso só nas placas: na minha barra cortava o "Você") · [~] 6 (item 2 feito: resumo das regras com pausa 'lendo as regras'; falta o 'Menor', dicas do gesto) · [ ] 7
+- [x] 1 · [x] 2 (com 9, 12 e 13, adiantados: o painel só parou de rolar em 360×640 com o contador único e os corações em linhas iguais) · [x] 3 · [x] 4 (achado no caminho: quem era o pé perdia o Confirmar para fora do painel no notebook; a linha de bloqueio saiu e o selo foi para o lado do título) · [x] 5 (rótulo MÃO/PÉ por extenso só nas placas: na minha barra cortava o "Você") · [x] 6 (resumo das regras com pausa 'lendo as regras'; dica do gesto no primeiro uso de cada seletor; achado: o 'ou toque 2×' vazava do botão em 360 e 375 px, padding do .botao base) · [ ] 7
 
 ## Riscos e rollback
 
