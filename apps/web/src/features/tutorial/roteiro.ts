@@ -203,8 +203,7 @@ function montarRoteiro(apelido: string): Passo[] {
     {
       alvo: '.palpite',
       titulo: 'Seu palpite',
-      texto:
-        'O Simas também disse 1. O 1 está riscado para você: o pé não pode fechar a soma em 3, alguém tem que errar. Com manilha e Ás, escolha 2 e confirme.',
+      texto: `O Simas também disse 1. O 1 está riscado para você: o pé não pode fechar a soma em 3, alguém tem que errar. Com manilha e Ás, escolha 2 e confirme: ${usaToque() ? 'um toque escolhe, o segundo no mesmo número confirma' : 'um clique escolhe, dois cliques rápidos confirmam'}.`,
     },
     { tipo: 'palpite', valor: 2 },
   );

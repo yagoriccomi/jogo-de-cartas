@@ -1,12 +1,10 @@
 import { useState, type FormEvent } from 'react';
-import { CONFIGURACAO_PADRAO, LIMITES, type ConfiguracaoPartida } from '@fodinha/shared';
+import { CONFIGURACAO_PADRAO, LIMITES } from '@fodinha/shared';
 import { BotaoInstalar } from '../../componentes/BotaoInstalar';
-import { ConfiguracaoControles } from '../../componentes/ConfiguracaoControles';
 import { IconeFechar, IconeLivro } from '../../componentes/Icones';
 import { iniciarTutorial } from '../tutorial/motor';
 import { criarSala, dispensarAvisoDeEntrada, entrarNaSala } from '../../estado/acoes';
 import { useApp } from '../../estado/armazem';
-import { classes } from '../../lib/classes';
 import { lerApelido, salvarApelido } from '../../lib/sessao';
 import { useAcao } from '../../lib/useAcao';
 import { Carta } from '../mesa/Carta';
@@ -39,7 +37,6 @@ export function TelaEntrada() {
   const [modo, definirModo] = useState<Modo>(codigoConvite ? 'entrar' : 'criar');
   const [apelido, definirApelido] = useState(lerApelido);
   const [codigo, definirCodigo] = useState(codigoConvite);
-  const [configuracao, definirConfiguracao] = useState<ConfiguracaoPartida>(CONFIGURACAO_PADRAO);
   const [tentou, definirTentou] = useState(false);
   const [ocupado, executar] = useAcao();
 
@@ -49,6 +46,12 @@ export function TelaEntrada() {
   const erroCodigo = modo === 'entrar' && codigoLimpo === '' ? 'Informe o código da sala.' : null;
   const semServidor = conexao !== 'conectado';
 
+  function trocarModo(novo: Modo) {
+    definirModo(novo);
+    definirTentou(false);
+  }
+
+  // A sala nasce com a configuração padrão; o dono ajusta no lobby, antes de iniciar.
   function enviar(evento: FormEvent) {
     evento.preventDefault();
     definirTentou(true);
@@ -57,7 +60,7 @@ export function TelaEntrada() {
     void executar(async () => {
       const sucesso =
         modo === 'criar'
-          ? await criarSala(apelidoLimpo, configuracao)
+          ? await criarSala(apelidoLimpo, CONFIGURACAO_PADRAO)
           : await entrarNaSala(codigoLimpo, apelidoLimpo);
       if (!sucesso) return;
       salvarApelido(apelidoLimpo);
@@ -121,39 +124,23 @@ export function TelaEntrada() {
             value={apelido}
             maxLength={LIMITES.maxApelido}
             autoComplete="nickname"
+            placeholder="Ex.: Yago"
             aria-invalid={tentou && erroApelido !== null}
-            aria-describedby={tentou && erroApelido ? 'erro-apelido' : undefined}
+            aria-describedby={tentou && erroApelido ? 'erro-apelido' : 'ajuda-apelido'}
             onChange={(e) => definirApelido(e.target.value)}
           />
-          {tentou && erroApelido && (
+          {tentou && erroApelido ? (
             <span id="erro-apelido" className="campo__erro">
               {erroApelido}
+            </span>
+          ) : (
+            <span id="ajuda-apelido" className="entrada__ajuda">
+              Sem cadastro: é só o nome na mesa.
             </span>
           )}
         </div>
 
-        <div className="abas" role="group" aria-label="O que deseja fazer">
-          <button
-            type="button"
-            aria-pressed={modo === 'criar'}
-            className={classes('aba', modo === 'criar' && 'aba--ativa')}
-            onClick={() => definirModo('criar')}
-          >
-            Criar sala
-          </button>
-          <button
-            type="button"
-            aria-pressed={modo === 'entrar'}
-            className={classes('aba', modo === 'entrar' && 'aba--ativa')}
-            onClick={() => definirModo('entrar')}
-          >
-            Entrar com código
-          </button>
-        </div>
-
-        {modo === 'criar' ? (
-          <ConfiguracaoControles valor={configuracao} onChange={definirConfiguracao} />
-        ) : (
+        {modo === 'entrar' && (
           <div className="campo">
             <label className="campo__rotulo" htmlFor="codigo">
               Código da sala
@@ -189,6 +176,19 @@ export function TelaEntrada() {
         >
           {ocupado ? 'Aguarde…' : modo === 'criar' ? 'Criar sala' : 'Entrar na mesa'}
         </button>
+        {modo === 'criar' ? (
+          <button type="button" className="botao botao--bloco" onClick={() => trocarModo('entrar')}>
+            Entrar com código
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="botao botao--texto entrada__trocar"
+            onClick={() => trocarModo('criar')}
+          >
+            Criar uma sala nova
+          </button>
+        )}
         {semServidor && (
           <p className="entrada__ajuda" role="status">
             Aguardando conexão com o servidor para continuar.

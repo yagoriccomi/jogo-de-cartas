@@ -3,8 +3,10 @@ import type { Carta as DadosDaCarta, Valor } from '@fodinha/shared';
 import { classes } from '../../lib/classes';
 import { useDuploToque } from '../../lib/useDuploToque';
 import type { EstiloComVariaveis } from '../../lib/estiloComVariaveis';
+import { verboDeToque } from '../tutorial/ponteiro';
+import { descreverSaldo } from './AndamentoDosPalpites';
 import { Carta } from './Carta';
-import { ContagemRegressiva } from './ContagemRegressiva';
+import { useDicaDoGesto } from './dicaDoGesto';
 import { SimbolosMaoEPe } from './SimbolosMaoEPe';
 
 /** Até esta quantidade de opções os botões são grandes e ocupam uma linha. */
@@ -23,7 +25,6 @@ interface Props {
   readonly palpitesAnteriores: readonly PalpiteAnterior[];
   /** Quantos ainda palpitam depois de mim. */
   readonly depoisDeVoce: number;
-  readonly prazoFinal: number | null;
   readonly ocupado: boolean;
   readonly onConfirmar: (quantidade: number) => void;
 }
@@ -41,6 +42,7 @@ function tamanhoDaGrade(opcoes: number): 'grande' | 'media' | 'pequena' {
   return 'pequena';
 }
 
+/** O primeiro palpite do aparelho ensina o gesto: o "2× no número" ganha destaque até ser usado. */
 export function PainelPalpite({
   cartasNaRodada,
   palpiteProibido,
@@ -49,23 +51,28 @@ export function PainelPalpite({
   manilha,
   palpitesAnteriores,
   depoisDeVoce,
-  prazoFinal,
   ocupado,
   onConfirmar,
 }: Props) {
   const [escolhido, definirEscolhido] = useState<number | null>(null);
   // Mesmo padrão das cartas: 1 toque escolhe, 2 rápidos confirmam (o botão Confirmar continua).
   const toqueNoPalpite = useDuploToque<number>(definirEscolhido, (quantidade) =>
-    onConfirmar(quantidade),
+    confirmar(quantidade),
   );
   const [detalhesAbertos, definirDetalhesAbertos] = useState(false);
+  const verbo = verboDeToque();
+  const dicaDoGesto = useDicaDoGesto('palpite');
   const opcoes = Array.from({ length: cartasNaRodada + 1 }, (_, quantidade) => quantidade);
   const soma = palpitesAnteriores.reduce((total, anterior) => total + anterior.palpite, 0);
   // Vazas ainda "sem dono" nos palpites: negativo quando a mesa já pediu mais do que há.
   const saldo = cartasNaRodada - soma;
   const colunas = Math.min(opcoes.length, COLUNAS_DA_GRADE_LONGA);
   const estiloGrade: EstiloComVariaveis = { '--colunas': colunas };
-  const cartasTexto = cartasNaRodada === 1 ? '1 carta' : `${cartasNaRodada} cartas`;
+
+  function confirmar(quantidade: number) {
+    dicaDoGesto.aprendeu();
+    onConfirmar(quantidade);
+  }
 
   return (
     <div className="palpite" role="dialog" aria-labelledby="titulo-palpite">
@@ -82,10 +89,13 @@ export function PainelPalpite({
             <span className="so-celular">
               Manilha <strong>{manilha ?? '–'}</strong>
             </span>
-            {souOPe && <span className="selo selo--pe">Você é o pé</span>}
+            {souOPe && (
+              <span className="selo selo--pe palpite__selo-pe">
+                Você é o pé: não pode fechar a soma
+              </span>
+            )}
           </span>
         </div>
-        {prazoFinal !== null && <ContagemRegressiva prazoFinal={prazoFinal} className="pilula" />}
       </div>
 
       <div
@@ -112,26 +122,11 @@ export function PainelPalpite({
         })}
       </div>
 
-      {palpiteProibido !== null && (
-        <p className="palpite__bloqueio" role="note">
-          O {palpiteProibido} está bloqueado: a soma fecharia nas {cartasTexto}.
-          <span className="so-computador"> O pé precisa garantir que alguém erre.</span>
-        </p>
-      )}
-
       <div className="palpite__rodape">
         <div className="palpite__info">
           <p className="palpite__resumo">
-            <span>
-              <span className="palpite__rodada-de">Rodada de </span>
-              <strong>{cartasNaRodada}</strong> {cartasNaRodada === 1 ? 'carta' : 'cartas'}
-            </span>
-            <span className="palpite__divisor" aria-hidden="true">
-              |
-            </span>
-            <span>
-              Saldo:{' '}
-              <strong className={classes(saldo < 0 && 'palpite__saldo--negativo')}>{saldo}</strong>
+            <span className={classes('palpite__saldo', saldo < 0 && 'palpite__saldo--negativo')}>
+              {descreverSaldo(soma, cartasNaRodada)}
             </span>
           </p>
           <button
@@ -146,11 +141,25 @@ export function PainelPalpite({
         </div>
         <button
           type="button"
-          className="botao botao--primario"
+          className="botao botao--primario palpite__confirmar"
           disabled={escolhido === null || ocupado}
-          onClick={() => escolhido !== null && onConfirmar(escolhido)}
+          onClick={() => escolhido !== null && confirmar(escolhido)}
         >
-          {escolhido === null ? 'Escolha' : `Confirmar ${escolhido}`}
+          {escolhido === null ? (
+            `${verbo} num número`
+          ) : (
+            <>
+              <span>Confirmar {escolhido}</span>
+              <span
+                className={classes(
+                  'palpite__gesto',
+                  dicaDoGesto.destacar && 'palpite__gesto--destaque',
+                )}
+              >
+                ou {verbo.toLowerCase()} 2× no número
+              </span>
+            </>
+          )}
         </button>
       </div>
 

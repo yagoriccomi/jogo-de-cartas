@@ -74,11 +74,12 @@ Sem cadastro · até 10 na mesa · celular e computador · servidor que não dei
 <summary><strong>Sala, tempo e conexão</strong></summary>
 
 - **Mesa:** até 10 participantes, com até 4 bots.
-- **Tempo da vez:** o dono escolhe, ao criar a sala ou no lobby, quanto tempo cada um tem para palpitar ou jogar: de 10 segundos a 2 minutos (padrão 30 s), ou sem limite. Estourado o prazo, o servidor joga pelo jogador e todos os bots da mesa reagem com um emoji sorteado.
+- **Tempo da vez:** o dono escolhe no lobby quanto tempo cada um tem para palpitar ou jogar: 15, 30, 45, 60 ou 90 segundos (padrão 30 s), ou sem limite. Estourado o prazo, o servidor joga pelo jogador e todos os bots da mesa reagem com um emoji sorteado.
 - **Queda de conexão:** se alguém fica mais de 10 segundos desconectado, a partida pausa e os jogadores votam "Deseja esperar o retorno de [apelido]?". Basta um SIM para continuar esperando; se todos votarem NÃO, um bot termina a rodada dele e ele é eliminado. Quem cai e volta (até recarregando a página) retorna ao mesmo lugar.
 - **Entrar no meio:** dá para entrar com a partida em andamento. Quem chega assiste até a próxima rodada e senta com a mesma quantidade de vidas do jogador vivo com mais vidas.
+- **Resumo das regras:** no começo de cada partida aparece um resumo curto das regras, até o jogador marcar "Não perguntar novamente neste computador". Enquanto ele lê, a mesa inteira pausa e os outros veem "Jogador noob lendo as regras!" com o tempo restante: no máximo 60 segundos, uma vez por jogador por partida.
 - **Dono da sala:** quem criou a sala pode pausar e retomar a partida quando quiser, reiniciá-la (volta à rodada 1 com vidas cheias para todos) e expulsar pessoas. Quem é expulso não consegue voltar àquela sala pelo mesmo navegador. Se o dono sair, o posto passa para quem está há mais tempo na sala, e volta para o criador se ele retornar.
-- **Eliminados veem as cartas (opcional):** o dono decide, na criação da sala, no lobby ou no menu lateral (inclusive no meio da partida), se quem já foi eliminado pode ver a mão de quem ainda joga, tocando na placa do jogador. Vem desligada. Quem ainda está vivo nunca recebe as cartas dos outros.
+- **Eliminados veem as cartas (opcional):** o dono decide, no lobby ou no menu lateral (inclusive no meio da partida), se quem já foi eliminado pode ver a mão de quem ainda joga, tocando na placa do jogador. Vem desligada. Quem ainda está vivo nunca recebe as cartas dos outros.
 - **Saída no meio da rodada:** quem sai (ou é expulso) tem a rodada terminada por um bot e só então deixa a mesa.
 
 </details>
@@ -86,14 +87,15 @@ Sem cadastro · até 10 na mesa · celular e computador · servidor que não dei
 <details>
 <summary><strong>A mesa na tela</strong></summary>
 
-- **Gesto único:** cartas, palpite e reações seguem o mesmo padrão: 1 toque seleciona e 2 toques rápidos confirmam. O palpite mantém o botão Confirmar; no teclado, Enter ou Espaço confirmam direto.
+- **Gesto único:** cartas, palpite e reações seguem o mesmo padrão: 1 toque seleciona e 2 toques rápidos confirmam. O palpite mantém o botão Confirmar; no teclado, Enter ou Espaço confirmam direto. Na primeira vez que alguém usa cada um deles naquele aparelho, a dica do gesto fica em destaque e depois volta ao normal.
 - **Mão organizada:** suas cartas aparecem sempre da mais forte (à esquerda) para a mais fraca (à direita), considerando a manilha da rodada.
 - **Cartas na mesa:** a carta que está ganhando fica sozinha à esquerda, com o nome de quem a jogou em cima; as demais que valem formam uma pilha ao lado, da mais forte para a mais fraca. Passe o mouse ou toque numa carta para ver quem a jogou. As que empataram e se anularam ficam na linha de baixo.
 - **Montinhos:** cada vaza ganha vira um montinho na frente de quem ganhou; as vazas todas empatadas vão para um monte abaixo da manilha (no celular, só o contador). Acima da vira, um contador mostra a vaza da rodada (ex.: 2/5).
 - **Ritmo:** a última vaza de cada rodada fica 3 segundos na mesa antes de ir para o montinho, e o resultado da rodada fica uns 6 segundos na tela (uns 4 a mais nas rodadas cegas, que se resolvem sozinhas). Quando a partida acaba, uma tela celebra o vencedor.
-- **Sua vez:** a faixa "Sua vez!" cruza a mesa, suas cartas pulsam em rosa, toca uma campainha própria, o título da aba muda e as placas de cima rolam acompanhando quem está jogando.
-- **Placas:** seguem a ordem de jogo, com a mão à esquerda e o pé à direita.
-- **Painel de palpite:** mostra as cartas da rodada e o saldo (cartas menos a soma dos palpites já dados; pode ficar negativo). "Mostrar mais" abre quem já palpitou, em ordem, e quantos ainda palpitam depois de você.
+- **Sua vez:** a faixa "Sua vez!" cruza a mesa, suas cartas pulsam em rosa, toca uma campainha própria, o título da aba muda e as placas de cima rolam acompanhando quem está jogando. O seu tempo aparece uma vez só, na pílula "Sua vez": pulsa nos últimos 10 segundos e faz tic-tac nos últimos 5.
+- **Placas:** seguem a ordem de jogo, com a mão à esquerda e o pé à direita. No primeiro palpite da partida elas dizem "MÃO" e "PÉ" por extenso; depois fica só o ícone (a mão e a pegada).
+- **Durante os palpites:** o centro da mesa mostra quem está palpitando, quanto a mesa já pediu e quantos já palpitaram.
+- **Painel de palpite:** pergunta "Vai fazer quantas?" e mostra o saldo em palavras ("Pediram 3 de 5 · sobram 2", ou "passou 1"). O botão diz "Toque num número" até haver escolha e depois "Confirmar N"; quem é o pé vê o aviso de que não pode fechar a soma, com o número proibido riscado. "Mostrar mais" abre quem já palpitou, em ordem, e quantos ainda palpitam depois de você.
 
 </details>
 
@@ -101,9 +103,9 @@ Sem cadastro · até 10 na mesa · celular e computador · servidor que não dei
 
 **🎮 Jogo**
 
-- Salas por código, sem cadastro: entre como convidado com um apelido.
+- Salas por código, sem cadastro: só o apelido, "Criar sala" ou "Entrar com código".
 - Convite por link com mensagem pronta: compartilhamento nativo do aparelho, botão direto do WhatsApp ou cópia do link; o link já preenche o código da sala.
-- Anfitrião configura a partida (baralhos, vidas, 8-9-10, tempo da vez), adiciona bots e inicia.
+- A sala nasce com a configuração padrão e o anfitrião ajusta no lobby (baralhos, vidas, 8-9-10, tempo da vez), adiciona bots e inicia; o botão diz o que falta ("Adicione 1 jogador para iniciar").
 - Bots que palpitam pela força da mão (e, na rodada cega, pelas cartas que veem na testa dos outros) e jogam para acertar o palpite.
 - Placar a qualquer momento (vidas, palpite e vazas feitas de todos) e guia de regras ilustrado, passo a passo.
 - Tutorial interativo com versão rápida, que pula os passos só explicativos.
@@ -212,7 +214,7 @@ npm run format      # formata com Prettier
 npm run test:e2e    # testes de tela (Playwright)
 ```
 
-Os **testes de tela** abrem o jogo de verdade num Chromium em 5 tamanhos (de 360×640 a 1920×1080) e conferem o que já quebrou antes: a mesa cheia (10 jogadores, 13 cartas) sem rolar a página, o palpite cabendo no feltro, as cartas dentro da mesa, placar e regras, e o tutorial inteiro, com todo balão apontando para algo visível. Eles sobem sozinhos um servidor e um web de teste nas portas 3101 e 5199, então funcionam com o Docker de desenvolvimento ligado. Na primeira vez, instale o navegador: `npx playwright install chromium` (dentro de `apps/e2e`).
+Os **testes de tela** abrem o jogo de verdade num Chromium em 5 tamanhos (de 360×640 a 1920×1080) e conferem o que já quebrou antes: a mesa cheia (10 jogadores, 13 cartas) sem rolar a página, o palpite cabendo no feltro, o resumo das regras e a dica das reações, as cartas dentro da mesa, placar e regras, e o tutorial inteiro, com todo balão apontando para algo visível. Eles sobem sozinhos um servidor e um web de teste nas portas 3101 e 5199, então funcionam com o Docker de desenvolvimento ligado. Na primeira vez, instale o navegador: `npx playwright install chromium` (dentro de `apps/e2e`).
 
 A cada push e pull request, o GitHub Actions executa lint, typecheck, testes, build e os testes de tela.
 

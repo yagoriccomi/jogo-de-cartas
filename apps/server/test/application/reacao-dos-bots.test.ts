@@ -67,4 +67,20 @@ describe('reação dos bots', () => {
     for (let i = 0; i < PASSOS_DE_JOGO; i++) c.relogio.avancar(PRAZO_MS);
     expect(c.notificador.reacoes).toHaveLength(0);
   });
+
+  it('deveFazerTodosOsBotsReagiremQuandoUmHumanoEstouraOPrazo', () => {
+    // Acima da chance: calados no sorteio comum, então só o estouro de prazo os faz reagir.
+    const c = montarCenario({}, () => 0.5);
+    const ana = c.criarSala();
+    c.servico.adicionarBot(ator(ana));
+    c.servico.adicionarBot(ator(ana));
+    c.servico.iniciarPartida(ator(ana));
+    for (let i = 0; i < PASSOS_DE_JOGO && c.notificador.reacoes.length === 0; i++) {
+      c.relogio.avancar(ATRASO_BOT_MS);
+      c.relogio.avancar(PRAZO_MS);
+    }
+    const quemReagiu = new Set(c.notificador.reacoes.map(({ reacao }) => reacao.jogadorId));
+    expect(quemReagiu.size).toBe(2);
+    expect(quemReagiu.has(ana.jogadorId)).toBe(false);
+  });
 });

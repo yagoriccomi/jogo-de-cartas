@@ -18,6 +18,7 @@ import {
   registrarOrigemDaJogada,
 } from './animacao-compartilhada';
 import { Carta } from './Carta';
+import { useDicaDoGesto } from './dicaDoGesto';
 import { calcularLeque } from './leque';
 import { animarDistribuicao } from './mao-animacoes';
 
@@ -69,6 +70,7 @@ export function Mao({
 }: Props) {
   const computador = useMediaQuery(CONSULTA_COMPUTADOR);
   const toque = useMediaQuery(CONSULTA_TOQUE);
+  const dicaDoGesto = useDicaDoGesto('carta');
   const [referencia, largura] = useLargura<HTMLDivElement>();
   const lequeRef = useRef<HTMLUListElement>(null);
   const itensRef = useRef(new Map<string, HTMLLIElement>());
@@ -192,6 +194,7 @@ export function Mao({
     // A mesa usa este retângulo para animar o voo da mão até o centro.
     registrarOrigemDaJogada(cartaId, elemento.getBoundingClientRect());
     definirSelecionadaId(null);
+    dicaDoGesto.aprendeu();
     onJogar(cartaId);
   }
 
@@ -209,6 +212,7 @@ export function Mao({
 
   const contagem = `Sua mão · ${cartas.length} ${cartas.length === 1 ? 'carta' : 'cartas'}`;
   let dica = contagem;
+  const ensinandoGesto = podeJogar && !bloqueada && dicaDoGesto.destacar;
   if (todasOcultas) dica = 'Rodada cega · sua carta fica virada e é revelada na mesa';
   else if (podeJogar && !bloqueada) {
     dica = toque
@@ -218,13 +222,10 @@ export function Mao({
 
   return (
     <div className="mao" ref={referencia} onContextMenu={aoCancelar}>
-      <div className="mao__legenda">
-        <span className="mao__forte">◀ Mais forte</span>
-        <span className="mao__dica" aria-live="polite">
-          {dica}
-        </span>
-        <span className="mao__fraca">Mais fraca ▶</span>
-      </div>
+      <p className={classes('mao__dica', ensinandoGesto && 'dica-do-gesto')} aria-live="polite">
+        {ensinandoGesto && <strong className="dica-do-gesto__rotulo">Dica</strong>}
+        {dica}
+      </p>
       <ul
         className="mao__leque"
         ref={lequeRef}
@@ -273,6 +274,13 @@ export function Mao({
           );
         })}
       </ul>
+      {/* Sob as cartas e apagada: orienta sem competir com a mão. Com 1 carta não há ordem. */}
+      {cartas.length > 1 && (
+        <div className="mao__ordem" aria-hidden="true">
+          <span>◀ Mais forte</span>
+          <span>Mais fraca ▶</span>
+        </div>
+      )}
     </div>
   );
 }

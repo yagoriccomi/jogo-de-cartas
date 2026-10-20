@@ -3,6 +3,7 @@ import {
   abrirCenario,
   ALTURA_MINIMA_DO_BOTAO_PX,
   contem,
+  distancia,
   ESPERA_DA_MESA_MS,
   esperarAnimacoes,
   esperarSemRolagem,
@@ -16,6 +17,8 @@ import {
 const CARTAS_NA_MESA_PARA_MEDIR = 6;
 /** Entre uma vaza e outra as cartas voam por ~1 s; isso dá folga para alguma pousar. */
 const ESPERA_PARA_POUSAR_MS = 10_000;
+/** Folga entre o botão de reações e os números do palpite: dois toques rápidos não erram o alvo. */
+const FOLGA_DO_BOTAO_DE_REACOES_PX = 8;
 /** Coração menor que isso some na tela do celular (já aconteceu). */
 const LARGURA_MINIMA_DO_CORACAO_PX = 8;
 
@@ -34,6 +37,47 @@ test.describe('Mesa cheia (10 jogadores, 13 cartas)', () => {
 
     const coracao = await medir(page.locator('.minha__vidas .coracao').first());
     expect(coracao.width).toBeGreaterThanOrEqual(LARGURA_MINIMA_DO_CORACAO_PX);
+  });
+
+  test('o resumo das regras abre no começo, cabe na tela e não volta depois de dispensado', async ({
+    page,
+  }) => {
+    await abrirCenario(page, { ...MESA_CHEIA, comResumoDasRegras: true });
+    const resumo = page.getByRole('dialog', { name: 'Regras em 1 minuto' });
+    await expect(resumo).toBeVisible({ timeout: ESPERA_DA_MESA_MS });
+    // A mesa só fica pausada depois que o servidor aceita: o aviso de espera confirma.
+    await expect(resumo.getByRole('status')).toContainText('esperando você');
+    await expect(resumo).toContainText('1×');
+
+    // Os dois botões ficam à vista sem rolar o diálogo, até no celular baixo.
+    expect(
+      await resumo.evaluate((caixa) => caixa.scrollHeight - caixa.clientHeight),
+    ).toBeLessThanOrEqual(1);
+    const tela = telaDe(page);
+    const dispensar = resumo.getByRole('button', { name: 'Não perguntar novamente' });
+    expect(contem(tela, await medir(dispensar))).toBe(true);
+    expect(contem(tela, await medir(resumo.getByRole('button', { name: 'Entendi' })))).toBe(true);
+
+    await dispensar.click();
+    await expect(resumo).toBeHidden();
+    await expect(page.locator('.sobreposicao')).toHaveCount(0);
+    await page.reload();
+    await expect(page.locator('.mesa')).toBeVisible({ timeout: ESPERA_DA_MESA_MS });
+    await expect(resumo).toBeHidden();
+  });
+
+  test('o botão de reações fica longe dos números do palpite', async ({ page }) => {
+    await abrirCenario(page);
+    await expect(page.locator('.palpite')).toBeVisible({ timeout: ESPERA_DA_MESA_MS });
+    await esperarAnimacoes(page);
+
+    const botao = await medir(page.locator('.reacoes__botao'));
+    const alvos = page.locator('.palpite__opcao, .palpite__rodape .botao, .palpite__mais');
+    for (const alvo of await alvos.all()) {
+      expect(distancia(botao, await medir(alvo))).toBeGreaterThanOrEqual(
+        FOLGA_DO_BOTAO_DE_REACOES_PX,
+      );
+    }
   });
 
   test('o palpite cabe no feltro sem rolar e com botões tocáveis', async ({ page }) => {
@@ -57,6 +101,11 @@ test.describe('Mesa cheia (10 jogadores, 13 cartas)', () => {
       expect(contem(caixaDoPainel, caixa)).toBe(true);
     }
     await expect(page.locator('.palpite__rodape .botao')).toBeInViewport();
+    // Com um número escolhido o botão ganha a segunda linha ("ou toque 2×"), que já vazou dele.
+    await opcoes.nth(1).click();
+    const confirmar = page.locator('.palpite__confirmar');
+    await expect(confirmar).toContainText('2×');
+    expect(await confirmar.evaluate((b) => b.scrollWidth - b.clientWidth)).toBeLessThanOrEqual(1);
     // As vidas continuam visíveis durante o palpite (já ficaram cobertas por ele).
     await expect(page.locator('.minha__vidas')).toBeInViewport();
   });
@@ -88,6 +137,22 @@ test.describe('Mesa cheia (10 jogadores, 13 cartas)', () => {
     for (const caixa of pousadas) {
       expect(contem(feltro, caixa), 'carta da mesa vazando do feltro').toBe(true);
     }
+  });
+
+  test('a dica das reações fica em destaque só até a primeira reação do aparelho', async ({
+    page,
+  }) => {
+    await abrirCenario(page);
+    const botao = page.locator('.reacoes__botao');
+    const destaque = page.locator('.reacoes__dica.dica-do-gesto');
+    await botao.click();
+    await expect(destaque).toBeVisible();
+    expect(contem(telaDe(page), await medir(page.locator('.reacoes__painel')))).toBe(true);
+
+    await page.locator('.reacoes__opcao').first().dblclick();
+    await botao.click();
+    await expect(page.locator('.reacoes__dica')).toBeVisible();
+    await expect(destaque).toHaveCount(0);
   });
 
   test('placar e regras abrem a qualquer momento e cabem na tela', async ({ page }, info) => {

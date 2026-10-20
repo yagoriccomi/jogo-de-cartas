@@ -226,6 +226,26 @@ body:has(.mesa:not(.mesa--fim)) {
   padding-right: 56px;
 }
 
+/* Primeiro palpite da partida: ícone + "MÃO"/"PÉ" por extenso; depois encolhe para só o ícone. */
+.simbolo--com-rotulo {
+  width: auto;
+  gap: 3px;
+  padding: 0 5px 0 3px;
+  font-weight: 800;
+  font-size: 0.62rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.placa:has(.simbolos--com-rotulo) .placa__nome {
+  padding-right: 52px;
+}
+
+.placa:has(.simbolos--com-rotulo .simbolo--mao):has(.simbolos--com-rotulo .simbolo--pe)
+  .placa__nome {
+  padding-right: 100px;
+}
+
 /* ---------- Palpite e vazas feitas (placas, minha área e placar) ---------- */
 
 .numeros {
@@ -390,10 +410,52 @@ body:has(.mesa:not(.mesa--fim)) {
   font-size: 0.65rem;
 }
 
+/* Selo da manilha: moldura pixel com o brilho holográfico das cartas de manilha. */
 .feltro__manilha {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow: hidden;
+  padding: 3px 10px 4px;
+  border: 2px solid var(--rosa);
+  border-radius: 3px;
+  background: var(--feltro-escuro);
+  box-shadow:
+    3px 3px 0 rgb(0 0 0 / 0.6),
+    0 0 12px rgb(255 42 138 / 0.55);
+}
+
+.feltro__manilha-holo {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: repeating-linear-gradient(
+    115deg,
+    rgb(255 42 138 / 0.22) 0 6px,
+    rgb(255 214 90 / 0.16) 6px 12px,
+    rgb(45 226 230 / 0.22) 12px 18px,
+    transparent 18px 30px
+  );
+  background-size: 200% 200%;
+  animation: holo 7s linear infinite alternate;
+}
+
+.feltro__manilha-rotulo {
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--texto);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feltro__manilha-holo {
+    animation: none;
+  }
 }
 
 .feltro__manilha-valor {
@@ -454,6 +516,48 @@ body:has(.mesa:not(.mesa--fim)) {
 }
 
 /* ---------- Montinhos das vazas empatadas (canto inferior direito da mesa) ---------- */
+
+/* Palpites dos outros: de quem é a vez e a soma, no meio do feltro (as jogadas ainda estão vazias). */
+.andamento {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding-inline: 8px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.andamento p {
+  margin: 0;
+  max-width: 100%;
+}
+
+/* Quebra equilibrada em vez de reticências: no celular o nome inteiro cabe em duas linhas. */
+.andamento__vez {
+  font-size: 0.85rem;
+  line-height: 1.2;
+  text-wrap: balance;
+  color: var(--texto);
+}
+
+.andamento__nome {
+  color: var(--rosa-claro);
+}
+
+.andamento__saldo {
+  font-size: 1.25rem;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.andamento__quantos {
+  font-size: 0.75rem;
+  color: var(--texto-suave);
+}
 
 .feltro__vazio {
   position: absolute;
@@ -737,10 +841,6 @@ body:has(.mesa:not(.mesa--fim)) {
   font-size: 0.68rem;
 }
 
-.palpite__topo .pilula {
-  flex: none;
-}
-
 .palpite__grade {
   display: grid;
   grid-template-columns: repeat(var(--colunas, 4), minmax(0, 1fr));
@@ -783,6 +883,11 @@ body:has(.mesa:not(.mesa--fim)) {
   min-height: 42px;
 }
 
+/* O padding do .botao base vence o do .palpite__confirmar e empurrava o "ou toque 2×" para fora. */
+.palpite__rodape .palpite__confirmar {
+  padding-inline: 10px;
+}
+
 .palpite__opcao[aria-pressed='true'] {
   border-color: var(--rosa-palido);
   background: var(--rosa-forte);
@@ -797,9 +902,10 @@ body:has(.mesa:not(.mesa--fim)) {
   text-decoration: line-through;
 }
 
-.palpite__bloqueio {
-  font-size: 0.75rem;
-  color: var(--rosa-suave);
+/* A regra inteira cabe ao lado da manilha: em caixa normal a frase ocupa metade do espaço. */
+.selo.palpite__selo-pe {
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 /* Resumo sempre à vista; o detalhe (quem já palpitou) só abre a pedido, para não poluir o painel. */
@@ -812,9 +918,6 @@ body:has(.mesa:not(.mesa--fim)) {
 }
 
 .palpite__resumo {
-  display: flex;
-  align-items: baseline;
-  gap: 0 6px;
   margin: 0;
   font-size: 0.8rem;
   line-height: 1.2;
@@ -822,21 +925,18 @@ body:has(.mesa:not(.mesa--fim)) {
   color: var(--texto-suave);
 }
 
-.palpite__resumo strong {
-  font-family: var(--fonte-numeros);
-  font-size: 1.25rem;
+.palpite__saldo {
+  font-weight: 700;
   color: #fff;
 }
 
-.palpite__resumo .palpite__saldo--negativo {
+.palpite__saldo--negativo {
   color: var(--rosa-suave);
 }
 
-.palpite__divisor {
-  color: var(--ciano);
-}
-
+/* Link pequeno com alvo de toque de 44px (o ::after cresce sem empurrar o painel). */
 .palpite__mais {
+  position: relative;
   padding: 2px 0;
   border: none;
   background: none;
@@ -846,6 +946,40 @@ body:has(.mesa:not(.mesa--fim)) {
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
+}
+
+.palpite__mais::after {
+  content: '';
+  position: absolute;
+  inset: calc((100% - var(--alvo-minimo)) / 2) -8px;
+}
+
+/* Uma linha só ("Toque num número"): quebrado em três, o botão empurrava o painel a rolar. */
+.palpite__confirmar {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  gap: 1px;
+  padding-inline: 10px;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+/* Pode quebrar em duas linhas: a largura da fonte muda de sistema para sistema (no Linux vazava). */
+.palpite__gesto {
+  font-size: 0.68rem;
+  font-weight: 600;
+  white-space: normal;
+  letter-spacing: 0;
+  opacity: 0.85;
+}
+
+/* Primeiro palpite do aparelho: o atalho de dois toques aparece por inteiro, não como nota. */
+.palpite__gesto--destaque {
+  opacity: 1;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
 }
 
 /* Rola por dentro: com 9 adversários a lista não pode empurrar o Confirmar para longe. */
@@ -942,6 +1076,25 @@ body:has(.mesa:not(.mesa--fim)) {
 @keyframes pulsar {
   50% {
     opacity: 0.55;
+  }
+}
+
+/* Meu prazo acabando: escala, brilho e ritmo crescem com --urgencia (0 aos 10 s, 1 no zero). */
+.contagem--pulsando {
+  animation: pulso-do-prazo calc(1s - 0.55s * var(--urgencia, 0)) ease-in-out infinite;
+}
+
+@keyframes pulso-do-prazo {
+  50% {
+    transform: scale(calc(1.08 + 0.3 * var(--urgencia, 0)));
+    box-shadow: 0 0 calc(6px + 18px * var(--urgencia, 0)) var(--dourado);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contagem--urgente,
+  .contagem--pulsando {
+    animation: none;
   }
 }
 
@@ -1067,7 +1220,10 @@ body:has(.mesa:not(.mesa--fim)) {
   text-align: center;
 }
 
+/* Uma linha só: "SUA VEZ 23s" quebrado em dois encolhia o feltro e fazia o palpite rolar. */
 .vez--minha {
+  flex: none;
+  white-space: nowrap;
   border-color: var(--rosa);
   background: var(--rosa-forte);
   color: #fff;
@@ -1077,8 +1233,7 @@ body:has(.mesa:not(.mesa--fim)) {
   box-shadow: 0 0 16px var(--rosa);
 }
 
-.minha__aviso,
-.minha__dica-cega {
+.minha__aviso {
   padding: 10px 14px;
   border: 1px dashed var(--ciano);
   border-radius: 12px;
@@ -1087,16 +1242,10 @@ body:has(.mesa:not(.mesa--fim)) {
   text-align: center;
 }
 
-.minha__dica-cega {
-  border: 0;
-  padding: 0;
-  font-size: 0.8rem;
-  color: var(--texto-suave);
-}
-
 /* ---------- Mão em leque ---------- */
 
 .mao {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1105,39 +1254,33 @@ body:has(.mesa:not(.mesa--fim)) {
   min-width: 0;
 }
 
-.mao__legenda {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 8px;
+.mao__dica {
   width: 100%;
   max-width: 1080px;
+  margin: 0;
   font-size: 0.68rem;
-  letter-spacing: 1px;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.mao__forte,
-.mao__fraca {
-  white-space: nowrap;
-}
-
-.mao__forte {
-  color: var(--rosa-claro);
-}
-
-.mao__fraca {
-  color: var(--ciano-claro);
-}
-
-.mao__dica {
-  flex: 1;
   text-align: center;
-  font-weight: 400;
-  text-transform: none;
-  letter-spacing: 0;
   color: var(--ciano-palido);
+}
+
+/* Fora do fluxo, no respiro abaixo das cartas: não rouba altura do feltro (o palpite do 360×640). */
+.mao__ordem {
+  position: absolute;
+  top: calc(100% + 2px);
+  inset-inline: 0;
+  display: flex;
+  justify-content: space-between;
+  max-width: 1080px;
+  margin-inline: auto;
+  line-height: 1;
+  pointer-events: none;
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--texto-suave);
+  opacity: 0.6;
 }
 
 .mao__leque {
@@ -1280,6 +1423,25 @@ body:has(.mesa:not(.mesa--fim)) {
   .folha__alca {
     display: none;
   }
+}
+
+/* ---------- Dica do gesto (primeiro uso de cada seletor, uma vez por aparelho) ---------- */
+
+.dica-do-gesto {
+  color: var(--ciano);
+  font-weight: 700;
+  text-shadow: 0 0 8px rgb(45 226 230 / 0.55);
+}
+
+.dica-do-gesto__rotulo {
+  margin-right: 6px;
+  padding: 0 5px;
+  border-radius: 6px;
+  background: var(--ciano);
+  color: var(--fundo);
+  font-size: 0.85em;
+  text-transform: uppercase;
+  text-shadow: none;
 }
 
 /* ---------- Pausa (votação) ---------- */
@@ -1629,7 +1791,7 @@ body:has(.mesa:not(.mesa--fim)) {
   /* Computador: a vira continua à mostra na coluna dela; o painel ocupa a direita do feltro. */
   .palpite {
     inset: 50% 5% auto auto;
-    width: min(440px, 58%);
+    width: min(480px, 62%);
     max-height: calc(100% - 20px);
     gap: 10px;
     padding: 16px 18px;
@@ -1638,6 +1800,14 @@ body:has(.mesa:not(.mesa--fim)) {
 
   .palpite__titulo {
     font-size: 2rem;
+  }
+
+  /* O feltro do computador é baixo: o selo do pé vai ao lado do título, não numa linha a mais. */
+  .palpite__cabeca {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 14px;
   }
 
   /* A coluna (vira, rótulos e manilha) ocupa ~1,4 carta + 150px: encolhe junto com a mesa. */
@@ -1706,6 +1876,18 @@ body:has(.mesa:not(.mesa--fim)) {
     font-size: 0.95rem;
   }
 
+  .andamento__vez {
+    font-size: 1.1rem;
+  }
+
+  .andamento__saldo {
+    font-size: 2.2rem;
+  }
+
+  .andamento__quantos {
+    font-size: 0.85rem;
+  }
+
   /* No desktop sobra feltro: a carta cresce até o limite da altura e o grupo fica centralizado,
      com a largura exata da fila mais longa. */
   .mesa-linhas {
@@ -1749,9 +1931,8 @@ body:has(.mesa:not(.mesa--fim)) {
     font-size: 0.9rem;
   }
 
-  .mao__legenda {
+  .mao__dica {
     font-size: 0.75rem;
-    letter-spacing: 2px;
   }
 }
 
@@ -1855,15 +2036,13 @@ body:has(.mesa:not(.mesa--fim)) {
 
   /* Com até 10 vidas, os corações encolheriam a 5px ao lado do aviso da vez: no celular quebram
      em duas fileiras de 5, sem encolher. */
+  /* Linhas iguais (ver colunasDosCoracoes): a altura da minha área não varia com a mão. */
   .minha__vidas {
     --l-coracao: 12px;
-    flex-wrap: wrap;
-    row-gap: 2px;
-    width: calc(min(var(--total, 1), 5) * (var(--l-coracao) + 2px));
-  }
-
-  .minha__vidas .coracao {
-    flex: 0 0 var(--l-coracao);
+    display: grid;
+    grid-template-columns: repeat(var(--colunas-coracoes, 5), var(--l-coracao));
+    gap: 2px;
+    width: auto;
   }
 
   .simbolos--placa {
@@ -2039,17 +2218,13 @@ body:has(.mesa:not(.mesa--fim)) {
     gap: 4px;
   }
 
-  /* O botão riscado e o selo "Você é o pé" já dizem isso; a linha de texto não cabe aqui. */
-  .palpite__bloqueio {
-    display: none;
-  }
-
-  /* "13 cartas | Saldo 7" cabe numa linha ao lado do Confirmar; com "Rodada de" quebraria. */
-  .palpite__rodada-de {
-    display: none;
-  }
-
   .palpite__rodape .botao {
     min-height: 36px;
+    font-size: 0.82rem;
+  }
+
+  /* Aqui o painel ocupa o feltro todo e o botão de reações pousa no canto de baixo: o link recua. */
+  .palpite__mais {
+    margin-left: 48px;
   }
 }

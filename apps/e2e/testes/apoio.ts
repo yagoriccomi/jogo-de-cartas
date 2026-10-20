@@ -17,11 +17,28 @@ export interface Retangulo {
   readonly height: number;
 }
 
+/** Mesma chave e valor de `features/regras/preferencia.ts` no web. */
+const CHAVE_DO_RESUMO = 'fodinha:resumo-das-regras';
+const RESUMO_DISPENSADO = 'dispensado';
+
+interface OpcoesDoCenario {
+  readonly jogadores: number;
+  readonly cartas: number;
+  /** O resumo das regras abre no começo da partida e cobriria a mesa: só aparece se pedido. */
+  readonly comResumoDasRegras?: boolean;
+}
+
 /** Abre o cenário de teste de desenvolvimento: você + bots, já na rodada pedida. */
 export async function abrirCenario(
   page: Page,
-  { jogadores, cartas }: { jogadores: number; cartas: number } = MESA_CHEIA,
+  { jogadores, cartas, comResumoDasRegras = false }: OpcoesDoCenario = MESA_CHEIA,
 ): Promise<void> {
+  if (!comResumoDasRegras) {
+    await page.addInitScript(([chave, valor]) => localStorage.setItem(chave, valor), [
+      CHAVE_DO_RESUMO,
+      RESUMO_DISPENSADO,
+    ] as const);
+  }
   await page.goto(`/?cenario=${jogadores}x${cartas}`);
   await expect(page.locator('.mesa')).toBeVisible({ timeout: ESPERA_DA_MESA_MS });
 }
@@ -39,6 +56,13 @@ export function contem(fora: Retangulo, dentro: Retangulo): boolean {
     dentro.x + dentro.width <= fora.x + fora.width + FOLGA_PX &&
     dentro.y + dentro.height <= fora.y + fora.height + FOLGA_PX
   );
+}
+
+/** Menor distância entre as bordas de dois retângulos (0 quando se tocam ou se cruzam). */
+export function distancia(a: Retangulo, b: Retangulo): number {
+  const dx = Math.max(0, b.x - (a.x + a.width), a.x - (b.x + b.width));
+  const dy = Math.max(0, b.y - (a.y + a.height), a.y - (b.y + b.height));
+  return Math.hypot(dx, dy);
 }
 
 export function telaDe(page: Page): Retangulo {

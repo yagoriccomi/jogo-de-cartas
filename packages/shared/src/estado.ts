@@ -95,6 +95,13 @@ export interface PausaVisivel {
   readonly votacoes: readonly VotacaoEspera[];
   /** O dono pausou: só ele retoma. Pode coexistir com votações de ausentes. */
   readonly pausadaPeloDono: boolean;
+  /** Um novato está lendo o resumo das regras: a mesa espera até ele fechar ou o tempo acabar. */
+  readonly lendoRegras: LeituraDasRegras | null;
+}
+
+export interface LeituraDasRegras {
+  readonly jogadorId: string;
+  readonly restanteMs: number;
 }
 
 /**

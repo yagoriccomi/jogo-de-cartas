@@ -8,11 +8,13 @@ import {
 import { reagir } from '../../estado/acoes';
 import { useApp } from '../../estado/armazem';
 import { useAcao } from '../../lib/useAcao';
+import { classes } from '../../lib/classes';
 import { useDuploToque } from '../../lib/useDuploToque';
 import { somEstaLigado } from '../som/preferencia';
 import { tocarReacao } from '../som/sintetizador';
 import { verboDeToque } from '../tutorial/ponteiro';
 import { MARCADORES, seletor } from './animacao-compartilhada';
+import { useDicaDoGesto } from './dicaDoGesto';
 import { EmojiAnimado, ehTrevoDourado } from './emojiAnimado';
 import { rolarFaixaAtePlaca } from './useSinaisDaVez';
 import './reacoes.css';
@@ -151,6 +153,7 @@ interface Props {
 export function ReacoesDaMesa({ meuId, jogadores }: Props) {
   const { reacoes } = useApp();
   const [aberto, definirAberto] = useState(false);
+  const dicaDoGesto = useDicaDoGesto('reacao');
   const [selecionada, definirSelecionada] = useState<Reacao | null>(null);
   // Muda a cada toque para remontar o emoji e recomeçar a animação da prévia.
   const [toques, definirToques] = useState(0);
@@ -186,6 +189,7 @@ export function ReacoesDaMesa({ meuId, jogadores }: Props) {
     },
     (reacao) => {
       definirAberto(false);
+      dicaDoGesto.aprendeu();
       void executar(() => reagir(reacao));
     },
   );
@@ -223,7 +227,10 @@ export function ReacoesDaMesa({ meuId, jogadores }: Props) {
                 </button>
               );
             })}
-            <p className="reacoes__dica">{verboDeToque()} 1 vez: prévia · 2 rápidas: envia</p>
+            <p className={classes('reacoes__dica', dicaDoGesto.destacar && 'dica-do-gesto')}>
+              {dicaDoGesto.destacar && <strong className="dica-do-gesto__rotulo">Dica</strong>}
+              {verboDeToque()} 1 vez: prévia · 2 rápidas: envia
+            </p>
           </div>
         )}
       </div>

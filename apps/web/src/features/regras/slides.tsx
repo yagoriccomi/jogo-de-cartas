@@ -115,8 +115,9 @@ export const SLIDES: readonly Slide[] = [
     ilustracao: <IlustracaoTempo />,
     texto: (
       <>
-        Toque (ou clique) para escolher a carta e toque de novo para jogar. Botão direito cancela.
-        Se o tempo da vez acabar, o jogo joga por você.
+        Na carta, no palpite e nas reações, <strong>1 toque escolhe e 2 toques confirmam</strong>{' '}
+        (no computador, clique). Botão direito cancela a escolha. Se o tempo da vez acabar, o jogo
+        joga por você.
       </>
     ),
   },

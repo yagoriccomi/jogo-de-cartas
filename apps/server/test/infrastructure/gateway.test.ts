@@ -316,6 +316,34 @@ describe('GatewayDoJogo (integração com Socket.IO real)', () => {
     expect(retomado.pausa).toBeNull();
   });
 
+  it('deveAvisarAMesaQuandoUmJogadorPausaParaLerAsRegras', async () => {
+    const dono = await conectar();
+    const convidado = await conectar();
+    const sessaoDono = dadosDe(await criarSala(dono));
+    const sessaoConvidado = dadosDe(
+      await entrarNaSala(convidado, sessaoDono.codigoSala, 'Beto', 'disp-beto'),
+    );
+    dadosDe(await dono.emitir((r) => dono.socket.emit('sala:iniciarPartida', r)));
+    await dono.aguardarJogo((e) => e.pausa === null, 'partida iniciada');
+
+    dadosDe(await convidado.emitir((r) => convidado.socket.emit('jogo:lerRegras', r)));
+    const lendo = await dono.aguardarJogo(
+      (e) => e.pausa?.lendoRegras?.jogadorId === sessaoConvidado.jogadorId,
+      'pausa de leitura das regras',
+    );
+    const posicao = dono.jogos.indexOf(lendo);
+
+    const repetida = await convidado.emitir((r) => convidado.socket.emit('jogo:lerRegras', r));
+    expect(repetida).toMatchObject({ ok: false, erro: { codigo: 'ENTRADA_INVALIDA' } });
+
+    dadosDe(await convidado.emitir((r) => convidado.socket.emit('jogo:pararDeLerRegras', r)));
+    const retomado = await dono.aguardar(
+      () => dono.jogos.slice(posicao + 1).find((e) => e.pausa === null),
+      'jogo:estado sem pausa',
+    );
+    expect(retomado.pausa).toBeNull();
+  });
+
   it('deveIgnorarEventoSemCallbackDeAckQuandoClienteNaoPedeResposta', async () => {
     const cliente = await conectar();
 

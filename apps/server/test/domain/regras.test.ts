@@ -1,4 +1,4 @@
-import { CONFIGURACAO_PADRAO } from '@fodinha/shared';
+import { CONFIGURACAO_PADRAO, LIMITES } from '@fodinha/shared';
 import { describe, expect, it } from 'vitest';
 import { montarBaralhoEmbaralhado, totalDeCartas, valoresEmJogo } from '../../src/domain/baralho';
 import { validarConfiguracao } from '../../src/domain/configuracao';
@@ -56,6 +56,14 @@ describe('baralho', () => {
   });
 });
 
+/** Sem `prazoDaVezSegundos`, como manda um cliente de antes da opção. */
+const BASE_VALIDA = {
+  quantidadeBaralhos: 1,
+  vidasIniciais: 5,
+  incluirOitoNoveDez: false,
+  mortosVeemCartas: false,
+};
+
 describe('configuração', () => {
   it.each([
     { quantidadeBaralhos: 0, vidasIniciais: 5, incluirOitoNoveDez: false, mortosVeemCartas: false },
@@ -76,23 +84,21 @@ describe('configuração', () => {
       prazoDaVezSegundos: 30,
     },
     { quantidadeBaralhos: 1, vidasIniciais: 5, incluirOitoNoveDez: false, mortosVeemCartas: 'sim' },
+    { ...BASE_VALIDA, prazoDaVezSegundos: LIMITES.minPrazoDaVezSegundos - 1 },
+    { ...BASE_VALIDA, prazoDaVezSegundos: LIMITES.maxPrazoDaVezSegundos + 1 },
+    { ...BASE_VALIDA, prazoDaVezSegundos: '30' },
   ])('deveRejeitarConfiguracaoForaDosLimites %o', (configuracao) => {
     expect(() => validarConfiguracao(configuracao)).toThrow();
   });
 
-  it.each([9, 121, 30.5, '30'])('deveRejeitarTempoDaVezInvalido %o', (prazoDaVezSegundos) => {
-    expect(() => validarConfiguracao({ ...CONFIGURACAO_PADRAO, prazoDaVezSegundos })).toThrow();
+  it('deveAceitarSalaSemLimiteDeTempo', () => {
+    expect(
+      validarConfiguracao({ ...BASE_VALIDA, prazoDaVezSegundos: null }).prazoDaVezSegundos,
+    ).toBeNull();
   });
 
-  it.each([10, 120, null])('deveAceitarTempoDaVez %o', (prazoDaVezSegundos) => {
-    const validada = validarConfiguracao({ ...CONFIGURACAO_PADRAO, prazoDaVezSegundos });
-    expect(validada.prazoDaVezSegundos).toBe(prazoDaVezSegundos);
-  });
-
-  it('deveUsarOTempoPadraoQuandoOClienteNaoInforma', () => {
-    const semPrazo: Record<string, unknown> = { ...CONFIGURACAO_PADRAO };
-    delete semPrazo.prazoDaVezSegundos;
-    expect(validarConfiguracao(semPrazo).prazoDaVezSegundos).toBe(
+  it('deveUsarOPrazoPadraoQuandoOClienteAntigoNaoInforma', () => {
+    expect(validarConfiguracao(BASE_VALIDA).prazoDaVezSegundos).toBe(
       CONFIGURACAO_PADRAO.prazoDaVezSegundos,
     );
   });

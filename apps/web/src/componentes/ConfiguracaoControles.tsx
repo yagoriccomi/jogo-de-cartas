@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import { LIMITES, type ConfiguracaoPartida } from '@fodinha/shared';
+import { CONFIGURACAO_PADRAO, LIMITES, type ConfiguracaoPartida } from '@fodinha/shared';
 import './configuracao.css';
 
 interface Props {
@@ -17,24 +17,16 @@ interface PassoProps {
   readonly maximo: number;
   readonly desabilitado: boolean;
   readonly onChange: (valor: number) => void;
-  /** Texto exibido no lugar do número (ex.: o passo do prazo anda por índice de opção). */
-  readonly formatar?: (valor: number) => string;
+  /** Texto exibido no lugar do número (ex.: "30 s"). */
+  readonly exibir?: (valor: number) => string;
 }
 
-/** Degraus do tempo da vez; `null` = sem limite, sempre o último. */
-const OPCOES_DE_PRAZO: readonly (number | null)[] = [10, 15, 20, 30, 45, 60, 90, 120, null];
+/** Escolhas do tempo da vez no lobby; `null` = sem limite (fica por último, como o "máximo"). */
+export const OPCOES_DE_PRAZO: readonly (number | null)[] = [15, 30, 45, 60, 90, null];
 
-function indiceDoPrazo(prazo: number | null): number {
-  if (prazo === null) return OPCOES_DE_PRAZO.length - 1;
-  // Um valor fora dos degraus (outro cliente) cai no degrau mais próximo de baixo.
-  return OPCOES_DE_PRAZO.reduce<number>(
-    (melhor, opcao, indice) => (opcao !== null && opcao <= prazo ? indice : melhor),
-    0,
-  );
-}
-
-function descreverPrazo(prazo: number | null): string {
-  return prazo === null ? 'Sem limite' : `${prazo} s`;
+/** Espaço que não quebra: "30 s" nunca fica com o "s" sozinho na linha de baixo. */
+export function descreverPrazo(segundos: number | null): string {
+  return segundos === null ? 'Sem limite' : `${segundos}\u00a0s`;
 }
 
 function Passo({
@@ -45,7 +37,7 @@ function Passo({
   maximo,
   desabilitado,
   onChange,
-  formatar = String,
+  exibir = String,
 }: PassoProps) {
   const idRotulo = useId();
   return (
@@ -62,7 +54,7 @@ function Passo({
           −
         </button>
         <output className="passo__valor" aria-live="polite">
-          {formatar(valor)}
+          {exibir(valor)}
         </output>
         <button
           type="button"
@@ -76,6 +68,12 @@ function Passo({
       </div>
     </div>
   );
+}
+
+/** Prazo fora da lista (sala de cenário, versão antiga) cai no padrão. */
+function indiceDoPrazo(segundos: number | null): number {
+  const indice = OPCOES_DE_PRAZO.indexOf(segundos);
+  return indice >= 0 ? indice : OPCOES_DE_PRAZO.indexOf(CONFIGURACAO_PADRAO.prazoDaVezSegundos);
 }
 
 /** Controles de configuração reaproveitados pela criação de sala e pelo lobby (DRY). */
@@ -109,7 +107,7 @@ export function ConfiguracaoControles({ valor, onChange, desabilitado = false }:
         minimo={0}
         maximo={OPCOES_DE_PRAZO.length - 1}
         desabilitado={desabilitado}
-        formatar={(indice) => descreverPrazo(OPCOES_DE_PRAZO[indice] ?? null)}
+        exibir={(indice) => descreverPrazo(OPCOES_DE_PRAZO[indice] ?? null)}
         onChange={(indice) =>
           onChange({ ...valor, prazoDaVezSegundos: OPCOES_DE_PRAZO[indice] ?? null })
         }

@@ -10,6 +10,7 @@ import { CONSULTA_COMPUTADOR, useMediaQuery } from '../../lib/useMediaQuery';
 import { useSonsDaMesa } from '../som/useSonsDaMesa';
 import { CabecalhoApp } from '../menu/CabecalhoApp';
 import { DialogoRegras } from '../menu/DialogoRegras';
+import { ResumoDasRegras } from '../regras/ResumoDasRegras';
 import { DESTINO_DOS_EMPATES } from './animacao-compartilhada';
 import { Baralho } from './Baralho';
 import { Carta } from './Carta';
@@ -27,6 +28,7 @@ import { PainelResultado } from './PainelResultado';
 import { SimbolosMaoEPe } from './SimbolosMaoEPe';
 import { PlacaJogador } from './PlacaJogador';
 import { ReacoesDaMesa } from './ReacoesDaMesa';
+import { AndamentoDosPalpites } from './AndamentoDosPalpites';
 import { TelaFimDePartida } from './TelaFimDePartida';
 import { MonteDeEmpates } from './MonteDeEmpates';
 import { useAnimacaoDeVaza } from './useAnimacaoDeVaza';
@@ -105,6 +107,9 @@ export function TelaMesa() {
   const jogadorDaMaoAberta = jogo.jogadores.find((j) => j.id === maoAbertaDe);
   const palpitando = jogo.fase === 'palpites' && souDaVez && !estouEliminado;
   const podeJogar = jogo.fase === 'jogando' && souDaVez && !estouEliminado;
+  // Primeiro palpite da partida: nas placas, mão e pé aparecem com o nome, depois só o ícone. Na
+  // minha barra não: o rótulo cortaria o "Você", e o painel de palpite já diz "Você é o pé".
+  const rotularMaoEPe = jogo.numeroRodada === 1 && jogo.fase === 'palpites';
 
   // Contagem a partir do "tempo restante" que o servidor mandou, não do relógio dele.
   const prazoFinal =
@@ -122,6 +127,8 @@ export function TelaMesa() {
         : [{ id: j.id, nome: j.apelido, palpite: j.palpite, ehMao: j.id === jogo.idDoPrimeiro }],
     );
   const depoisDeVoce = minhaPosicao === -1 ? 0 : vivosEmOrdem.length - minhaPosicao - 1;
+  const jaPalpitaram = vivosEmOrdem.filter((j) => j.palpite !== null);
+  const somaDosPalpites = jaPalpitaram.reduce((soma, j) => soma + (j.palpite ?? 0), 0);
 
   let situacao: string;
   if (aguardandoProximaRodada) situacao = 'Você entra na próxima rodada';
@@ -185,6 +192,7 @@ export function TelaMesa() {
                 jogador={jogador}
                 ehPe={jogador.id === jogo.idDoPe}
                 ehPrimeiro={jogador.id === jogo.idDoPrimeiro}
+                rotularMaoEPe={rotularMaoEPe}
                 ehDaVez={ehDaVez}
                 prazoFinal={ehDaVez ? prazoFinal : null}
                 manilha={jogo.manilha}
@@ -216,8 +224,10 @@ export function TelaMesa() {
               </div>
               <Baralho />
             </div>
+            {/* Rótulo dentro do selo: nada da coluna da vira o cobre, em nenhum tamanho de mesa. */}
             <div className="feltro__manilha">
-              <span className="rotulo-pequeno feltro__rotulo">Manilha</span>
+              <span className="feltro__manilha-holo" aria-hidden="true" />
+              <span className="feltro__manilha-rotulo">Manilha</span>
               <strong className="feltro__manilha-valor">{jogo.manilha ?? '–'}</strong>
             </div>
             <MonteDeEmpates
@@ -228,13 +238,18 @@ export function TelaMesa() {
           </div>
 
           <div className="feltro__jogadas">
-            {cartasNaMesa.length === 0 && !palpitando && (
+            {jogo.fase === 'palpites' && !palpitando && (
+              <AndamentoDosPalpites
+                nomeDaVez={pausado ? null : nomeDe(jogo.idDaVez)}
+                soma={somaDosPalpites}
+                cartasNaRodada={jogo.cartasPorJogador}
+                palpitaram={jaPalpitaram.length}
+                vivos={vivosEmOrdem.length}
+              />
+            )}
+            {cartasNaMesa.length === 0 && jogo.fase !== 'palpites' && (
               <p className="feltro__vazio">
-                {jogo.fase === 'palpites'
-                  ? 'Palpites em andamento…'
-                  : podeJogar
-                    ? 'Sua vez: jogue uma carta'
-                    : 'Nenhuma carta na mesa ainda.'}
+                {podeJogar ? 'Sua vez: jogue uma carta' : 'Nenhuma carta na mesa ainda.'}
               </p>
             )}
             {/* Sempre montadas: manter o mesmo DOM entre a mesa e a vaza fechada preserva os voos. */}
@@ -269,7 +284,6 @@ export function TelaMesa() {
               manilha={jogo.manilha}
               palpitesAnteriores={palpitesAnteriores}
               depoisDeVoce={depoisDeVoce}
-              prazoFinal={prazoFinal}
               ocupado={ocupado}
               onConfirmar={(quantidade) => void executar(() => palpitar(quantidade))}
             />
@@ -332,7 +346,11 @@ export function TelaMesa() {
           >
             {souDaVez ? 'Sua vez' : situacao}
             {souDaVez && prazoFinal !== null && (
-              <ContagemRegressiva prazoFinal={prazoFinal} className="pilula pilula--escura" />
+              <ContagemRegressiva
+                prazoFinal={prazoFinal}
+                className="pilula pilula--escura"
+                alertar
+              />
             )}
           </span>
         </div>
@@ -345,11 +363,6 @@ export function TelaMesa() {
         {estouEliminado && (
           <p className="minha__aviso" role="status">
             Você foi eliminado. Acompanhe a partida até o fim.
-          </p>
-        )}
-        {jogo.rodadaCega && !aguardandoProximaRodada && !estouEliminado && (
-          <p className="minha__dica-cega">
-            Rodada cega: você não vê a sua carta, mas vê a dos outros.
           </p>
         )}
 
@@ -372,6 +385,12 @@ export function TelaMesa() {
         <PainelResultado jogo={jogo} meuId={meuId} recebidoEm={jogoRecebidoEm} />
       )}
       {pausado && <PainelPausa jogo={jogo} meuId={meuId} />}
+      <ResumoDasRegras
+        jogo={jogo}
+        meuId={meuId}
+        recebidoEm={jogoRecebidoEm}
+        ativo={tutorial === null && eu !== undefined && !estouEliminado}
+      />
       {consulta === 'placar' && (
         <DialogoPlacar jogo={jogo} meuId={meuId} onFechar={() => definirConsulta(null)} />
       )}
