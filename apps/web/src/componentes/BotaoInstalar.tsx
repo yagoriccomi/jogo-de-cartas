@@ -1,9 +1,24 @@
 import { useInstalacao } from '../lib/useInstalacao';
-import { IconeInstalar } from './Icones';
+import { IconeCompartilhar, IconeInstalar } from './Icones';
 
-/** Convite para "Adicionar à tela inicial"; some quando o navegador não oferece a instalação. */
+/**
+ * Convite para "Adicionar à tela inicial". No iPhone o Safari não deixa o site oferecer a
+ * instalação: no lugar do botão vai o passo a passo pelo menu Compartilhar.
+ */
 export function BotaoInstalar() {
-  const { podeInstalar, instalar } = useInstalacao();
+  const { podeInstalar, instalarPeloCompartilhar, instalar } = useInstalacao();
+  if (instalarPeloCompartilhar) {
+    return (
+      <p className="aviso-instalar">
+        <IconeInstalar />
+        <span>
+          Instale o jogo: toque em <strong>Compartilhar</strong>{' '}
+          <IconeCompartilhar className="icone aviso-instalar__compartilhar" /> e depois em{' '}
+          <strong>Adicionar à Tela de Início</strong>.
+        </span>
+      </p>
+    );
+  }
   if (!podeInstalar) return null;
 
   return (

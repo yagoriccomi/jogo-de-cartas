@@ -563,3 +563,28 @@ button:disabled {
     display: none;
   }
 }
+
+/* Passo a passo de instalação no iPhone, onde o site não pode oferecer o botão. */
+.aviso-instalar {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--texto-suave);
+  border: 1px dashed var(--linha);
+  border-radius: 12px;
+}
+
+.aviso-instalar strong {
+  color: var(--texto);
+}
+
+.aviso-instalar__compartilhar {
+  width: 1.1em;
+  height: 1.1em;
+  vertical-align: -0.2em;
+  color: var(--ciano);
+}

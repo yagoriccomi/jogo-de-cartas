@@ -125,7 +125,7 @@ Sem cadastro · até 10 na mesa · celular e computador · servidor que não dei
 
 **📱 Celular**
 
-- Site responsivo e instalável (abre em tela cheia, com ícone na tela inicial).
+- Site responsivo e instalável (abre em tela cheia, com ícone na tela inicial). No Android aparece o botão "Instalar na tela inicial"; no iPhone, onde o Safari não permite esse botão, a tela inicial ensina o caminho: Compartilhar → Adicionar à Tela de Início.
 - A partida nunca rola a tela e não deixa arrastar além dela; no celular o topo fica recolhido (toque na alça ou deslize para baixo a partir do topo para abrir) e o palpite aparece dentro da mesa, sem cobrir a mão nem as suas vidas.
 
 ## Arquitetura
