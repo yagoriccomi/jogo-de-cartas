@@ -18,6 +18,7 @@
 - Rodadas: 1 carta → máximo possível → volta a 1. A rodada de 1 carta é **cega** (vê-se a carta dos outros, não a própria); terminados os palpites, todas as cartas vão sozinhas à mesa e a vaza é resolvida (`Partida.revelarRodadaCega`).
 - Perde 1 vida por vaza de diferença entre palpite e resultado. O "pé" (último a palpitar) não pode fechar a soma.
 - Prazo da vez (`TURN_TIMEOUT_SECONDS`): estourou, o servidor joga automaticamente.
+- Pausa de fim de rodada: 8 s, mais 4 s quando a rodada era cega (`pausaExtraRodadaCegaMs`); o cliente segura a última vaza e a revelação cega por mais tempo (`useAnimacaoDeVaza`).
 - Desconexão > 10 s (carência) pausa a partida e abre votação de espera por ausente; todos NÃO → eliminado (bot termina a rodada). Pausa congela prazos e bots.
 - Entrada no meio da partida: senta na próxima rodada com a maior vida entre os vivos.
 - Dono (criador; passa ao humano mais antigo e volta ao criador pelo mesmo `dispositivoId`): pausa/retoma a partida a qualquer momento (congela prazos e bots), reinicia a sala e expulsa (humano expulso fica banido pelo `dispositivoId`).
@@ -31,7 +32,7 @@
 
 **Identidade visual aprovada:** "Feltro + neon Vice City" (fundo #120720, feltro #0d3a3c, neon rosa #ff2a8a e ciano #2de2e6, `Yellowtail` + `Kanit`; números em `Jersey 15`, escolhida por distinguir bem 2, 3 e 8 em tamanho pequeno) com cartas em pixel art (valor grande; naipe pequeno nas comuns, grande e holográfico só na manilha). Símbolos pixel de "mão" (abre a rodada) e "pé" (último a palpitar) no canto do status.
 
-**Mesa (decisões de layout):** a partida nunca rola a página (`.app` com `100dvh`; as áreas internas encolhem, cartas da mesa medidas por `cqw/cqh`). Linha de cima: a carta que está ganhando sozinha à esquerda e a pilha das demais válidas (forte → fraca, cada uma por cima da anterior). Linha de baixo: as anuladas. Vaza ganha vira montinho no jogador (no celular o destino é a caixinha "Fez"); vaza toda empatada vira montinho no canto inferior direito do feltro (`vazasEmpatadas`). Palpite dentro do feltro; placar e regras ilustradas no topo, que no celular fica recolhido atrás de uma alça.
+**Mesa (decisões de layout):** a partida nunca rola a página (`.app` com `100dvh`; as áreas internas encolhem, cartas da mesa medidas por `cqw/cqh`). Linha de cima: a carta que está ganhando sozinha à esquerda e a pilha das demais válidas (forte → fraca, cada uma por cima da anterior). Linha de baixo: as anuladas. O dono da carta líder aparece sempre acima dela; nas demais, ao passar o mouse/focar/tocar (contorno rosa). Vaza ganha vira montinho no jogador (no celular o destino é a caixinha "Fez"); vazas todas empatadas viram um só monte abaixo da manilha (`MonteDeEmpates`; no celular só o contador; no computador a coluna da vira vira duas colunas). Contador da vaza (`n/total`) acima da vira. Sinais da vez: faixa "Sua vez!", mão pulsando, campainha própria, título da aba e rolagem das placas até quem joga. Fundos rosa com texto branco usam `--rosa-forte` (contraste AA); o neon `--rosa` fica para brilhos e contornos. Palpite dentro do feltro; placar e regras ilustradas no topo, que no celular fica recolhido atrás de uma alça.
 
 ## Stack Tecnológica e Ferramentas
 

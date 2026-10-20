@@ -22,7 +22,9 @@ Fodinha é um jogo de cartas multiplayer online, jogado direto no navegador. Cri
 - **Dono da sala:** quem criou a sala pode pausar e retomar a partida quando quiser, reiniciá-la (volta à rodada 1 com vidas cheias para todos) e expulsar pessoas. Quem é expulso não consegue voltar àquela sala pelo mesmo navegador. Se o dono sair, o posto passa para quem está há mais tempo na sala, e volta para o criador se ele retornar.
 - **Saída no meio da rodada:** quem sai (ou é expulso) tem a rodada terminada por um bot e só então deixa a mesa.
 - **Mão organizada:** suas cartas aparecem sempre da mais forte (à esquerda) para a mais fraca (à direita), considerando a manilha da rodada.
-- **Mesa:** a carta que está ganhando fica sozinha à esquerda; as demais que valem formam uma pilha ao lado, da mais forte para a mais fraca. As que empataram e se anularam ficam na linha de baixo. Cada vaza ganha vira um montinho na frente de quem ganhou; vaza toda empatada vira um montinho no canto inferior direito da mesa.
+- **Mesa:** a carta que está ganhando fica sozinha à esquerda, com o nome de quem a jogou em cima; as demais que valem formam uma pilha ao lado, da mais forte para a mais fraca. Passe o mouse ou toque numa carta para ver quem a jogou. As que empataram e se anularam ficam na linha de baixo. Cada vaza ganha vira um montinho na frente de quem ganhou; as vazas todas empatadas vão para um monte abaixo da manilha (no celular, só o contador). Acima da vira, um contador mostra a vaza da rodada (ex.: 2/5).
+- **Ritmo:** a última vaza de cada rodada fica mais tempo na mesa antes de ir para o montinho, e o resultado da rodada fica uns 8 segundos na tela (uns 12 nas rodadas cegas, que se resolvem sozinhas). Quando a partida acaba, uma tela celebra o vencedor.
+- **Sua vez:** a faixa "Sua vez!" cruza a mesa, suas cartas pulsam em rosa, toca uma campainha própria, o título da aba muda e, no celular, as placas de cima rolam acompanhando quem está jogando.
 
 ## Features
 
@@ -36,7 +38,7 @@ Fodinha é um jogo de cartas multiplayer online, jogado direto no navegador. Cri
 - Servidor autoritativo: o cliente só recebe a própria mão, a vira, as cartas jogadas e, na rodada cega, a carta dos outros.
 - Reconexão por token após recarregar a página.
 - Prazo da vez com jogada automática, para a mesa nunca travar.
-- Tutorial interativo na tela inicial: uma rodada de 3 cartas e uma rodada cega roteiradas contra 2 bots, com cartas sempre iguais e balões de fala apontando cada parte da mesa. Funciona sem servidor.
+- Tutorial interativo na tela inicial: uma rodada de 3 cartas e uma rodada cega roteiradas contra 2 bots, com cartas sempre iguais e balões de fala apontando cada parte da mesa. Tem uma versão rápida, que pula os passos só explicativos. Funciona sem servidor.
 - Sons de fliperama (sintetizados, sem arquivos de áudio) e vibração na sua vez e ao perder vida, com opção de silenciar no menu.
 - Placar a qualquer momento (vidas, palpite e vazas feitas de todos) e guia de regras ilustrado, passo a passo.
 - Partida sem rolar a tela: no celular o topo fica recolhido (toque na alça ou deslize para baixo a partir do topo para abrir) e o palpite aparece dentro da mesa, sem cobrir a mão nem as suas vidas.
@@ -108,7 +110,7 @@ Detalhes do ambiente Docker:
    npm run dev
    ```
 
-   Ou separadamente: `npm run dev:server` e `npm run dev:web`.
+   Ou separadamente: `npm run dev:server` e `npm run dev:web`. O servidor lê o `.env` da raiz (porta em `PORT`); o web aponta para `VITE_SERVER_URL`. Se os dois não baterem, a tela de conexão avisa que o servidor local não respondeu.
 
 ## Testes e Qualidade
 
