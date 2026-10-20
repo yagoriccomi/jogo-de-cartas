@@ -86,7 +86,6 @@ beforeEach(() => {
     registrador: silencioso,
     gerarAleatorio: BOTS_CALADOS,
     tempos: {
-      prazoDaVezMs: PRAZO_MS,
       atrasoDoBotMs: ATRASO_BOT_MS,
       pausaFimDeRodadaMs: PAUSA_FIM_RODADA_MS,
       pausaExtraRodadaCegaMs: 0,
@@ -337,6 +336,22 @@ describe('ServicoDeSalas — partida', () => {
 
     relogio.avancar(PRAZO_MS);
     expect(partidaDe(dono)?.jogadores[0]?.palpite).not.toBeNull();
+  });
+
+  it('naoDeveJogarPeloHumanoQuandoASalaNaoTemLimiteDeTempo', () => {
+    const dono = servico.criarSala({
+      apelido: 'Ana',
+      configuracao: { ...CONFIGURACAO_PADRAO, prazoDaVezSegundos: null },
+      dispositivoId: 'disp-ana',
+    });
+    servico.adicionarBot(ator(dono));
+    servico.iniciarPartida(ator(dono));
+
+    relogio.avancar(10 * PRAZO_MS);
+    const estado = partidaDe(dono);
+    expect(estado?.idDaVez).toBe(dono.jogadorId);
+    expect(estado?.prazoDaVezEm).toBeNull();
+    expect(estado?.jogadores[0]?.palpite).toBeNull();
   });
 
   it('deveLevarAPartidaAteOFimSoComPrazosEBots', () => {

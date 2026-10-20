@@ -6,7 +6,7 @@ import {
   type ConfiguracaoPartida,
   type ParticipanteSala,
 } from '@fodinha/shared';
-import { ConfiguracaoControles } from '../../componentes/ConfiguracaoControles';
+import { ConfiguracaoControles, descreverPrazo } from '../../componentes/ConfiguracaoControles';
 import { DialogoConfirmacao } from '../../componentes/DialogoConfirmacao';
 import { IconeExpulsar, IconeFechar } from '../../componentes/Icones';
 import {
@@ -30,7 +30,19 @@ function descreverConfiguracao(configuracao: ConfiguracaoPartida): string {
       : `${configuracao.quantidadeBaralhos} baralhos`;
   const faixa = configuracao.incluirOitoNoveDez ? 'com 8, 9 e 10' : 'sem 8, 9 e 10';
   const mortos = configuracao.mortosVeemCartas ? ' · eliminados veem as cartas' : '';
-  return `${baralhos} · ${configuracao.vidasIniciais} vidas · ${faixa}${mortos}`;
+  const prazo =
+    configuracao.prazoDaVezSegundos === null
+      ? 'sem limite de tempo'
+      : `${descreverPrazo(configuracao.prazoDaVezSegundos)} por vez`;
+  return `${baralhos} · ${configuracao.vidasIniciais} vidas · ${faixa} · ${prazo}${mortos}`;
+}
+
+/** O motivo do bloqueio vai no próprio botão, em vez de um "Iniciar" apagado sem explicação. */
+function rotuloDoIniciar(faltam: number): string {
+  if (faltam <= 0) return 'Iniciar partida';
+  return faltam === 1
+    ? 'Adicione 1 jogador para iniciar'
+    : `Adicione ${faltam} jogadores para iniciar`;
 }
 
 function inicialDe(apelido: string): string {
@@ -204,7 +216,7 @@ export function TelaLobby() {
             disabled={ocupado || !podeIniciar}
             onClick={() => void executar(iniciarPartida)}
           >
-            Iniciar partida
+            {rotuloDoIniciar(LIMITES.minJogadores - total)}
           </button>
         ) : (
           <p className="lobby__espera" role="status">

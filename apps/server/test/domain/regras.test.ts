@@ -1,3 +1,4 @@
+import { CONFIGURACAO_PADRAO, LIMITES } from '@fodinha/shared';
 import { describe, expect, it } from 'vitest';
 import { montarBaralhoEmbaralhado, totalDeCartas, valoresEmJogo } from '../../src/domain/baralho';
 import { validarConfiguracao } from '../../src/domain/configuracao';
@@ -21,6 +22,7 @@ describe('baralho', () => {
         vidasIniciais: 5,
         incluirOitoNoveDez: false,
         mortosVeemCartas: false,
+        prazoDaVezSegundos: 30,
       }),
     ).toBe(40);
   });
@@ -32,6 +34,7 @@ describe('baralho', () => {
         vidasIniciais: 5,
         incluirOitoNoveDez: true,
         mortosVeemCartas: false,
+        prazoDaVezSegundos: 30,
       }),
     ).toBe(208);
   });
@@ -43,6 +46,7 @@ describe('baralho', () => {
         vidasIniciais: 5,
         incluirOitoNoveDez: false,
         mortosVeemCartas: false,
+        prazoDaVezSegundos: 30,
       },
       geradorComSemente(1),
     );
@@ -51,6 +55,14 @@ describe('baralho', () => {
     expect(cartas.every((c) => /^c\d+$/.test(c.id))).toBe(true);
   });
 });
+
+/** Sem `prazoDaVezSegundos`, como manda um cliente de antes da opção. */
+const BASE_VALIDA = {
+  quantidadeBaralhos: 1,
+  vidasIniciais: 5,
+  incluirOitoNoveDez: false,
+  mortosVeemCartas: false,
+};
 
 describe('configuração', () => {
   it.each([
@@ -62,16 +74,33 @@ describe('configuração', () => {
       vidasIniciais: 11,
       incluirOitoNoveDez: false,
       mortosVeemCartas: false,
+      prazoDaVezSegundos: 30,
     },
     {
       quantidadeBaralhos: 1.5,
       vidasIniciais: 5,
       incluirOitoNoveDez: false,
       mortosVeemCartas: false,
+      prazoDaVezSegundos: 30,
     },
     { quantidadeBaralhos: 1, vidasIniciais: 5, incluirOitoNoveDez: false, mortosVeemCartas: 'sim' },
+    { ...BASE_VALIDA, prazoDaVezSegundos: LIMITES.minPrazoDaVezSegundos - 1 },
+    { ...BASE_VALIDA, prazoDaVezSegundos: LIMITES.maxPrazoDaVezSegundos + 1 },
+    { ...BASE_VALIDA, prazoDaVezSegundos: '30' },
   ])('deveRejeitarConfiguracaoForaDosLimites %o', (configuracao) => {
     expect(() => validarConfiguracao(configuracao)).toThrow();
+  });
+
+  it('deveAceitarSalaSemLimiteDeTempo', () => {
+    expect(
+      validarConfiguracao({ ...BASE_VALIDA, prazoDaVezSegundos: null }).prazoDaVezSegundos,
+    ).toBeNull();
+  });
+
+  it('deveUsarOPrazoPadraoQuandoOClienteAntigoNaoInforma', () => {
+    expect(validarConfiguracao(BASE_VALIDA).prazoDaVezSegundos).toBe(
+      CONFIGURACAO_PADRAO.prazoDaVezSegundos,
+    );
   });
 });
 
