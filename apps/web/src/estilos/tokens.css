@@ -14,6 +14,8 @@
   --texto-neon: #ffe3f1;
 
   --rosa: #ff2a8a;
+  /* Fundo de texto branco: o neon puro dá só 3,5:1; este passa de 4,5:1 (WCAG AA). */
+  --rosa-forte: #e0156f;
   --rosa-claro: #ff8fc4;
   --rosa-suave: #ffb8d8;
   --rosa-palido: #ffd6ec;

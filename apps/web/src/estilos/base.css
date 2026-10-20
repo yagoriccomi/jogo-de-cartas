@@ -204,7 +204,7 @@ button:disabled {
   min-height: 56px;
   border-color: var(--rosa);
   border-radius: 16px;
-  background: var(--rosa);
+  background: var(--rosa-forte);
   color: #fff;
   font-weight: 800;
   font-size: 1.05rem;
@@ -330,7 +330,7 @@ button:disabled {
 }
 
 .selo--rosa {
-  background: var(--rosa);
+  background: var(--rosa-forte);
   color: #fff;
 }
 
