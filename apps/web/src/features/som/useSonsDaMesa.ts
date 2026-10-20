@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react';
 import type { EstadoPartidaVisivel } from '@fodinha/shared';
 import { detectarEventos } from './eventos';
 import { somEstaLigado } from './preferencia';
-import { destravarAudioNoPrimeiroGesto, tocarEvento } from './sintetizador';
+import { destravarAudioNoPrimeiroGesto } from './contextoDeAudio';
+import { tocarEvento } from './sintetizador';
 import { vibrarPara } from './vibracao';
 
 /**

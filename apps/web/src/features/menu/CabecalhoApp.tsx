@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { IconeAbaixo, IconeMenu } from '../../componentes/Icones';
 import { classes } from '../../lib/classes';
+import { useMusicaDeFundo } from '../som/useMusicaDeFundo';
 import { MenuLateral } from './MenuLateral';
 import './menu.css';
 
@@ -49,6 +50,8 @@ function useGestoDoTopo(ativo: boolean, aberto: boolean, definirAberto: (v: bool
 
 /** Topo comum ao lobby e à mesa: marca, informação da rodada e o botão que abre o menu lateral. */
 export function CabecalhoApp({ children, acoes, recolhivel = false }: Props) {
+  // A música vive onde o menu com os controles dela está ao alcance: lobby e mesa.
+  useMusicaDeFundo();
   const [menuAberto, definirMenuAberto] = useState(false);
   const [topoAberto, definirTopoAberto] = useState(false);
   useGestoDoTopo(recolhivel, topoAberto, definirTopoAberto);
