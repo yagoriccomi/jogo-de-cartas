@@ -340,6 +340,22 @@ describe('proximaRodada publicada pelo condutor', () => {
     expect(c.partidaDe(ana)?.proximaRodada).toBeNull();
   });
 
+  it('deveDarMaisTempoAoFimDaRodadaCega', () => {
+    const extraMs = 3_000;
+    c = montarCenario({ pausaExtraRodadaCegaMs: extraMs });
+    const ana = mesaComUmHumanoETresBots();
+    // A primeira rodada tem 1 carta: é cega.
+    jogarAteFimDeRodada([ana], ana);
+    c.servico.republicar(ana.codigoSala);
+    const comecaEmMs = c.partidaDe(ana)?.proximaRodada?.comecaEmMs ?? 0;
+    expect(comecaEmMs).toBeGreaterThan(PAUSA_FIM_RODADA_MS);
+
+    c.relogio.avancar(comecaEmMs - 1);
+    expect(c.partidaDe(ana)?.fase).toBe('fim_de_rodada');
+    c.relogio.avancar(1);
+    expect(c.partidaDe(ana)?.fase).toBe('palpites');
+  });
+
   it('deveInformarOQueVemEACorrerOTempoAteADistribuicao', () => {
     const ana = mesaComUmHumanoETresBots();
     jogarAteFimDeRodada([ana], ana);

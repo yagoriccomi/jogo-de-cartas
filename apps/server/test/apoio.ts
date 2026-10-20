@@ -159,6 +159,8 @@ export function montarCenario(temposExtras: Partial<TemposDoCondutor> = {}) {
       prazoDaVezMs: PRAZO_MS,
       atrasoDoBotMs: ATRASO_BOT_MS,
       pausaFimDeRodadaMs: PAUSA_FIM_RODADA_MS,
+      // Zero por padrão: os testes contam a pausa sem saber se a rodada era cega.
+      pausaExtraRodadaCegaMs: 0,
       carenciaDeDesconexaoMs: CARENCIA_MS,
       ...temposExtras,
     },

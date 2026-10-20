@@ -88,6 +88,7 @@ beforeEach(() => {
       prazoDaVezMs: PRAZO_MS,
       atrasoDoBotMs: ATRASO_BOT_MS,
       pausaFimDeRodadaMs: PAUSA_FIM_RODADA_MS,
+      pausaExtraRodadaCegaMs: 0,
       carenciaDeDesconexaoMs: CARENCIA_MS,
     },
   });

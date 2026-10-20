@@ -121,6 +121,7 @@ beforeEach(async () => {
       prazoDaVezMs: PRAZO_DA_VEZ_MS,
       atrasoDoBotMs: 20,
       pausaFimDeRodadaMs: 20,
+      pausaExtraRodadaCegaMs: 0,
       carenciaDeDesconexaoMs: CARENCIA_MS,
     },
   });

@@ -14,8 +14,11 @@ import {
 import { lerAmbiente } from './infrastructure/ambiente';
 import { GatewayDoJogo, NotificadorSocketIo } from './infrastructure/socket/gateway';
 
-// Inclui ~2 s da animação da última vaza indo para o montinho antes de o resultado aparecer.
-const PAUSA_FIM_DE_RODADA_MS = 6_000;
+// Inclui ~3 s da última vaza na mesa e indo para o montinho antes de o resultado aparecer;
+// jogadores reclamaram que 6 s não davam para ler o resultado.
+const PAUSA_FIM_DE_RODADA_MS = 8_000;
+// A rodada cega se resolve sozinha: a revelação no cliente leva ~3 s a mais para ser lida.
+const PAUSA_EXTRA_RODADA_CEGA_MS = 4_000;
 const TEMPO_DE_ABANDONO_MS = 10 * 60_000;
 // Recarregar a página ou piscar a rede não deve pausar a mesa.
 const CARENCIA_DE_DESCONEXAO_MS = 10_000;
@@ -48,6 +51,7 @@ async function iniciar(): Promise<void> {
       prazoDaVezMs: ambiente.prazoDaVezMs,
       atrasoDoBotMs: ambiente.atrasoDoBotMs,
       pausaFimDeRodadaMs: PAUSA_FIM_DE_RODADA_MS,
+      pausaExtraRodadaCegaMs: PAUSA_EXTRA_RODADA_CEGA_MS,
       carenciaDeDesconexaoMs: CARENCIA_DE_DESCONEXAO_MS,
     },
   });

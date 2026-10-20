@@ -11,6 +11,11 @@ export interface TemposDoCondutor {
   readonly atrasoDoBotMs: number;
   /** Tempo de exibição do resultado da rodada antes da próxima distribuição. */
   readonly pausaFimDeRodadaMs: number;
+  /**
+   * Acréscimo à pausa quando a rodada que acabou era cega: as cartas vão sozinhas à mesa de uma
+   * vez e o jogador precisa de mais tempo para descobrir a própria carta e entender o resultado.
+   */
+  readonly pausaExtraRodadaCegaMs: number;
   /** Tolerância a quedas curtas (recarregar a página) antes de pausar a partida (premissa P1). */
   readonly carenciaDeDesconexaoMs: number;
 }
@@ -140,9 +145,9 @@ export class CondutorDePartidas {
 
     const { tempos } = this.deps;
     if (partida.faseAtual === 'fim_de_rodada') {
-      this.agendar(sala, { tipo: 'proximaRodada', atrasoMs: tempos.pausaFimDeRodadaMs }, () =>
-        partida.iniciarProximaRodada(),
-      );
+      const atrasoMs =
+        tempos.pausaFimDeRodadaMs + (partida.rodadaCega ? tempos.pausaExtraRodadaCegaMs : 0);
+      this.agendar(sala, { tipo: 'proximaRodada', atrasoMs }, () => partida.iniciarProximaRodada());
       return;
     }
 
