@@ -960,14 +960,17 @@ body:has(.mesa:not(.mesa--fim)) {
   flex-direction: column;
   justify-content: center;
   min-width: 0;
+  gap: 1px;
   padding-inline: 10px;
   line-height: 1.1;
   white-space: nowrap;
 }
 
+/* Pode quebrar em duas linhas: a largura da fonte muda de sistema para sistema (no Linux vazava). */
 .palpite__gesto {
   font-size: 0.68rem;
   font-weight: 600;
+  white-space: normal;
   letter-spacing: 0;
   opacity: 0.85;
 }
