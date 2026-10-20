@@ -20,7 +20,8 @@ import { Mao } from './Mao';
 import { MesaLinhas } from './MesaLinhas';
 import { Montinhos } from './Montinhos';
 import { NumerosDaRodada } from './NumerosDaRodada';
-import { PainelPalpite } from './PainelPalpite';
+import { emOrdemDeJogo } from './ordemDeJogo';
+import { PainelPalpite, type PalpiteAnterior } from './PainelPalpite';
 import { PainelPausa } from './PainelPausa';
 import { PainelResultado } from './PainelResultado';
 import { SimbolosMaoEPe } from './SimbolosMaoEPe';
@@ -87,7 +88,9 @@ export function TelaMesa() {
   const eu = jogo.jogadores.find((j) => j.id === meuId);
   const participante = sala?.participantes.find((p) => p.id === meuId);
   const aguardandoProximaRodada = participante?.aguardandoProximaRodada ?? eu === undefined;
-  const adversarios = jogo.jogadores.filter((j) => j.id !== meuId);
+  // Placas na ordem de jogo: a mão fica à esquerda e o pé à direita.
+  const ordemDeJogo = emOrdemDeJogo(jogo.jogadores, jogo.idDoPrimeiro, jogo.idDoPe);
+  const adversarios = ordemDeJogo.filter((j) => j.id !== meuId);
   const nomeDe = (id: string | null) => {
     if (id === null) return null;
     if (id === meuId) return 'Você';
@@ -109,9 +112,16 @@ export function TelaMesa() {
       ? jogoRecebidoEm + jogo.prazoDaVezRestanteMs
       : null;
 
-  const palpitesDosOutros = adversarios.flatMap((j) =>
-    j.palpite === null || j.eliminado ? [] : [j.palpite],
-  );
+  const vivosEmOrdem = ordemDeJogo.filter((j) => !j.eliminado);
+  const minhaPosicao = vivosEmOrdem.findIndex((j) => j.id === meuId);
+  const palpitesAnteriores: PalpiteAnterior[] = vivosEmOrdem
+    .slice(0, Math.max(minhaPosicao, 0))
+    .flatMap((j) =>
+      j.palpite === null
+        ? []
+        : [{ id: j.id, nome: j.apelido, palpite: j.palpite, ehMao: j.id === jogo.idDoPrimeiro }],
+    );
+  const depoisDeVoce = minhaPosicao === -1 ? 0 : vivosEmOrdem.length - minhaPosicao - 1;
 
   let situacao: string;
   if (aguardandoProximaRodada) situacao = 'Você entra na próxima rodada';
@@ -257,7 +267,8 @@ export function TelaMesa() {
               souOPe={jogo.idDoPe === meuId}
               vira={jogo.vira}
               manilha={jogo.manilha}
-              palpitesDosOutros={palpitesDosOutros}
+              palpitesAnteriores={palpitesAnteriores}
+              depoisDeVoce={depoisDeVoce}
               prazoFinal={prazoFinal}
               ocupado={ocupado}
               onConfirmar={(quantidade) => void executar(() => palpitar(quantidade))}

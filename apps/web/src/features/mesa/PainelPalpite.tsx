@@ -4,6 +4,7 @@ import { classes } from '../../lib/classes';
 import type { EstiloComVariaveis } from '../../lib/estiloComVariaveis';
 import { Carta } from './Carta';
 import { ContagemRegressiva } from './ContagemRegressiva';
+import { SimbolosMaoEPe } from './SimbolosMaoEPe';
 
 /** Até esta quantidade de opções os botões são grandes e ocupam uma linha. */
 const OPCOES_GRANDES = 4;
@@ -17,11 +18,20 @@ interface Props {
   readonly souOPe: boolean;
   readonly vira: DadosDaCarta | null;
   readonly manilha: Valor | null;
-  /** Palpites já dados pelos outros nesta rodada (para a soma). */
-  readonly palpitesDosOutros: readonly number[];
+  /** Quem já palpitou nesta rodada, na ordem de jogo (a mão primeiro). */
+  readonly palpitesAnteriores: readonly PalpiteAnterior[];
+  /** Quantos ainda palpitam depois de mim. */
+  readonly depoisDeVoce: number;
   readonly prazoFinal: number | null;
   readonly ocupado: boolean;
   readonly onConfirmar: (quantidade: number) => void;
+}
+
+export interface PalpiteAnterior {
+  readonly id: string;
+  readonly nome: string;
+  readonly palpite: number;
+  readonly ehMao: boolean;
 }
 
 function tamanhoDaGrade(opcoes: number): 'grande' | 'media' | 'pequena' {
@@ -36,14 +46,18 @@ export function PainelPalpite({
   souOPe,
   vira,
   manilha,
-  palpitesDosOutros,
+  palpitesAnteriores,
+  depoisDeVoce,
   prazoFinal,
   ocupado,
   onConfirmar,
 }: Props) {
   const [escolhido, definirEscolhido] = useState<number | null>(null);
+  const [detalhesAbertos, definirDetalhesAbertos] = useState(false);
   const opcoes = Array.from({ length: cartasNaRodada + 1 }, (_, quantidade) => quantidade);
-  const soma = palpitesDosOutros.reduce((total, palpite) => total + palpite, 0);
+  const soma = palpitesAnteriores.reduce((total, anterior) => total + anterior.palpite, 0);
+  // Vazas ainda "sem dono" nos palpites: negativo quando a mesa já pediu mais do que há.
+  const saldo = cartasNaRodada - soma;
   const colunas = Math.min(opcoes.length, COLUNAS_DA_GRADE_LONGA);
   const estiloGrade: EstiloComVariaveis = { '--colunas': colunas };
   const cartasTexto = cartasNaRodada === 1 ? '1 carta' : `${cartasNaRodada} cartas`;
@@ -57,7 +71,7 @@ export function PainelPalpite({
         </div>
         <div className="palpite__cabeca">
           <h2 id="titulo-palpite" className="neon palpite__titulo">
-            Seu palpite
+            Vai fazer quantas?
           </h2>
           <span className="palpite__contexto">
             <span className="so-celular">
@@ -101,11 +115,30 @@ export function PainelPalpite({
       )}
 
       <div className="palpite__rodape">
-        <span className="palpite__soma">
-          {palpitesDosOutros.length > 0 ? 'Soma' : 'Você abre'}
-          <br />
-          <strong>{soma}</strong> de {cartasNaRodada}
-        </span>
+        <div className="palpite__info">
+          <p className="palpite__resumo">
+            <span>
+              <span className="palpite__rodada-de">Rodada de </span>
+              <strong>{cartasNaRodada}</strong> {cartasNaRodada === 1 ? 'carta' : 'cartas'}
+            </span>
+            <span className="palpite__divisor" aria-hidden="true">
+              |
+            </span>
+            <span>
+              Saldo:{' '}
+              <strong className={classes(saldo < 0 && 'palpite__saldo--negativo')}>{saldo}</strong>
+            </span>
+          </p>
+          <button
+            type="button"
+            className="palpite__mais"
+            aria-expanded={detalhesAbertos}
+            aria-controls="palpite-detalhes"
+            onClick={() => definirDetalhesAbertos((aberto) => !aberto)}
+          >
+            {detalhesAbertos ? 'Mostrar menos' : 'Mostrar mais'}
+          </button>
+        </div>
         <button
           type="button"
           className="botao botao--primario"
@@ -115,6 +148,32 @@ export function PainelPalpite({
           {escolhido === null ? 'Escolha' : `Confirmar ${escolhido}`}
         </button>
       </div>
+
+      {/* Abaixo do Confirmar: em telas baixas a lista aberta rola sem esconder o botão. */}
+      {detalhesAbertos && (
+        <div id="palpite-detalhes" className="palpite__detalhes">
+          {palpitesAnteriores.length === 0 ? (
+            <p className="palpite__vazio">Você abre a rodada.</p>
+          ) : (
+            <ol className="palpite__lista" aria-label="Palpites já feitos">
+              {palpitesAnteriores.map((anterior) => (
+                <li key={anterior.id} className="palpite__item">
+                  <span className="palpite__nome">{anterior.nome}</span>
+                  <SimbolosMaoEPe ehMao={anterior.ehMao} ehPe={false} />
+                  <span className="palpite__faz">
+                    → faz <strong>{anterior.palpite}</strong>
+                  </span>
+                </li>
+              ))}
+            </ol>
+          )}
+          {depoisDeVoce > 0 && (
+            <p className="palpite__depois">
+              Jogadores depois de você <strong>+{depoisDeVoce}</strong>
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
