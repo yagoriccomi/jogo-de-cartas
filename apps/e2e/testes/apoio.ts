@@ -2,6 +2,8 @@ import { expect, type Locator, type Page } from '@playwright/test';
 
 /** Mesa cheia: 10 jogadores e 13 cartas na mão (o caso que mais aperta o layout). */
 export const MESA_CHEIA = { jogadores: 10, cartas: 13 } as const;
+/** A rodada cega acaba sozinha depois dos palpites: o caminho curto até o fim da rodada. */
+export const MESA_CHEIA_NA_CEGA = { jogadores: 10, cartas: 1 } as const;
 /** Rodada longa: 2 jogadores com 1 baralho chegam a 19 cartas (aperta a mão e o palpite). */
 export const RODADA_LONGA = { jogadores: 2, cartas: 19 } as const;
 /** Com 3 baralhos os 2 chegam a 59: a mão só cabe com fileiras cheias e mais juntas. */

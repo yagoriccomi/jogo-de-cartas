@@ -1363,6 +1363,11 @@ body:has(.mesa:not(.mesa--fim)) {
   color: var(--texto-suave);
 }
 
+.folha__tabela {
+  min-height: 0;
+  overflow-y: auto;
+}
+
 .resultado {
   width: 100%;
   border-collapse: collapse;
@@ -1377,8 +1382,11 @@ body:has(.mesa:not(.mesa--fim)) {
 }
 
 .resultado thead th {
+  position: sticky;
+  top: 0;
   padding-top: 0;
   padding-bottom: 8px;
+  background: var(--superficie);
   font-size: 0.68rem;
   font-weight: 400;
   letter-spacing: 1px;
@@ -1416,6 +1424,14 @@ body:has(.mesa:not(.mesa--fim)) {
 .resultado__ok {
   font-weight: 700;
   color: var(--ciano-claro);
+}
+
+/* Celular baixo: 10 jogadores cabem sem rolar a tabela. */
+@media (max-height: 700px) {
+  .resultado th,
+  .resultado td {
+    padding-block: 7px;
+  }
 }
 
 .folha__proxima {

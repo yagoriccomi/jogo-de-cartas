@@ -10,6 +10,7 @@ import {
   jogarAteAMesaTer,
   medir,
   MESA_CHEIA,
+  MESA_CHEIA_NA_CEGA,
   palpitarQualquerCoisa,
   RODADA_LONGA,
   RODADA_MUITO_LONGA,
@@ -163,6 +164,29 @@ test.describe('Mesa cheia (10 jogadores, 13 cartas)', () => {
     await page.locator('.palpite__opcao:not([disabled])').first().click();
     await expect(confirmar).toContainText('2×');
     await conferir('com número');
+  });
+
+  test('o fim da rodada mostra os 10 jogadores e a contagem da próxima sem rolar', async ({
+    page,
+  }) => {
+    await abrirCenario(page, MESA_CHEIA_NA_CEGA);
+    await expect(page.locator('.palpite')).toBeVisible({ timeout: ESPERA_DA_MESA_MS });
+    await palpitarQualquerCoisa(page);
+    const folha = page.getByRole('dialog', { name: /fim da rodada/i });
+    await expect(folha.locator('.resultado tbody tr')).toHaveCount(MESA_CHEIA_NA_CEGA.jogadores, {
+      timeout: ESPERA_DA_MESA_MS,
+    });
+    // A barra da contagem anima o tempo todo: espera só a folha terminar de subir.
+    await expect.poll(() => folha.evaluate((el) => el.getAnimations().length)).toBe(0);
+
+    const tela = telaDe(page);
+    expect(contem(tela, await medir(folha))).toBe(true);
+    // No celular baixo a contagem já ficou escondida abaixo da tabela.
+    expect(contem(tela, await medir(folha.locator('.folha__proxima')))).toBe(true);
+    for (const rolavel of [folha, folha.locator('.folha__tabela')]) {
+      const rolagem = await rolavel.evaluate((el) => el.scrollHeight - el.clientHeight);
+      expect(rolagem).toBeLessThanOrEqual(1);
+    }
   });
 
   test('o toque duplo na mesa não marca texto nem dá zoom', async ({ page }) => {

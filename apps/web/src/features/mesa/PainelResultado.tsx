@@ -48,36 +48,39 @@ export function PainelResultado({ jogo, meuId, recebidoEm }: Props) {
         <span className="folha__cartas">{cartasTexto}</span>
       </div>
 
-      <table className="resultado">
-        <thead>
-          <tr>
-            <th scope="col">Jogador</th>
-            <th scope="col">Palpite</th>
-            <th scope="col">Fez</th>
-            <th scope="col">Vidas</th>
-          </tr>
-        </thead>
-        <tbody>
-          {resultados.map((r) => {
-            const jogador = jogadorDe(r.jogadorId);
-            const perdeu = r.vidasPerdidas > 0;
-            return (
-              <tr key={r.jogadorId} className={classes(r.jogadorId === meuId && 'resultado__eu')}>
-                <th scope="row">
-                  {jogador?.apelido ?? 'Jogador'}
-                  {r.jogadorId === meuId && ' (você)'}
-                </th>
-                <td>{r.palpite}</td>
-                <td>{r.vazasFeitas}</td>
-                <td className={perdeu ? 'resultado__perdeu' : 'resultado__ok'}>
-                  {jogador && `♥${jogador.vidas} `}
-                  {perdeu ? `−${r.vidasPerdidas}` : '✓'}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      {/* Só a tabela rola: com 10 jogadores numa tela baixa, a contagem da próxima rodada some. */}
+      <div className="folha__tabela">
+        <table className="resultado">
+          <thead>
+            <tr>
+              <th scope="col">Jogador</th>
+              <th scope="col">Palpite</th>
+              <th scope="col">Fez</th>
+              <th scope="col">Vidas</th>
+            </tr>
+          </thead>
+          <tbody>
+            {resultados.map((r) => {
+              const jogador = jogadorDe(r.jogadorId);
+              const perdeu = r.vidasPerdidas > 0;
+              return (
+                <tr key={r.jogadorId} className={classes(r.jogadorId === meuId && 'resultado__eu')}>
+                  <th scope="row">
+                    {jogador?.apelido ?? 'Jogador'}
+                    {r.jogadorId === meuId && ' (você)'}
+                  </th>
+                  <td>{r.palpite}</td>
+                  <td>{r.vazasFeitas}</td>
+                  <td className={perdeu ? 'resultado__perdeu' : 'resultado__ok'}>
+                    {jogador && `♥${jogador.vidas} `}
+                    {perdeu ? `−${r.vidasPerdidas}` : '✓'}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
 
       {proxima && (
         <div className="folha__proxima">
