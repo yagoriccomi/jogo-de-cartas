@@ -96,9 +96,9 @@ fodinha/
 ├── apps/
 │   ├── server/                      # Node 24 + Fastify + Socket.IO
 │   │   ├── src/
-│   │   │   ├── domain/              # regras puras: baralho, força, vaza, rodadas, partida, estratégia de bot
+│   │   │   ├── domain/              # regras puras: baralho, força, vaza, rodadas, partida, projeção (quem vê o quê), estratégia de bot
 │   │   │   ├── application/         # salas, serviço de sala, bots, agendador de prazos da vez
-│   │   │   ├── infrastructure/      # http (/health), gateway Socket.IO, repositório em memória
+│   │   │   ├── infrastructure/      # http (/health), gateway Socket.IO (+ entradas: unknown → tipos), repositório em memória
 │   │   │   └── main.ts              # composition root (liga tudo; lê o ambiente)
 │   │   ├── test/                    # Vitest: domínio, aplicação
 │   │   ├── Dockerfile               # imagem de PRODUÇÃO (multi-stage, contexto = raiz)

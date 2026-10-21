@@ -1,6 +1,5 @@
 import type {
   Carta,
-  CartaNaMao,
   ConfiguracaoPartida,
   FasePartida,
   Jogada,
@@ -11,12 +10,13 @@ import type {
   VazaGanha,
   VazaResolvida,
 } from '@fodinha/shared';
-import { LIMITES, NAIPES } from '@fodinha/shared';
+import { LIMITES } from '@fodinha/shared';
 import { embaralhar, type GeradorAleatorio } from './aleatoriedade';
 import { montarBaralhoEmbaralhado, totalDeCartas, valoresEmJogo } from './baralho';
 import { validarConfiguracao } from './configuracao';
 import { ErroDeRegra } from './erros';
-import { forcaDaCarta, valorDaManilha } from './forca';
+import { valorDaManilha } from './forca';
+import { projetarPara, type RetratoDaPartida, type VisaoDaPartida } from './projecao';
 import {
   maxCartasPorJogador,
   palpiteProibidoDoPe,
@@ -39,41 +39,6 @@ interface JogadorNaPartida {
  * `remover`: saiu ou foi expulso — o assento some entre as rodadas.
  */
 export type DestinoDaSaida = 'eliminar' | 'remover';
-
-/** Projeção do jogador para quem observa; dados de sala (apelido, bot, conexão) vêm da aplicação. */
-export interface JogadorNaVisao {
-  readonly id: string;
-  readonly vidas: number;
-  readonly eliminado: boolean;
-  readonly palpite: number | null;
-  readonly vazasFeitas: number;
-  readonly vazasGanhas: readonly VazaGanha[];
-  readonly cartasNaMao: number;
-  readonly cartaNaTesta: Carta | null;
-  readonly maoRevelada: readonly Carta[] | null;
-  readonly saiAoFimDaRodada: boolean;
-}
-
-export interface VisaoDaPartida {
-  readonly configuracao: ConfiguracaoPartida;
-  readonly fase: FasePartida;
-  readonly numeroRodada: number;
-  readonly cartasPorJogador: number;
-  readonly rodadaCega: boolean;
-  readonly vira: Carta | null;
-  readonly manilha: Valor | null;
-  readonly jogadores: readonly JogadorNaVisao[];
-  readonly idDoPe: string | null;
-  readonly idDoPrimeiro: string | null;
-  readonly idDaVez: string | null;
-  readonly minhaMao: readonly CartaNaMao[];
-  readonly mesa: readonly JogadaNaMesa[];
-  readonly ultimaVaza: VazaResolvida | null;
-  readonly vazasEmpatadas: readonly VazaEmpatada[];
-  readonly palpiteProibido: number | null;
-  readonly resultadoRodada: readonly ResultadoJogadorNaRodada[] | null;
-  readonly vencedores: readonly string[];
-}
 
 export interface PrevisaoDaRodada {
   readonly cartasPorJogador: number;
@@ -342,15 +307,15 @@ export class Partida {
     this.configuracao = { ...this.configuracao, mortosVeemCartas };
   }
 
-  /**
-   * Visão sem mão alheia revelada (salvo a carta na testa da rodada cega), para espectadores e
-   * jogadores. Exceção: com `mortosVeemCartas`, o eliminado vê a mão dos outros.
-   */
+  /** Quem observa só recebe o que pode ver: as regras de visibilidade ficam em `projetarPara`. */
   visaoPara(jogadorId: string | null): VisaoDaPartida {
-    const indiceObservador = jogadorId === null ? null : this.indiceDe(jogadorId);
-    const observador = indiceObservador === null ? null : this.jogador(indiceObservador);
-    const rodadaEmJogo = this.fase === 'palpites' || this.fase === 'jogando';
+    // `indiceDe` recusa quem não está na partida antes de qualquer coisa ser montada.
+    const observadorId = jogadorId === null ? null : this.jogador(this.indiceDe(jogadorId)).id;
+    return projetarPara(this.retrato(), observadorId);
+  }
 
+  private retrato(): RetratoDaPartida {
+    const rodadaEmJogo = this.fase === 'palpites' || this.fase === 'jogando';
     return {
       configuracao: this.configuracao,
       fase: this.fase,
@@ -359,31 +324,20 @@ export class Partida {
       rodadaCega: this.rodadaCega,
       vira: this.vira,
       manilha: this.manilha,
+      valores: this.valores,
       jogadores: this.jogadores.map((jogador) => ({
-        id: jogador.id,
-        vidas: jogador.vidas,
-        eliminado: jogador.eliminado,
-        palpite: jogador.palpite,
-        vazasFeitas: jogador.vazasGanhas.length,
-        vazasGanhas: [...jogador.vazasGanhas],
-        cartasNaMao: jogador.mao.length,
-        cartaNaTesta: this.cartaNaTestaVistaPor(jogador, observador),
-        maoRevelada: this.maoReveladaPara(jogador, observador),
+        ...jogador,
         saiAoFimDaRodada: this.saidasPendentes.has(jogador.id),
       })),
       idDoPe: this.fase === 'encerrada' ? null : this.jogador(this.indiceDoPe).id,
       idDoPrimeiro: rodadaEmJogo ? this.jogador(this.proximoVivo(this.indiceDoPe)).id : null,
       idDaVez: this.idDaVez,
-      minhaMao: observador ? this.maoVistaPeloDono(observador) : [],
-      mesa: organizarMesa(this.mesa, this.manilha as Valor, this.valores),
+      mesa: this.mesa,
       ultimaVaza: this.ultimaVaza,
-      vazasEmpatadas: [...this.vazasEmpatadas],
-      palpiteProibido:
-        observador && indiceObservador === this.indiceDoPe && this.fase === 'palpites'
-          ? this.palpiteProibidoAtual()
-          : null,
+      vazasEmpatadas: this.vazasEmpatadas,
+      palpiteProibidoDoPe: this.palpiteProibidoAtual(),
       resultadoRodada: this.resultadoRodada,
-      vencedores: [...this.vencedores],
+      vencedores: this.vencedores,
     };
   }
 
@@ -541,37 +495,6 @@ export class Partida {
     return ehPe
       ? `Como pé, você não pode palpitar ${quantidade}: a soma dos palpites fecharia com o número de cartas.`
       : 'Palpite inválido.';
-  }
-
-  private cartaNaTestaVistaPor(
-    jogador: JogadorNaPartida,
-    observador: JogadorNaPartida | null,
-  ): Carta | null {
-    if (!this.rodadaCega || jogador === observador) return null;
-    return jogador.mao[0] ?? null;
-  }
-
-  /** Eliminado não joga mais: ver a mão alheia não lhe dá vantagem, só diverte quem assiste. */
-  private maoReveladaPara(
-    jogador: JogadorNaPartida,
-    observador: JogadorNaPartida | null,
-  ): Carta[] | null {
-    const podeVer = this.configuracao.mortosVeemCartas && !!observador?.eliminado;
-    if (!podeVer || jogador === observador) return null;
-    return this.ordenarDaMaisForte(jogador.mao);
-  }
-
-  private maoVistaPeloDono(dono: JogadorNaPartida): CartaNaMao[] {
-    if (this.rodadaCega) return dono.mao.map((carta) => ({ id: carta.id, oculta: true as const }));
-    return this.ordenarDaMaisForte(dono.mao);
-  }
-
-  /** Da mais forte para a mais fraca; empate de valor desempata pelo naipe. */
-  private ordenarDaMaisForte(mao: readonly Carta[]): Carta[] {
-    const forca = (carta: Carta) =>
-      forcaDaCarta(carta, this.manilha as Valor, this.valores) * NAIPES.length +
-      NAIPES.indexOf(carta.naipe);
-    return [...mao].sort((a, b) => forca(b) - forca(a));
   }
 
   private exigirVez(jogadorId: string): number {

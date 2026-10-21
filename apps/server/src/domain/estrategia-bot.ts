@@ -1,7 +1,7 @@
 import { NAIPES, ehCartaOculta, type Carta, type Jogada, type Valor } from '@fodinha/shared';
 import { valoresEmJogo } from './baralho';
 import { forcaDaCarta } from './forca';
-import type { VisaoDaPartida } from './partida';
+import type { VisaoDaPartida } from './projecao';
 import { resolverVaza } from './vaza';
 
 /**
