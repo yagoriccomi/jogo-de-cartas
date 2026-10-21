@@ -1,7 +1,13 @@
-import { expect, type Locator, type Page } from '@playwright/test';
+import { expect, type BrowserContext, type Locator, type Page } from '@playwright/test';
 
 /** Mesa cheia: 10 jogadores e 13 cartas na mão (o caso que mais aperta o layout). */
 export const MESA_CHEIA = { jogadores: 10, cartas: 13 } as const;
+/** A rodada cega acaba sozinha depois dos palpites: o caminho curto até o fim da rodada. */
+export const MESA_CHEIA_NA_CEGA = { jogadores: 10, cartas: 1 } as const;
+/** Rodada longa: 2 jogadores com 1 baralho chegam a 19 cartas (aperta a mão e o palpite). */
+export const RODADA_LONGA = { jogadores: 2, cartas: 19 } as const;
+/** Com 3 baralhos os 2 chegam a 59: a mão só cabe com fileiras cheias e mais juntas. */
+export const RODADA_MUITO_LONGA = { jogadores: 2, cartas: 59 } as const;
 
 /** Tolerância de arredondamento de subpixel nas medidas do navegador. */
 const FOLGA_PX = 1;
@@ -28,17 +34,20 @@ interface OpcoesDoCenario {
   readonly comResumoDasRegras?: boolean;
 }
 
+/** Como se o jogador já tivesse tocado "Não perguntar novamente": o resumo não abre. */
+export async function dispensarResumoDasRegras(alvo: Page | BrowserContext): Promise<void> {
+  await alvo.addInitScript(([chave, valor]) => localStorage.setItem(chave, valor), [
+    CHAVE_DO_RESUMO,
+    RESUMO_DISPENSADO,
+  ] as const);
+}
+
 /** Abre o cenário de teste de desenvolvimento: você + bots, já na rodada pedida. */
 export async function abrirCenario(
   page: Page,
   { jogadores, cartas, comResumoDasRegras = false }: OpcoesDoCenario = MESA_CHEIA,
 ): Promise<void> {
-  if (!comResumoDasRegras) {
-    await page.addInitScript(([chave, valor]) => localStorage.setItem(chave, valor), [
-      CHAVE_DO_RESUMO,
-      RESUMO_DISPENSADO,
-    ] as const);
-  }
+  if (!comResumoDasRegras) await dispensarResumoDasRegras(page);
   await page.goto(`/?cenario=${jogadores}x${cartas}`);
   await expect(page.locator('.mesa')).toBeVisible({ timeout: ESPERA_DA_MESA_MS });
 }

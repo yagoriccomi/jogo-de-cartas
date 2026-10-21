@@ -10,6 +10,10 @@ import {
   jogarAteAMesaTer,
   medir,
   MESA_CHEIA,
+  MESA_CHEIA_NA_CEGA,
+  palpitarQualquerCoisa,
+  RODADA_LONGA,
+  RODADA_MUITO_LONGA,
   telaDe,
 } from './apoio';
 
@@ -66,6 +70,21 @@ test.describe('Mesa cheia (10 jogadores, 13 cartas)', () => {
     await expect(resumo).toBeHidden();
   });
 
+  test('recarregar a página durante a leitura não deixa o resumo cobrindo a mesa', async ({
+    page,
+  }) => {
+    await abrirCenario(page, { ...MESA_CHEIA, comResumoDasRegras: true });
+    const resumo = page.getByRole('dialog', { name: 'Regras em 1 minuto' });
+    await expect(resumo.getByRole('status')).toContainText('esperando você', {
+      timeout: ESPERA_DA_MESA_MS,
+    });
+
+    // A leitura é 1 por partida: de volta à mesa, o servidor recusa a segunda e a mesa não pausa.
+    await page.reload();
+    await expect(page.locator('.mesa')).toBeVisible({ timeout: ESPERA_DA_MESA_MS });
+    await expect(resumo).toBeHidden();
+  });
+
   test('o botão de reações fica longe dos números do palpite', async ({ page }) => {
     await abrirCenario(page);
     await expect(page.locator('.palpite')).toBeVisible({ timeout: ESPERA_DA_MESA_MS });
@@ -78,6 +97,17 @@ test.describe('Mesa cheia (10 jogadores, 13 cartas)', () => {
         FOLGA_DO_BOTAO_DE_REACOES_PX,
       );
     }
+  });
+
+  test('o botão de reações não cobre o selo da manilha', async ({ page }) => {
+    await abrirCenario(page);
+    await expect(page.locator('.palpite')).toBeVisible({ timeout: ESPERA_DA_MESA_MS });
+    await palpitarQualquerCoisa(page);
+    await esperarAnimacoes(page);
+
+    const botao = await medir(page.locator('.reacoes__botao'));
+    const selo = await medir(page.locator('.feltro__manilha'));
+    expect(distancia(botao, selo)).toBeGreaterThan(0);
   });
 
   test('o palpite cabe no feltro sem rolar e com botões tocáveis', async ({ page }) => {
@@ -108,6 +138,74 @@ test.describe('Mesa cheia (10 jogadores, 13 cartas)', () => {
     expect(await confirmar.evaluate((b) => b.scrollWidth - b.clientWidth)).toBeLessThanOrEqual(1);
     // As vidas continuam visíveis durante o palpite (já ficaram cobertas por ele).
     await expect(page.locator('.minha__vidas')).toBeInViewport();
+  });
+
+  test('o botão do palpite não corta o texto, nem com o saldo comprido', async ({ page }) => {
+    await abrirCenario(page);
+    const painel = page.locator('.palpite');
+    await expect(painel).toBeVisible({ timeout: ESPERA_DA_MESA_MS });
+    await esperarAnimacoes(page);
+
+    // O saldo vem dos palpites sorteados dos bots: põe um dos mais compridos que a mesa cheia gera.
+    await page.locator('.palpite__saldo-parte').evaluateAll((partes) => {
+      const [pedido, resto] = partes;
+      if (pedido) pedido.textContent = 'Pediram 24 de 13 ·';
+      if (resto) resto.textContent = 'passou 11';
+    });
+    const confirmar = page.locator('.palpite__confirmar');
+    const conferir = async (estado: string) => {
+      const cortado = await confirmar.evaluate((b) => b.scrollWidth - b.clientWidth);
+      expect(cortado, `texto do botão vazando (${estado})`).toBeLessThanOrEqual(1);
+      const rolagem = await painel.evaluate((el) => el.scrollHeight - el.clientHeight);
+      expect(rolagem, `painel rolando (${estado})`).toBeLessThanOrEqual(1);
+    };
+    // "Toque num número" já vazou do botão no celular estreito.
+    await conferir('sem número');
+    await page.locator('.palpite__opcao:not([disabled])').first().click();
+    await expect(confirmar).toContainText('2×');
+    await conferir('com número');
+  });
+
+  test('o fim da rodada mostra os 10 jogadores e a contagem da próxima sem rolar', async ({
+    page,
+  }) => {
+    await abrirCenario(page, MESA_CHEIA_NA_CEGA);
+    await expect(page.locator('.palpite')).toBeVisible({ timeout: ESPERA_DA_MESA_MS });
+    await palpitarQualquerCoisa(page);
+    const folha = page.getByRole('dialog', { name: /fim da rodada/i });
+    await expect(folha.locator('.resultado tbody tr')).toHaveCount(MESA_CHEIA_NA_CEGA.jogadores, {
+      timeout: ESPERA_DA_MESA_MS,
+    });
+    // A barra da contagem anima o tempo todo: espera só a folha terminar de subir.
+    await expect.poll(() => folha.evaluate((el) => el.getAnimations().length)).toBe(0);
+
+    const tela = telaDe(page);
+    expect(contem(tela, await medir(folha))).toBe(true);
+    // No celular baixo a contagem já ficou escondida abaixo da tabela.
+    expect(contem(tela, await medir(folha.locator('.folha__proxima')))).toBe(true);
+    for (const rolavel of [folha, folha.locator('.folha__tabela')]) {
+      const rolagem = await rolavel.evaluate((el) => el.scrollHeight - el.clientHeight);
+      expect(rolagem).toBeLessThanOrEqual(1);
+    }
+  });
+
+  test('o toque duplo na mesa não marca texto nem dá zoom', async ({ page }) => {
+    await abrirCenario(page);
+    await expect(page.locator('.palpite')).toBeVisible({ timeout: ESPERA_DA_MESA_MS });
+
+    // Errar o alvo do gesto de confirmar (2 toques) marcava as palavras em volta.
+    await page.locator('.palpite__titulo').dblclick();
+    expect(await page.evaluate(() => getSelection()?.toString() ?? '')).toBe('');
+
+    // O Chromium do teste não dá zoom no toque duplo; o iPhone dá, a menos que a mesa peça
+    // "manipulation" (pinça e rolagem continuam).
+    for (const alvo of ['.palpite__opcao', '.mao .carta', '.reacoes__botao', '.feltro']) {
+      const gestos = await page
+        .locator(alvo)
+        .first()
+        .evaluate((el) => getComputedStyle(el).touchAction);
+      expect(gestos, alvo).toBe('manipulation');
+    }
   });
 
   test('as cartas jogadas ficam dentro do feltro', async ({ page }) => {
@@ -176,3 +274,34 @@ test.describe('Mesa cheia (10 jogadores, 13 cartas)', () => {
     expect(contem(telaDe(page), await medir(regras))).toBe(true);
   });
 });
+
+for (const rodada of [RODADA_LONGA, RODADA_MUITO_LONGA]) {
+  test.describe(`Rodada longa (2 jogadores, ${rodada.cartas} cartas)`, () => {
+    test('só a grade do palpite rola: título e Confirmar à vista', async ({ page }) => {
+      await abrirCenario(page, rodada);
+      const painel = page.locator('.palpite');
+      await expect(painel).toBeVisible({ timeout: ESPERA_DA_MESA_MS });
+      await esperarAnimacoes(page);
+      await esperarSemRolagem(page);
+
+      // Com 59 cartas a mão já empurrou o Confirmar para fora do painel.
+      const tela = telaDe(page);
+      expect(contem(tela, await medir(page.locator('.mao')))).toBe(true);
+      const rolagemInterna = await painel.evaluate((el) => el.scrollHeight - el.clientHeight);
+      expect(rolagemInterna, 'quem rola é a grade, não o painel').toBeLessThanOrEqual(1);
+      const caixaDoPainel = await medir(painel);
+      expect(contem(tela, caixaDoPainel)).toBe(true);
+      for (const parte of ['.palpite__titulo', '.palpite__rodape .botao']) {
+        expect(contem(caixaDoPainel, await medir(page.locator(parte))), parte).toBe(true);
+      }
+
+      // O último número alcançável rolando a grade, e a escolha chega ao Confirmar.
+      const ultima = page.locator('.palpite__opcao:not([disabled])').last();
+      await ultima.scrollIntoViewIfNeeded();
+      await ultima.click();
+      await expect(page.locator('.palpite__confirmar')).toContainText(
+        `Confirmar ${await ultima.textContent()}`,
+      );
+    });
+  });
+}

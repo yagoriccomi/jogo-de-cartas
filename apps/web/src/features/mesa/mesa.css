@@ -38,6 +38,16 @@ body:has(.mesa:not(.mesa--fim)) {
   min-width: 0;
 }
 
+/* Toque duplo é o gesto de confirmar (cartas, palpite, reações): sem isto o iPhone dava zoom nele e
+   errar o alvo marcava as palavras em volta. Pinça e rolagem continuam; o :where não vence nenhuma
+   regra própria (o guia das regras, por exemplo, só rola na vertical). */
+:where(.mesa, .mesa *) {
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
 .mesa__cega {
   margin-left: 8px;
 }
@@ -841,10 +851,18 @@ body:has(.mesa:not(.mesa--fim)) {
   font-size: 0.68rem;
 }
 
+/* Rodadas longas (19+ números) não cabem em feltro baixo: só a grade rola, e o título e o
+   Confirmar ficam sempre à vista. O mínimo garante uma fileira quando a lista "Mostrar mais" abre. */
 .palpite__grade {
   display: grid;
   grid-template-columns: repeat(var(--colunas, 4), minmax(0, 1fr));
   gap: 6px;
+  flex-shrink: 1;
+  min-height: 40px;
+  overflow-y: auto;
+  /* Respiro para o brilho do número escolhido não ser cortado pela rolagem; a margem devolve o espaço. */
+  padding: 4px 6px;
+  margin: -4px -6px;
 }
 
 .palpite__opcao {
@@ -880,6 +898,8 @@ body:has(.mesa:not(.mesa--fim)) {
 
 .palpite__rodape .botao {
   flex: 1;
+  /* Nunca mais estreito que o próprio texto: quem cede é o resumo, que quebra em duas linhas. */
+  min-width: min-content;
   min-height: 42px;
 }
 
@@ -914,15 +934,19 @@ body:has(.mesa:not(.mesa--fim)) {
   flex: 0 1 auto;
   flex-direction: column;
   align-items: flex-start;
-  min-width: 0;
+  min-width: min-content;
 }
 
 .palpite__resumo {
   margin: 0;
   font-size: 0.8rem;
   line-height: 1.2;
-  white-space: nowrap;
   color: var(--texto-suave);
+}
+
+/* Quebra só entre "Pediram 3 de 5 ·" e "sobram 2", nunca no meio de uma metade. */
+.palpite__saldo-parte {
+  white-space: nowrap;
 }
 
 .palpite__saldo {
@@ -948,13 +972,16 @@ body:has(.mesa:not(.mesa--fim)) {
   cursor: pointer;
 }
 
+/* O alvo cresce mais para cima (sobre o resumo) que para baixo: abaixo do link vem a borda do
+   painel, e o que passasse dela fazia o painel cheio rolar à toa. */
 .palpite__mais::after {
   content: '';
   position: absolute;
-  inset: calc((100% - var(--alvo-minimo)) / 2) -8px;
+  inset: auto -8px -6px;
+  height: var(--alvo-minimo);
 }
 
-/* Uma linha só ("Toque num número"): quebrado em três, o botão empurrava o painel a rolar. */
+/* "Confirmar N" numa linha só; o resto do texto pode quebrar. */
 .palpite__confirmar {
   display: flex;
   flex-direction: column;
@@ -964,6 +991,13 @@ body:has(.mesa:not(.mesa--fim)) {
   padding-inline: 10px;
   line-height: 1.1;
   white-space: nowrap;
+}
+
+/* "Toque num número" quebra em duas linhas equilibradas em vez de empurrar o resumo (ou vazar do
+   botão, como já fez em celular estreito). */
+.palpite__instrucao {
+  white-space: normal;
+  text-wrap: balance;
 }
 
 /* Pode quebrar em duas linhas: a largura da fonte muda de sistema para sistema (no Linux vazava). */
@@ -1329,6 +1363,11 @@ body:has(.mesa:not(.mesa--fim)) {
   color: var(--texto-suave);
 }
 
+.folha__tabela {
+  min-height: 0;
+  overflow-y: auto;
+}
+
 .resultado {
   width: 100%;
   border-collapse: collapse;
@@ -1343,8 +1382,11 @@ body:has(.mesa:not(.mesa--fim)) {
 }
 
 .resultado thead th {
+  position: sticky;
+  top: 0;
   padding-top: 0;
   padding-bottom: 8px;
+  background: var(--superficie);
   font-size: 0.68rem;
   font-weight: 400;
   letter-spacing: 1px;
@@ -1382,6 +1424,14 @@ body:has(.mesa:not(.mesa--fim)) {
 .resultado__ok {
   font-weight: 700;
   color: var(--ciano-claro);
+}
+
+/* Celular baixo: 10 jogadores cabem sem rolar a tabela. */
+@media (max-height: 700px) {
+  .resultado th,
+  .resultado td {
+    padding-block: 7px;
+  }
 }
 
 .folha__proxima {
@@ -2188,7 +2238,11 @@ body:has(.mesa:not(.mesa--fim)) {
     padding-block: 10px;
   }
 
+  /* O botão de reações pousa no canto de baixo do feltro: a coluna da vira sobe, encolhe e
+     deita o selo da manilha para terminar acima dele. */
   .feltro__esquerda {
+    --l-carta: clamp(36px, calc((100cqh - 160px) / 1.4), 56px);
+    align-self: flex-start;
     gap: 2px;
   }
 
@@ -2196,8 +2250,18 @@ body:has(.mesa:not(.mesa--fim)) {
     --l-baralho: 22px;
   }
 
+  .feltro__manilha {
+    flex-direction: row;
+    gap: 5px;
+    padding: 2px 7px;
+  }
+
+  .feltro__manilha-rotulo {
+    font-size: 0.5rem;
+  }
+
   .feltro__manilha-valor {
-    font-size: 1.88rem;
+    font-size: 1.5rem;
   }
 
   .palpite {

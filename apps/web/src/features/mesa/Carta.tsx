@@ -2,7 +2,7 @@ import type { MouseEvent } from 'react';
 import { ehCartaOculta, type CartaNaMao, type Naipe, type Valor } from '@fodinha/shared';
 import { classes } from '../../lib/classes';
 import type { EstiloComVariaveis } from '../../lib/estiloComVariaveis';
-import { caminhoDoNaipe, caminhoDoTexto } from './pixel';
+import { caminhoDoDesenho, caminhoDoNaipe, caminhoDoTexto } from './pixel';
 import './carta.css';
 
 export type EstadoCarta = 'normal' | 'selecionada' | 'apagada';
@@ -39,6 +39,21 @@ export function descreverCarta(carta: CartaNaMao | null, manilha: Valor | null):
 
 const VIEWBOX_VALOR = '0 0 11 7';
 const VIEWBOX_NAIPE = '0 0 9 9';
+
+// Estrela em pixel no verso: o "F" cursivo do logo, que estava ali, era lido como um 7 de longe.
+const DESENHO_DO_VERSO: readonly string[] = [
+  '....X....',
+  '...XXX...',
+  '...XXX...',
+  'XXXXXXXXX',
+  '.XXXXXXX.',
+  '..XXXXX..',
+  '..XXXXX..',
+  '.XX...XX.',
+  '.X.....X.',
+];
+const CAMINHO_DO_VERSO = caminhoDoDesenho(DESENHO_DO_VERSO);
+const VIEWBOX_VERSO = '0 0 9 9';
 
 interface Props {
   /** `null` ou carta oculta desenham o verso (carta virada). */
@@ -99,7 +114,9 @@ export function Carta({
     <span className="carta__face" aria-hidden="true">
       <span className="carta__neon" />
       <span className="carta__selo">
-        <span className="carta__letra">F</span>
+        <svg className="carta__emblema" viewBox={VIEWBOX_VERSO} shapeRendering="crispEdges">
+          <path fill="currentColor" d={CAMINHO_DO_VERSO} />
+        </svg>
       </span>
     </span>
   ) : (

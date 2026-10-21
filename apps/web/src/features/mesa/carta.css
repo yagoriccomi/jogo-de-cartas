@@ -147,7 +147,7 @@
   filter: saturate(0.4);
 }
 
-/* Verso: xadrez pixel rosa, moldura ciano neon e um "F" com brilho. */
+/* Verso: xadrez pixel rosa, moldura ciano neon e uma estrela pixel com brilho. */
 .carta--verso {
   background-color: var(--superficie);
   background-image: repeating-conic-gradient(rgb(255 42 138 / 0.5) 0 25%, transparent 0 50%);
@@ -184,21 +184,11 @@
   filter: drop-shadow(0 0 4px var(--rosa)) drop-shadow(0 0 8px var(--rosa));
 }
 
-.carta__letra {
-  /* O mesmo "F" cursivo em neon do logo Fodinha. */
-  font-family: var(--fonte-titulo);
-  font-size: 44cqw;
-  line-height: 1;
+.carta__emblema {
+  width: 36cqw;
+  height: 36cqw;
   color: #ffe3f1;
-  text-shadow:
-    0 0 1.5cqw var(--rosa),
-    0 0 4cqw var(--rosa),
-    0 0 9cqw var(--rosa);
-  /*
-   * Na Yellowtail o traço do "F" fica bem à direita da caixa da letra (medido: centro do traço
-   * 0,235em à direita do centro da caixa e 0,025em acima). Compensa para o traço ficar no centro.
-   */
-  transform: translate(-0.235em, 0.025em);
+  filter: drop-shadow(0 0 1.5cqw var(--rosa)) drop-shadow(0 0 4cqw var(--rosa));
 }
 
 @media (prefers-reduced-motion: reduce) {

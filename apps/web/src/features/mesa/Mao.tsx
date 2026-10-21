@@ -11,6 +11,7 @@ import { classes } from '../../lib/classes';
 import type { EstiloComVariaveis } from '../../lib/estiloComVariaveis';
 import { CONSULTA_COMPUTADOR, CONSULTA_TOQUE, useMediaQuery } from '../../lib/useMediaQuery';
 import { useDuploToque } from '../../lib/useDuploToque';
+import { useAlturaDaJanela } from '../../lib/useAlturaDaJanela';
 import { useLargura } from '../../lib/useLargura';
 import {
   MARCADORES,
@@ -23,6 +24,8 @@ import { calcularLeque } from './leque';
 import { animarDistribuicao } from './mao-animacoes';
 
 const JOGADORES_PADRAO_NA_MESA = 4;
+/** Fatia da tela que a mão pode ocupar: nas rodadas longas o resto fica para o feltro e o palpite. */
+const FRACAO_DA_TELA_PARA_A_MAO = 0.3;
 
 interface Props {
   /** Já chega ordenada do servidor (mais forte → mais fraca): nunca reordenar aqui. */
@@ -72,6 +75,7 @@ export function Mao({
   const toque = useMediaQuery(CONSULTA_TOQUE);
   const dicaDoGesto = useDicaDoGesto('carta');
   const [referencia, largura] = useLargura<HTMLDivElement>();
+  const alturaDaJanela = useAlturaDaJanela();
   const lequeRef = useRef<HTMLUListElement>(null);
   const itensRef = useRef(new Map<string, HTMLLIElement>());
   const [selecionadaId, definirSelecionadaId] = useState<string | null>(null);
@@ -99,9 +103,16 @@ export function Mao({
     }
   }
 
+  const alturaMaxima = alturaDaJanela > 0 ? alturaDaJanela * FRACAO_DA_TELA_PARA_A_MAO : undefined;
   const layout = useMemo(
-    () => calcularLeque({ quantidade: cartas.length, larguraDisponivel: largura, computador }),
-    [cartas.length, largura, computador],
+    () =>
+      calcularLeque({
+        quantidade: cartas.length,
+        larguraDisponivel: largura,
+        computador,
+        alturaMaxima,
+      }),
+    [cartas.length, largura, computador, alturaMaxima],
   );
 
   // Os efeitos de animação leem sempre o dado mais recente sem precisar re-executar.
