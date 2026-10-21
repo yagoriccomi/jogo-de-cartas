@@ -23,7 +23,7 @@ export function useTituloDaVez(souDaVez: boolean): void {
  * está com a vez para a vista, sem rolar a página.
  */
 export function useRolarAtePlacaDaVez(
-  faixa: RefObject<HTMLUListElement>,
+  faixa: RefObject<HTMLUListElement | null>,
   idDaVez: string | null,
 ): void {
   useEffect(() => {

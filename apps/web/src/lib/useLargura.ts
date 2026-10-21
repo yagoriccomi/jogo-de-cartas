@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState, type RefObject } from 'react';
 
 /** Mede a largura de um elemento e acompanha redimensionamentos (necessário para calcular o leque). */
-export function useLargura<T extends HTMLElement>(): [RefObject<T>, number] {
+export function useLargura<T extends HTMLElement>(): [RefObject<T | null>, number] {
   const referencia = useRef<T>(null);
   const [largura, definirLargura] = useState(0);
 

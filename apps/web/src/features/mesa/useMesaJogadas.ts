@@ -15,7 +15,7 @@ interface Entrada {
   readonly meuId: string | null;
   /** Rodada cega: a minha carta também sai virada, pois só é revelada na mesa. */
   readonly rodadaCega: boolean;
-  readonly raiz: RefObject<HTMLElement>;
+  readonly raiz: RefObject<HTMLElement | null>;
 }
 
 function assinaturaDe(cartas: readonly JogadaNaMesa[]): string {

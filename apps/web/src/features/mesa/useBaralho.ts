@@ -27,7 +27,7 @@ interface Entrada {
   readonly jogo: EstadoPartidaVisivel | null;
   readonly meuId: string | null;
   readonly recebidoEm: number;
-  readonly vira: RefObject<HTMLElement>;
+  readonly vira: RefObject<HTMLElement | null>;
 }
 
 interface Estado {
