@@ -38,6 +38,16 @@ body:has(.mesa:not(.mesa--fim)) {
   min-width: 0;
 }
 
+/* Toque duplo é o gesto de confirmar (cartas, palpite, reações): sem isto o iPhone dava zoom nele e
+   errar o alvo marcava as palavras em volta. Pinça e rolagem continuam; o :where não vence nenhuma
+   regra própria (o guia das regras, por exemplo, só rola na vertical). */
+:where(.mesa, .mesa *) {
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
 .mesa__cega {
   margin-left: 8px;
 }

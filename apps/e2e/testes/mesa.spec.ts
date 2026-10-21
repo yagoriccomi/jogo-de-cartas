@@ -138,6 +138,25 @@ test.describe('Mesa cheia (10 jogadores, 13 cartas)', () => {
     await expect(page.locator('.minha__vidas')).toBeInViewport();
   });
 
+  test('o toque duplo na mesa não marca texto nem dá zoom', async ({ page }) => {
+    await abrirCenario(page);
+    await expect(page.locator('.palpite')).toBeVisible({ timeout: ESPERA_DA_MESA_MS });
+
+    // Errar o alvo do gesto de confirmar (2 toques) marcava as palavras em volta.
+    await page.locator('.palpite__titulo').dblclick();
+    expect(await page.evaluate(() => getSelection()?.toString() ?? '')).toBe('');
+
+    // O Chromium do teste não dá zoom no toque duplo; o iPhone dá, a menos que a mesa peça
+    // "manipulation" (pinça e rolagem continuam).
+    for (const alvo of ['.palpite__opcao', '.mao .carta', '.reacoes__botao', '.feltro']) {
+      const gestos = await page
+        .locator(alvo)
+        .first()
+        .evaluate((el) => getComputedStyle(el).touchAction);
+      expect(gestos, alvo).toBe('manipulation');
+    }
+  });
+
   test('as cartas jogadas ficam dentro do feltro', async ({ page }) => {
     await abrirCenario(page);
     await jogarAteAMesaTer(page, CARTAS_NA_MESA_PARA_MEDIR);
