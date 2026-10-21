@@ -206,7 +206,7 @@ Com o servidor de desenvolvimento (`CENARIOS_DE_TESTE=true`, já ligado no Docke
 ## Testes e qualidade
 
 ```bash
-npm test            # testes (Vitest)
+npm test            # testes de unidade (Vitest): regras do servidor e cálculos puros do web
 npm run typecheck   # checagem de tipos
 npm run lint        # ESLint
 npm run build       # build de todos os pacotes
