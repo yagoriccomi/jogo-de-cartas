@@ -12,6 +12,7 @@ import {
   MESA_CHEIA,
   palpitarQualquerCoisa,
   RODADA_LONGA,
+  RODADA_MUITO_LONGA,
   telaDe,
 } from './apoio';
 
@@ -250,28 +251,33 @@ test.describe('Mesa cheia (10 jogadores, 13 cartas)', () => {
   });
 });
 
-test.describe('Rodada longa (2 jogadores, 19 cartas)', () => {
-  test('só a grade do palpite rola: título e Confirmar à vista', async ({ page }) => {
-    await abrirCenario(page, RODADA_LONGA);
-    const painel = page.locator('.palpite');
-    await expect(painel).toBeVisible({ timeout: ESPERA_DA_MESA_MS });
-    await esperarAnimacoes(page);
-    await esperarSemRolagem(page);
+for (const rodada of [RODADA_LONGA, RODADA_MUITO_LONGA]) {
+  test.describe(`Rodada longa (2 jogadores, ${rodada.cartas} cartas)`, () => {
+    test('só a grade do palpite rola: título e Confirmar à vista', async ({ page }) => {
+      await abrirCenario(page, rodada);
+      const painel = page.locator('.palpite');
+      await expect(painel).toBeVisible({ timeout: ESPERA_DA_MESA_MS });
+      await esperarAnimacoes(page);
+      await esperarSemRolagem(page);
 
-    const rolagemInterna = await painel.evaluate((el) => el.scrollHeight - el.clientHeight);
-    expect(rolagemInterna, 'quem rola é a grade, não o painel').toBeLessThanOrEqual(1);
-    const caixaDoPainel = await medir(painel);
-    expect(contem(telaDe(page), caixaDoPainel)).toBe(true);
-    for (const parte of ['.palpite__titulo', '.palpite__rodape .botao']) {
-      expect(contem(caixaDoPainel, await medir(page.locator(parte))), parte).toBe(true);
-    }
+      // Com 59 cartas a mão já empurrou o Confirmar para fora do painel.
+      const tela = telaDe(page);
+      expect(contem(tela, await medir(page.locator('.mao')))).toBe(true);
+      const rolagemInterna = await painel.evaluate((el) => el.scrollHeight - el.clientHeight);
+      expect(rolagemInterna, 'quem rola é a grade, não o painel').toBeLessThanOrEqual(1);
+      const caixaDoPainel = await medir(painel);
+      expect(contem(tela, caixaDoPainel)).toBe(true);
+      for (const parte of ['.palpite__titulo', '.palpite__rodape .botao']) {
+        expect(contem(caixaDoPainel, await medir(page.locator(parte))), parte).toBe(true);
+      }
 
-    // O último número alcançável rolando a grade, e a escolha chega ao Confirmar.
-    const ultima = page.locator('.palpite__opcao:not([disabled])').last();
-    await ultima.scrollIntoViewIfNeeded();
-    await ultima.click();
-    await expect(page.locator('.palpite__confirmar')).toContainText(
-      `Confirmar ${await ultima.textContent()}`,
-    );
+      // O último número alcançável rolando a grade, e a escolha chega ao Confirmar.
+      const ultima = page.locator('.palpite__opcao:not([disabled])').last();
+      await ultima.scrollIntoViewIfNeeded();
+      await ultima.click();
+      await expect(page.locator('.palpite__confirmar')).toContainText(
+        `Confirmar ${await ultima.textContent()}`,
+      );
+    });
   });
-});
+}

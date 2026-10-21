@@ -6,6 +6,8 @@ const MARGEM_TOPO = 30;
 const MARGEM_BASE = 26;
 /** Fração da altura da carta entre uma fileira e a seguinte (deixa valor e naipe visíveis). */
 const DESLOCAMENTO_ENTRE_FILEIRAS = 0.72;
+/** O mais perto que as fileiras chegam nas rodadas longas: o valor (e o naipe pequeno) à vista. */
+const DESLOCAMENTO_MINIMO_ENTRE_FILEIRAS = 0.5;
 /** Inclinação máxima das pontas do leque. */
 const ANGULO_MAXIMO_NAS_PONTAS = 13;
 /** Quanto o arco pode afundar nas pontas, em px. */
@@ -17,6 +19,9 @@ const LARGURA_PADRAO = 360;
 /** Menor carta ainda legível quando a mão encolhe para caber na altura. */
 const LARGURA_MINIMA_NO_COMPUTADOR = 64;
 const LARGURA_MINIMA_NO_CELULAR = 52;
+/** Só nas rodadas muito longas, já com as fileiras cheias e juntas: o valor ainda se lê. */
+const LARGURA_COMPACTA_NO_COMPUTADOR = 56;
+const LARGURA_COMPACTA_NO_CELULAR = 44;
 const PASSO_DE_ENCOLHIMENTO = 2;
 
 interface Perfil {
@@ -128,23 +133,79 @@ export function calcularLeque({
     computador ? LARGURA_MINIMA_NO_COMPUTADOR : LARGURA_MINIMA_NO_CELULAR,
   );
 
-  let layout = montarLeque(quantidade, disponivel, perfil);
+  const confortavel = encolherAteCaber(perfil, larguraMinima, alturaMaxima, (menor) =>
+    montarLeque(quantidade, disponivel, menor),
+  );
+  if (confortavel.layout.alturaTotal <= alturaMaxima) return confortavel.layout;
+
+  // Nem a menor carta coube: cada fileira leva tantas quantas o passo mínimo deixa, as fileiras
+  // se aproximam e, se ainda faltar, a carta encolhe mais um pouco. Sem isso, com 39 cartas ou
+  // mais, a mão empurrava o Confirmar para fora da tela.
+  const larguraCompacta = Math.min(
+    confortavel.perfil.larguraCarta,
+    computador ? LARGURA_COMPACTA_NO_COMPUTADOR : LARGURA_COMPACTA_NO_CELULAR,
+  );
+  const cheio = { ...confortavel.perfil, porFileiraPreferido: quantidade };
+  return encolherAteCaber(cheio, larguraCompacta, alturaMaxima, (menor) =>
+    aproximarFileiras({ quantidade, disponivel, perfil: menor, alturaMaxima }),
+  ).layout;
+}
+
+interface Encolhimento {
+  readonly perfil: Perfil;
+  readonly layout: LayoutDoLeque;
+}
+
+/** Encolhe a carta de pouco em pouco até o leque caber na altura ou chegar à largura mínima. */
+function encolherAteCaber(
+  perfil: Perfil,
+  larguraMinima: number,
+  alturaMaxima: number,
+  montar: (perfil: Perfil) => LayoutDoLeque,
+): Encolhimento {
+  let atual: Encolhimento = { perfil, layout: montar(perfil) };
   for (
     let largura = perfil.larguraCarta - PASSO_DE_ENCOLHIMENTO;
-    layout.alturaTotal > alturaMaxima && largura >= larguraMinima;
+    atual.layout.alturaTotal > alturaMaxima && largura >= larguraMinima;
     largura -= PASSO_DE_ENCOLHIMENTO
   ) {
     const escala = largura / perfil.larguraCarta;
-    layout = montarLeque(quantidade, disponivel, {
-      ...perfil,
-      larguraCarta: largura,
-      passoMaximo: perfil.passoMaximo * escala,
-    });
+    const menor = { ...perfil, larguraCarta: largura, passoMaximo: perfil.passoMaximo * escala };
+    atual = { perfil: menor, layout: montar(menor) };
   }
-  return layout;
+  return atual;
 }
 
-function montarLeque(quantidade: number, disponivel: number, perfil: Perfil): LayoutDoLeque {
+interface Aproximacao {
+  readonly quantidade: number;
+  readonly disponivel: number;
+  readonly perfil: Perfil;
+  readonly alturaMaxima: number;
+}
+
+/** Aproxima as fileiras o bastante para caber na altura, sem passar do mínimo legível. */
+function aproximarFileiras({
+  quantidade,
+  disponivel,
+  perfil,
+  alturaMaxima,
+}: Aproximacao): LayoutDoLeque {
+  const layout = montarLeque(quantidade, disponivel, perfil);
+  if (layout.fileiras < 2 || layout.alturaTotal <= alturaMaxima) return layout;
+  const sobraParaAsFileiras = alturaMaxima - MARGEM_TOPO - layout.alturaCarta - MARGEM_BASE;
+  const fracao = Math.max(
+    DESLOCAMENTO_MINIMO_ENTRE_FILEIRAS,
+    sobraParaAsFileiras / ((layout.fileiras - 1) * layout.alturaCarta),
+  );
+  return montarLeque(quantidade, disponivel, perfil, fracao);
+}
+
+function montarLeque(
+  quantidade: number,
+  disponivel: number,
+  perfil: Perfil,
+  fracaoEntreFileiras = DESLOCAMENTO_ENTRE_FILEIRAS,
+): LayoutDoLeque {
   const { larguraCarta, passoMinimo, passoMaximo } = perfil;
   const alturaCarta = Math.round(larguraCarta * PROPORCAO_ALTURA);
 
@@ -159,7 +220,7 @@ function montarLeque(quantidade: number, disponivel: number, perfil: Perfil): La
   const passo =
     porFileira > 1 ? Math.min(passoMaximo, (disponivel - larguraCarta) / (porFileira - 1)) : 0;
   const larguraTotal = porFileira > 1 ? (porFileira - 1) * passo + larguraCarta : larguraCarta;
-  const deslocamentoEntreFileiras = Math.round(alturaCarta * DESLOCAMENTO_ENTRE_FILEIRAS);
+  const deslocamentoEntreFileiras = Math.floor(alturaCarta * fracaoEntreFileiras);
 
   const posicoes: PosicaoNoLeque[] = [];
   for (let indice = 0; indice < quantidade; indice += 1) {

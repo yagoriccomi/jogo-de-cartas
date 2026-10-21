@@ -4,6 +4,8 @@ import { expect, type Locator, type Page } from '@playwright/test';
 export const MESA_CHEIA = { jogadores: 10, cartas: 13 } as const;
 /** Rodada longa: 2 jogadores com 1 baralho chegam a 19 cartas (aperta a mão e o palpite). */
 export const RODADA_LONGA = { jogadores: 2, cartas: 19 } as const;
+/** Com 3 baralhos os 2 chegam a 59: a mão só cabe com fileiras cheias e mais juntas. */
+export const RODADA_MUITO_LONGA = { jogadores: 2, cartas: 59 } as const;
 
 /** Tolerância de arredondamento de subpixel nas medidas do navegador. */
 const FOLGA_PX = 1;
