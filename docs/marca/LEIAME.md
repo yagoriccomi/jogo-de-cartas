@@ -1,6 +1,7 @@
 # Marca do Fodinha
 
-O logo é o "F" cursivo neon do título (fonte Yellowtail), o mesmo do verso das cartas. O F está
+O logo é o "F" cursivo neon do título (fonte Yellowtail). O verso das cartas leva uma estrela em
+pixel, não o F: pequeno, ele era lido como um 7. O F está
 convertido em contorno vetorial (não depende da fonte instalada) e centralizado pela caixa real do traço.
 
 | Arquivo                | Uso                                                           |
