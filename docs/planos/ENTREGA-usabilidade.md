@@ -6,7 +6,7 @@
 | Modo   | Loop (sem confirmação do plano)                                                                |
 | Data   | 2026-10-20                                                                                     |
 | Branch | `feature/feedback-jogadores`: `99f7ef7`, `8b3e06d`, `df06b53`, `e7918a0`, `7732b19`, `6b0dda2` |
-| Status | Entregue; o teste com jogadores reais fica para depois                                         |
+| Status | Entregue e testado com jogadores reais                                                         |
 
 ## O que mudou
 
@@ -63,5 +63,5 @@ No navegador (dev): `http://localhost:5173/?cenario=10x13` em 360×640, 375×812
 
 ## Pendências
 
-- Teste com jogadores reais (plano no fim do handoff): fica para depois.
+- Teste com jogadores reais: feito pelo dono do produto depois da entrega, sem ajustes pedidos.
 - O aviso "Jogador noob lendo as regras!" visto pelos outros só é coberto pelo teste de integração (dois clientes); não há teste de tela com dois navegadores.
