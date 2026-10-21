@@ -1,0 +1,121 @@
+/* ---------- Celular (< 900px) ---------- */
+
+@media (max-width: 899px) {
+  /* Feltro ocupa o espaço entre as placas e a minha área; o conteúdo fica centrado nele. */
+  .mesa {
+    gap: 8px;
+    /* Espaço da alça do topo recolhido. */
+    padding-top: 18px;
+    padding-bottom: 10px;
+  }
+
+  .feltro {
+    flex: 1;
+    min-height: 0;
+    gap: 10px;
+    padding: 14px 16px;
+    border-radius: 36px;
+  }
+
+  .feltro__esquerda {
+    --l-carta: clamp(40px, calc((100cqh - 135px) / 1.4), 56px);
+    gap: 6px;
+  }
+
+  /* No celular o monte de empates vira só contador: o espaço do feltro vai para a mesa. */
+  .feltro__esquerda:has(.empates) {
+    --l-carta: clamp(36px, calc((100cqh - 175px) / 1.4), 56px);
+  }
+
+  .empates__monte {
+    display: none;
+  }
+
+  .feltro__manilha-valor {
+    font-size: 2.38rem;
+  }
+
+  .feltro__rotulo {
+    font-size: 0.7rem;
+  }
+
+  /* Valor menor nas cartas da mesa: com 55% à mostra, até o "10" cabe no canto. */
+  .mesa-linha__carta .carta__face {
+    --u: 5.5cqw;
+  }
+
+  /* Placas estreitas, rolagem escondida e esmaecida na borda: convite a arrastar. */
+  .adversarios {
+    padding-right: 40px;
+    scrollbar-width: none;
+    mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+  }
+
+  .adversarios::-webkit-scrollbar {
+    display: none;
+  }
+
+  .placa {
+    flex-basis: 128px;
+    padding: 5px 8px;
+  }
+
+  /* Nomes de bot com nome e sobrenome ("Toko Kunavara") precisam caber inteiros. */
+  .placa__nome {
+    font-size: 0.8rem;
+  }
+
+  .placa--com-testa {
+    flex-basis: 150px;
+  }
+
+  /* Nome na primeira linha (com folga para os símbolos); placar e testa abaixo. */
+  .placa:has(.simbolos--placa) .placa__linha {
+    padding-top: 0;
+  }
+
+  .placa__linha {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+
+  .placa__texto {
+    flex: 1 1 100%;
+  }
+
+  .placa:has(.simbolos--placa) .placa__nome {
+    padding-right: 24px;
+  }
+
+  .placa:has(.simbolo--mao):has(.simbolo--pe) .placa__nome {
+    padding-right: 46px;
+  }
+
+  /* Com até 10 vidas, os corações encolheriam a 5px ao lado do aviso da vez: no celular quebram
+     em duas fileiras de 5, sem encolher. */
+  /* Linhas iguais (ver colunasDosCoracoes): a altura da minha área não varia com a mão. */
+  .minha__vidas {
+    --l-coracao: 12px;
+    display: grid;
+    grid-template-columns: repeat(var(--colunas-coracoes, 5), var(--l-coracao));
+    gap: 2px;
+    width: auto;
+  }
+
+  .simbolos--placa {
+    top: 4px;
+    right: 5px;
+    gap: 3px;
+  }
+
+  .simbolos--placa .simbolo {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+  }
+
+  .simbolos--placa .simbolo svg {
+    width: 11px;
+    height: 11px;
+  }
+}

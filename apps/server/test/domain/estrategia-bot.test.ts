@@ -1,7 +1,7 @@
 import { CONFIGURACAO_PADRAO, type Carta, type Naipe, type Valor } from '@fodinha/shared';
 import { describe, expect, it } from 'vitest';
 import { EstrategiaSimples } from '../../src/domain/estrategia-bot';
-import type { JogadorNaVisao, VisaoDaPartida } from '../../src/domain/partida';
+import type { JogadorNaVisao, VisaoDaPartida } from '../../src/domain/projecao';
 
 const estrategia = new EstrategiaSimples();
 

@@ -44,7 +44,7 @@ export interface AnimacaoDeVaza {
   readonly vaza: VazaResolvida | null;
   readonly voando: boolean;
   /** Contêiner das duas linhas, que contém os elementos `[data-carta-mesa]` a animar. */
-  readonly raiz: RefObject<HTMLDivElement>;
+  readonly raiz: RefObject<HTMLDivElement | null>;
 }
 
 function chaveDaVaza(vaza: VazaResolvida | null): string | null {

@@ -10,7 +10,7 @@ interface Props {
   readonly manilha: Valor | null;
   readonly nomeDe: (jogadorId: string) => string;
   readonly voando: boolean;
-  readonly raiz: RefObject<HTMLDivElement>;
+  readonly raiz: RefObject<HTMLDivElement | null>;
 }
 
 interface LinhaProps {

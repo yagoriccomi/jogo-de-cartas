@@ -1,0 +1,128 @@
+/* ---------- Pausa (votação) ---------- */
+
+.pausa__cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pausa__ponto {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--rosa);
+  box-shadow: 0 0 10px var(--rosa);
+  animation: pulsar 1.2s ease-in-out infinite;
+}
+
+.votacao {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.votacao + .votacao {
+  padding-top: 16px;
+  border-top: 1px solid var(--linha);
+}
+
+.votacao__situacao {
+  color: var(--texto-suave);
+}
+
+.votacao__situacao strong {
+  color: #fff;
+}
+
+.votacao__pergunta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--superficie-funda);
+}
+
+.votacao__titulo {
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.votacao__botoes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.votacao__botoes .botao {
+  min-height: 52px;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.votacao__botoes:has(.votacao--escolhido) .botao:not(.votacao--escolhido) {
+  opacity: 0.6;
+}
+
+.votacao__sim.votacao--escolhido {
+  background: var(--ciano);
+  color: var(--fundo);
+  box-shadow:
+    0 0 0 3px var(--texto),
+    0 0 16px rgb(45 226 230 / 0.7);
+}
+
+.votacao__nao.votacao--escolhido {
+  background: var(--rosa-forte);
+  color: #fff;
+  box-shadow:
+    0 0 0 3px var(--texto),
+    var(--brilho-rosa);
+}
+
+.votacao__espera {
+  color: var(--ciano-palido);
+}
+
+.votacao__votos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.votacao__votos li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 3px 0;
+}
+
+.voto {
+  font-weight: 700;
+}
+
+.voto--aguardando {
+  font-weight: 400;
+  color: var(--texto-suave);
+}
+
+.voto--sim {
+  color: var(--ciano-claro);
+}
+
+.voto--nao {
+  color: var(--rosa-claro);
+}
+
+.votacao__regra {
+  padding-top: 12px;
+  border-top: 1px solid var(--linha-suave);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--texto-suave);
+}
+
+.votacao__regra strong {
+  color: #fff;
+}

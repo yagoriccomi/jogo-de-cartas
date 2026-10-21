@@ -1,0 +1,18 @@
+/* ---------- Dica do gesto (primeiro uso de cada seletor, uma vez por aparelho) ---------- */
+
+.dica-do-gesto {
+  color: var(--ciano);
+  font-weight: 700;
+  text-shadow: 0 0 8px rgb(45 226 230 / 0.55);
+}
+
+.dica-do-gesto__rotulo {
+  margin-right: 6px;
+  padding: 0 5px;
+  border-radius: 6px;
+  background: var(--ciano);
+  color: var(--fundo);
+  font-size: 0.85em;
+  text-transform: uppercase;
+  text-shadow: none;
+}

@@ -1,0 +1,138 @@
+/* ---------- Resultado (folha) ---------- */
+
+.folha__alca {
+  align-self: center;
+  width: 44px;
+  height: 5px;
+  margin-top: -6px;
+  border-radius: 999px;
+  background: var(--bloqueado-borda);
+}
+
+.folha__cabecalho {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.folha__titulo {
+  font-size: 2.2rem;
+}
+
+.folha__cartas {
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+
+.folha__tabela {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.resultado {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.resultado th,
+.resultado td {
+  padding: 11px 4px;
+  border-bottom: 1px solid var(--linha-suave);
+  text-align: center;
+  font-size: 1rem;
+}
+
+.resultado thead th {
+  position: sticky;
+  top: 0;
+  padding-top: 0;
+  padding-bottom: 8px;
+  background: var(--superficie);
+  font-size: 0.68rem;
+  font-weight: 400;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--ciano-palido);
+}
+
+.resultado tbody th {
+  text-align: left;
+  font-weight: 700;
+}
+
+.resultado thead th:first-child {
+  text-align: left;
+}
+
+.resultado th:last-child,
+.resultado td:last-child {
+  text-align: right;
+}
+
+.resultado tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.resultado__eu th {
+  color: var(--ciano-branco);
+}
+
+.resultado__perdeu {
+  font-weight: 700;
+  color: var(--rosa-claro);
+}
+
+.resultado__ok {
+  font-weight: 700;
+  color: var(--ciano-claro);
+}
+
+/* Celular baixo: 10 jogadores cabem sem rolar a tabela. */
+@media (max-height: 700px) {
+  .resultado th,
+  .resultado td {
+    padding-block: 7px;
+  }
+}
+
+.folha__proxima {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--superficie-funda);
+}
+
+.folha__proxima-texto {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+
+.folha__segundos {
+  color: var(--ciano-palido);
+}
+
+.barra-progresso {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--linha-suave);
+  overflow: hidden;
+}
+
+.barra-progresso__preenchido {
+  width: var(--progresso, 0%);
+  height: 100%;
+  background: var(--ciano);
+  box-shadow: 0 0 10px var(--ciano);
+  transition: width 0.1s linear;
+}
+
+@media (min-width: 900px) {
+  .folha__alca {
+    display: none;
+  }
+}

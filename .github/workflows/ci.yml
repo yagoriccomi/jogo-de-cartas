@@ -23,6 +23,10 @@ jobs:
       - name: Instalar dependências
         run: npm ci
 
+      - name: Auditoria de dependências
+        # Só alta/crítica barra o CI: as baixas viram PR do Dependabot sem travar o fluxo.
+        run: npm audit --audit-level=high
+
       - name: Lint
         run: npm run lint
 

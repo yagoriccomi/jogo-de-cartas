@@ -11,6 +11,19 @@ import type { Server, Socket } from 'socket.io';
 import type { Notificador, Registrador } from '../../application/portas';
 import type { Ator, ServicoDeSalas } from '../../application/servico-de-salas';
 import { ErroDeRegra } from '../../domain/erros';
+import {
+  lerCarta,
+  lerCenario,
+  lerConfiguracao,
+  lerCriacao,
+  lerEntrada,
+  lerExpulsao,
+  lerMortosVeemCartas,
+  lerPalpite,
+  lerReacao,
+  lerReconexao,
+  lerVoto,
+} from './entradas';
 import { LimitadorDeEventos } from './limitador';
 
 interface DadosDoSocket {
@@ -72,7 +85,7 @@ export class GatewayDoJogo {
   private registrarEventos(socket: SocketDoJogo): void {
     socket.on('sala:criar', (dados, responder) =>
       this.responder(socket, responder, () =>
-        this.entrarComSessao(socket, this.servico.criarSala(objeto(dados))),
+        this.entrarComSessao(socket, this.servico.criarSala(lerCriacao(dados))),
       ),
     );
     socket.on('dev:cenario', (dados, responder) =>
@@ -80,27 +93,27 @@ export class GatewayDoJogo {
         if (!this.cenariosDeTeste) {
           throw new ErroDeRegra('SEM_PERMISSAO', 'Cenários de teste desativados neste servidor.');
         }
-        return this.entrarComSessao(socket, this.servico.criarCenario(objeto(dados)));
+        return this.entrarComSessao(socket, this.servico.criarCenario(lerCenario(dados)));
       }),
     );
     socket.on('sala:entrar', (dados, responder) =>
       this.responder(socket, responder, () =>
-        this.entrarComSessao(socket, this.servico.entrarSala(objeto(dados))),
+        this.entrarComSessao(socket, this.servico.entrarSala(lerEntrada(dados))),
       ),
     );
     socket.on('sala:reconectar', (dados, responder) =>
       this.responder(socket, responder, () =>
-        this.entrarComSessao(socket, this.servico.reconectar(objeto(dados))),
+        this.entrarComSessao(socket, this.servico.reconectar(lerReconexao(dados))),
       ),
     );
     socket.on('sala:configurar', (dados, responder) =>
       this.responder(socket, responder, () =>
-        nulo(this.servico.configurar(this.ator(socket), objeto(dados).configuracao)),
+        nulo(this.servico.configurar(this.ator(socket), lerConfiguracao(dados))),
       ),
     );
     socket.on('sala:definirMortosVeemCartas', (dados, responder) =>
       this.responder(socket, responder, () =>
-        nulo(this.servico.definirMortosVeemCartas(this.ator(socket), objeto(dados).permitir)),
+        nulo(this.servico.definirMortosVeemCartas(this.ator(socket), lerMortosVeemCartas(dados))),
       ),
     );
     socket.on('sala:adicionarBot', (responder) =>
@@ -108,7 +121,7 @@ export class GatewayDoJogo {
     );
     socket.on('sala:expulsar', (dados, responder) =>
       this.responder(socket, responder, () => {
-        const expulsao = this.servico.expulsar(this.ator(socket), objeto(dados).participanteId);
+        const expulsao = this.servico.expulsar(this.ator(socket), lerExpulsao(dados));
         if (expulsao.eraHumano) this.retirarExpulso(expulsao.expulsoId);
         return null;
       }),
@@ -135,7 +148,7 @@ export class GatewayDoJogo {
     );
     socket.on('jogo:votarEspera', (dados, responder) =>
       this.responder(socket, responder, () =>
-        nulo(this.servico.votarEspera(this.ator(socket), objeto(dados))),
+        nulo(this.servico.votarEspera(this.ator(socket), lerVoto(dados))),
       ),
     );
     socket.on('sala:sair', (responder) =>
@@ -147,17 +160,17 @@ export class GatewayDoJogo {
     );
     socket.on('jogo:palpitar', (dados, responder) =>
       this.responder(socket, responder, () =>
-        nulo(this.servico.palpitar(this.ator(socket), objeto(dados).quantidade)),
+        nulo(this.servico.palpitar(this.ator(socket), lerPalpite(dados))),
       ),
     );
     socket.on('jogo:jogarCarta', (dados, responder) =>
       this.responder(socket, responder, () =>
-        nulo(this.servico.jogarCarta(this.ator(socket), objeto(dados).cartaId)),
+        nulo(this.servico.jogarCarta(this.ator(socket), lerCarta(dados))),
       ),
     );
     socket.on('jogo:reagir', (dados, responder) =>
       this.responder(socket, responder, () =>
-        nulo(this.servico.reagir(this.ator(socket), objeto(dados).reacao)),
+        nulo(this.servico.reagir(this.ator(socket), lerReacao(dados))),
       ),
     );
     socket.on('disconnect', () => {
@@ -240,13 +253,6 @@ export class GatewayDoJogo {
     if (!ator) throw new ErroDeRegra('SEM_PERMISSAO', 'Entre em uma sala primeiro.');
     return ator;
   }
-}
-
-function objeto(dados: unknown): Record<string, unknown> {
-  if (typeof dados !== 'object' || dados === null) {
-    throw new ErroDeRegra('ENTRADA_INVALIDA', 'Dados da requisição inválidos.');
-  }
-  return dados as Record<string, unknown>;
 }
 
 function nulo(_: void): null {

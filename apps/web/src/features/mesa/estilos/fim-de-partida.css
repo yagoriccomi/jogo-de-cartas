@@ -1,0 +1,155 @@
+/* ---------- Fim de partida ---------- */
+
+.mesa--fim {
+  max-width: 560px;
+}
+
+.fim {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 22px 20px 0;
+  overflow: clip;
+}
+
+/* O vencedor é o protagonista: troféu, nome grande em neon e confete caindo atrás. */
+.fim__destaque {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.fim__trofeu {
+  width: 88px;
+  height: 88px;
+  filter: drop-shadow(0 0 14px rgb(255 214 90 / 0.6));
+  animation: trofeu-entra 0.7s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+@keyframes trofeu-entra {
+  from {
+    opacity: 0;
+    transform: translateY(-24px) scale(0.5) rotate(-12deg);
+  }
+}
+
+.fim__vencedor {
+  max-width: 100%;
+  font-size: clamp(2.6rem, 11vw, 3.6rem);
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+  animation: vencedor-entra 0.6s 0.25s ease-out both;
+}
+
+@keyframes vencedor-entra {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+}
+
+.fim__texto {
+  color: var(--texto-suave);
+}
+
+.confete {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.confete__pedaco {
+  position: absolute;
+  top: -12px;
+  left: var(--coluna);
+  width: 8px;
+  height: 12px;
+  background: var(--cor);
+  opacity: 0;
+  animation: confete-cai 3.2s var(--atraso) linear infinite;
+}
+
+@keyframes confete-cai {
+  0% {
+    opacity: 1;
+    transform: translateY(0) rotate(0);
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(420px) rotate(calc(var(--giro) * 540deg));
+  }
+}
+
+.fim__placar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fim__placar li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: var(--superficie-funda);
+}
+
+.fim__placar .fim__linha--vencedor {
+  border-color: var(--dourado);
+  box-shadow: 0 0 12px rgb(255 214 90 / 0.35);
+  font-weight: 700;
+}
+
+.fim__posicao {
+  min-width: 2ch;
+  font-family: var(--fonte-numeros);
+  font-size: 1.2rem;
+  color: var(--texto-suave);
+}
+
+.fim__nome {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fim__vidas {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+}
+
+/* Ações presas no rodapé: com 10 jogadores a lista passa da dobra do celular. */
+.fim__acoes {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 -20px;
+  padding: 14px 20px 18px;
+  background: linear-gradient(to bottom, transparent, var(--superficie) 22%);
+}
+
+.fim__acoes-secundarias {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}

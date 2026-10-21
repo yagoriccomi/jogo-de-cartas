@@ -1,0 +1,118 @@
+/* ---------- Placar (diálogo) ---------- */
+
+.botao--consulta {
+  color: var(--ciano-branco);
+}
+
+.placar__rodada {
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+
+.placar__rodada strong {
+  color: #fff;
+}
+
+.placar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+}
+
+.placar__linha {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: var(--superficie-funda);
+}
+
+.placar__linha--eu {
+  border-color: var(--ciano);
+}
+
+.placar__linha--vez {
+  border-color: var(--rosa);
+  box-shadow: 0 0 12px rgb(255 42 138 / 0.45);
+}
+
+.placar__linha--eliminado {
+  opacity: 0.5;
+}
+
+.placar__posicao {
+  flex: none;
+  width: 18px;
+  font-family: var(--fonte-numeros);
+  font-weight: 700;
+  color: var(--texto-fraco);
+  text-align: center;
+}
+
+.placar__quem {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.placar__nome {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-weight: 700;
+}
+
+.placar__apelido {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.placar__nome .selo {
+  padding: 0 6px;
+  font-size: 0.62rem;
+}
+
+/* No placar os símbolos de mão/pé seguem o nome, em vez de ficarem no canto. */
+.simbolos--placar {
+  position: static;
+}
+
+.simbolos--placar .simbolo {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+}
+
+.simbolos--placar .simbolo svg {
+  width: 11px;
+  height: 11px;
+}
+
+.placar__vidas .coracoes {
+  --l-coracao: 12px;
+}
+
+.placar__vidas {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.placar__vidas-numero {
+  font-family: var(--fonte-numeros);
+  font-weight: 700;
+  font-size: 1.12rem;
+}
+
+.placar__situacao {
+  font-size: 0.7rem;
+  color: var(--rosa-claro);
+}

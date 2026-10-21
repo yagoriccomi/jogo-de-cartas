@@ -1,6 +1,7 @@
 import type { ConfiguracaoPartida } from '@fodinha/shared';
 import { describe, expect, it } from 'vitest';
-import type { Partida, VisaoDaPartida } from '../../src/domain/partida';
+import type { Partida } from '../../src/domain/partida';
+import type { VisaoDaPartida } from '../../src/domain/projecao';
 import { avancarPartida, criarPartida, geradorComSemente, jogarRodadaAteOFim } from '../apoio';
 
 const DOIS_BARALHOS: ConfiguracaoPartida = {

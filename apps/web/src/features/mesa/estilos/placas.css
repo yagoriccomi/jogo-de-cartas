@@ -1,0 +1,262 @@
+/* ---------- Adversários ---------- */
+
+.adversarios-area {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* No celular a faixa rola na horizontal; a página em si nunca rola. */
+.adversarios {
+  display: flex;
+  gap: 8px;
+  padding: 14px 14px 8px;
+  margin: -6px -14px 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+
+.placa {
+  position: relative;
+  flex: 0 0 148px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  min-width: 0;
+  padding: 6px 10px;
+  /* Neon apagado: só a placa de quem está com a vez acende (.placa--vez). */
+  border: 2px solid var(--linha);
+  border-radius: 12px;
+  background: var(--superficie);
+  box-shadow: none;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.placa--com-testa {
+  flex-basis: 190px;
+}
+
+.placa--vez {
+  border-color: var(--rosa);
+  box-shadow:
+    0 0 0 1px var(--rosa),
+    0 0 18px rgb(255 42 138 / 0.65);
+}
+
+.placa--eliminada {
+  opacity: 0.45;
+  border-style: dashed;
+}
+
+.placa--offline {
+  border-style: dashed;
+  border-color: var(--bloqueado-borda);
+}
+
+.placa__linha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+}
+
+.placa__vidas {
+  width: 100%;
+}
+
+.placa__texto {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.placa__nome {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.selo-bot {
+  display: inline-flex;
+  flex: none;
+  color: var(--ciano);
+  filter: drop-shadow(0 0 3px var(--ciano));
+}
+
+.selo-bot svg {
+  width: 13px;
+  height: 13px;
+}
+
+.placa__apelido {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.placa__nome .selo {
+  flex: none;
+}
+
+.placa__nome .selo {
+  padding: 0 6px;
+  font-size: 0.62rem;
+}
+
+/* Também usado na tela de fim de partida. */
+.placa__coracao {
+  width: 12px;
+  height: 12px;
+  color: var(--rosa-claro);
+}
+
+.placa__nota {
+  font-size: 0.7rem;
+  color: var(--rosa-claro);
+}
+
+.placa__contagem {
+  width: fit-content;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--rosa-forte);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.placa__testa {
+  flex: none;
+}
+
+.simbolos {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  z-index: 1;
+  display: flex;
+  gap: 4px;
+}
+
+.simbolo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 2px solid currentColor;
+  border-radius: 7px;
+  background: var(--fundo);
+  box-shadow: 0 0 8px currentColor;
+}
+
+.simbolo svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Mão (abre a rodada) em rosa; pé (último a palpitar) em ciano. */
+.simbolo--mao {
+  color: var(--rosa);
+}
+
+.simbolo--pe {
+  color: var(--ciano);
+}
+
+/* Os símbolos ficam no canto de cima da placa: o nome não passa por baixo deles. */
+.placa:has(.simbolos--placa) .placa__nome {
+  padding-right: 28px;
+}
+
+.placa:has(.simbolo--mao):has(.simbolo--pe) .placa__nome {
+  padding-right: 56px;
+}
+
+/* Primeiro palpite da partida: ícone + "MÃO"/"PÉ" por extenso; depois encolhe para só o ícone. */
+.simbolo--com-rotulo {
+  width: auto;
+  gap: 3px;
+  padding: 0 5px 0 3px;
+  font-weight: 800;
+  font-size: 0.62rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.placa:has(.simbolos--com-rotulo) .placa__nome {
+  padding-right: 52px;
+}
+
+.placa:has(.simbolos--com-rotulo .simbolo--mao):has(.simbolos--com-rotulo .simbolo--pe)
+  .placa__nome {
+  padding-right: 100px;
+}
+
+/* ---------- Palpite e vazas feitas (placas, minha área e placar) ---------- */
+
+.numeros {
+  display: flex;
+  gap: 4px;
+}
+
+.numeros__item {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: center;
+  min-width: 44px;
+  padding: 2px 6px 3px;
+  border: 1px solid var(--linha);
+  border-radius: 8px;
+  background: var(--superficie-funda);
+}
+
+.numeros__rotulo {
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--texto-fraco);
+}
+
+.numeros__valor {
+  font-family: var(--fonte-numeros);
+  font-weight: 700;
+  font-size: 1.44rem;
+  line-height: 1.05;
+  color: #fff;
+}
+
+/* O "Fez" adianta o resultado: bateu o palpite (ciano) ou já passou dele (rosa). */
+.numeros__item--certa {
+  border-color: var(--ciano);
+}
+
+.numeros__item--certa .numeros__valor {
+  color: var(--ciano-branco);
+  text-shadow: 0 0 8px var(--ciano);
+}
+
+.numeros__item--estourou {
+  border-color: var(--rosa);
+}
+
+.numeros__item--estourou .numeros__valor {
+  color: var(--rosa-claro);
+  text-shadow: 0 0 8px var(--rosa);
+}
+
+.numeros--minha {
+  flex: none;
+}
