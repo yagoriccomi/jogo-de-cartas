@@ -5,7 +5,7 @@ import { useDuploToque } from '../../lib/useDuploToque';
 import { CONSULTA_COMPUTADOR, useMediaQuery } from '../../lib/useMediaQuery';
 import type { EstiloComVariaveis } from '../../lib/estiloComVariaveis';
 import { verboDeToque } from '../tutorial/ponteiro';
-import { descreverSaldo } from './AndamentoDosPalpites';
+import { partesDoSaldo } from './AndamentoDosPalpites';
 import { Carta } from './Carta';
 import { useDicaDoGesto } from './dicaDoGesto';
 import { SimbolosMaoEPe } from './SimbolosMaoEPe';
@@ -70,6 +70,7 @@ export function PainelPalpite({
   const soma = palpitesAnteriores.reduce((total, anterior) => total + anterior.palpite, 0);
   // Vazas ainda "sem dono" nos palpites: negativo quando a mesa já pediu mais do que há.
   const saldo = cartasNaRodada - soma;
+  const [pedido, resto] = partesDoSaldo(soma, cartasNaRodada);
   const colunas = Math.min(
     opcoes.length,
     computador ? COLUNAS_DA_GRADE_LONGA_NO_COMPUTADOR : COLUNAS_DA_GRADE_LONGA,
@@ -133,7 +134,8 @@ export function PainelPalpite({
         <div className="palpite__info">
           <p className="palpite__resumo">
             <span className={classes('palpite__saldo', saldo < 0 && 'palpite__saldo--negativo')}>
-              {descreverSaldo(soma, cartasNaRodada)}
+              <span className="palpite__saldo-parte">{pedido} ·</span>{' '}
+              <span className="palpite__saldo-parte">{resto}</span>
             </span>
           </p>
           <button
@@ -153,7 +155,8 @@ export function PainelPalpite({
           onClick={() => escolhido !== null && confirmar(escolhido)}
         >
           {escolhido === null ? (
-            `${verbo} num número`
+            // Espaço inseparável: no máximo "Toque num / número"; mais apertado, cede o resumo.
+            <span className="palpite__instrucao">{`${verbo}\u00a0num número`}</span>
           ) : (
             <>
               <span>Confirmar {escolhido}</span>

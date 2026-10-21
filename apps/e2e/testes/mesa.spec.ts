@@ -138,6 +138,32 @@ test.describe('Mesa cheia (10 jogadores, 13 cartas)', () => {
     await expect(page.locator('.minha__vidas')).toBeInViewport();
   });
 
+  test('o botão do palpite não corta o texto, nem com o saldo comprido', async ({ page }) => {
+    await abrirCenario(page);
+    const painel = page.locator('.palpite');
+    await expect(painel).toBeVisible({ timeout: ESPERA_DA_MESA_MS });
+    await esperarAnimacoes(page);
+
+    // O saldo vem dos palpites sorteados dos bots: põe um dos mais compridos que a mesa cheia gera.
+    await page.locator('.palpite__saldo-parte').evaluateAll((partes) => {
+      const [pedido, resto] = partes;
+      if (pedido) pedido.textContent = 'Pediram 24 de 13 ·';
+      if (resto) resto.textContent = 'passou 11';
+    });
+    const confirmar = page.locator('.palpite__confirmar');
+    const conferir = async (estado: string) => {
+      const cortado = await confirmar.evaluate((b) => b.scrollWidth - b.clientWidth);
+      expect(cortado, `texto do botão vazando (${estado})`).toBeLessThanOrEqual(1);
+      const rolagem = await painel.evaluate((el) => el.scrollHeight - el.clientHeight);
+      expect(rolagem, `painel rolando (${estado})`).toBeLessThanOrEqual(1);
+    };
+    // "Toque num número" já vazou do botão no celular estreito.
+    await conferir('sem número');
+    await page.locator('.palpite__opcao:not([disabled])').first().click();
+    await expect(confirmar).toContainText('2×');
+    await conferir('com número');
+  });
+
   test('o toque duplo na mesa não marca texto nem dá zoom', async ({ page }) => {
     await abrirCenario(page);
     await expect(page.locator('.palpite')).toBeVisible({ timeout: ESPERA_DA_MESA_MS });

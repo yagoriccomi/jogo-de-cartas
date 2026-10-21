@@ -898,6 +898,8 @@ body:has(.mesa:not(.mesa--fim)) {
 
 .palpite__rodape .botao {
   flex: 1;
+  /* Nunca mais estreito que o próprio texto: quem cede é o resumo, que quebra em duas linhas. */
+  min-width: min-content;
   min-height: 42px;
 }
 
@@ -932,15 +934,19 @@ body:has(.mesa:not(.mesa--fim)) {
   flex: 0 1 auto;
   flex-direction: column;
   align-items: flex-start;
-  min-width: 0;
+  min-width: min-content;
 }
 
 .palpite__resumo {
   margin: 0;
   font-size: 0.8rem;
   line-height: 1.2;
-  white-space: nowrap;
   color: var(--texto-suave);
+}
+
+/* Quebra só entre "Pediram 3 de 5 ·" e "sobram 2", nunca no meio de uma metade. */
+.palpite__saldo-parte {
+  white-space: nowrap;
 }
 
 .palpite__saldo {
@@ -975,7 +981,7 @@ body:has(.mesa:not(.mesa--fim)) {
   height: var(--alvo-minimo);
 }
 
-/* Uma linha só ("Toque num número"): quebrado em três, o botão empurrava o painel a rolar. */
+/* "Confirmar N" numa linha só; o resto do texto pode quebrar. */
 .palpite__confirmar {
   display: flex;
   flex-direction: column;
@@ -985,6 +991,13 @@ body:has(.mesa:not(.mesa--fim)) {
   padding-inline: 10px;
   line-height: 1.1;
   white-space: nowrap;
+}
+
+/* "Toque num número" quebra em duas linhas equilibradas em vez de empurrar o resumo (ou vazar do
+   botão, como já fez em celular estreito). */
+.palpite__instrucao {
+  white-space: normal;
+  text-wrap: balance;
 }
 
 /* Pode quebrar em duas linhas: a largura da fonte muda de sistema para sistema (no Linux vazava). */
