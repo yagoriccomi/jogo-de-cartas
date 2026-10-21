@@ -66,6 +66,21 @@ test.describe('Mesa cheia (10 jogadores, 13 cartas)', () => {
     await expect(resumo).toBeHidden();
   });
 
+  test('recarregar a página durante a leitura não deixa o resumo cobrindo a mesa', async ({
+    page,
+  }) => {
+    await abrirCenario(page, { ...MESA_CHEIA, comResumoDasRegras: true });
+    const resumo = page.getByRole('dialog', { name: 'Regras em 1 minuto' });
+    await expect(resumo.getByRole('status')).toContainText('esperando você', {
+      timeout: ESPERA_DA_MESA_MS,
+    });
+
+    // A leitura é 1 por partida: de volta à mesa, o servidor recusa a segunda e a mesa não pausa.
+    await page.reload();
+    await expect(page.locator('.mesa')).toBeVisible({ timeout: ESPERA_DA_MESA_MS });
+    await expect(resumo).toBeHidden();
+  });
+
   test('o botão de reações fica longe dos números do palpite', async ({ page }) => {
     await abrirCenario(page);
     await expect(page.locator('.palpite')).toBeVisible({ timeout: ESPERA_DA_MESA_MS });

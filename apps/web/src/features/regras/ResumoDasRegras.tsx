@@ -40,7 +40,11 @@ export function ResumoDasRegras({ jogo, meuId, recebidoEm, ativo }: Props) {
     if (jaAbriu.current || !ativo || resumoDispensado()) return;
     jaAbriu.current = true;
     definirAberto(true);
-    void lerRegras();
+    // Recusa (já leu nesta partida, por exemplo depois de recarregar a página): a mesa não
+    // pausa, então o resumo não pode ficar na frente enquanto o prazo da vez corre.
+    void lerRegras().then((pausou) => {
+      if (!pausou) definirAberto(false);
+    });
   }, [inicioDaPartida, ativo]);
 
   // O tempo da leitura acabou no servidor: a mesa voltou a andar, então o resumo sai da frente.
