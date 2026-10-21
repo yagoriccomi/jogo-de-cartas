@@ -64,4 +64,4 @@ No navegador (dev): `http://localhost:5173/?cenario=10x13` em 360×640, 375×812
 ## Pendências
 
 - Teste com jogadores reais: feito pelo dono do produto depois da entrega, sem ajustes pedidos.
-- O aviso "Jogador noob lendo as regras!" visto pelos outros só é coberto pelo teste de integração (dois clientes); não há teste de tela com dois navegadores.
+- Teste de tela do aviso "Jogador noob lendo as regras!" visto pelos outros: feito depois da entrega, com dois navegadores (`apps/e2e/testes/sala.spec.ts`).
