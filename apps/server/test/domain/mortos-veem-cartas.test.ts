@@ -89,9 +89,4 @@ describe('mortos veem cartas — sala', () => {
     expect(sala.estado().configuracao.mortosVeemCartas).toBe(true);
     expect(sala.partida?.visaoPara('dono').configuracao.mortosVeemCartas).toBe(true);
   });
-
-  it('deveRecusarValorQueNaoSejaBooleano', () => {
-    const sala = new Sala('ABCD', humano('dono'), CONFIGURACAO_PADRAO);
-    expect(() => sala.definirMortosVeemCartas('dono', 'sim')).toThrow();
-  });
 });

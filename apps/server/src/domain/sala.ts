@@ -6,7 +6,7 @@ import {
   type VotacaoEspera,
 } from '@fodinha/shared';
 import type { GeradorAleatorio } from './aleatoriedade';
-import { validarConfiguracao, validarMortosVeemCartas } from './configuracao';
+import { validarConfiguracao } from './configuracao';
 import { ErroDeRegra } from './erros';
 import { Partida } from './partida';
 
@@ -65,7 +65,7 @@ export class Sala {
   constructor(
     readonly codigo: string,
     criador: Participante,
-    configuracao: unknown,
+    configuracao: ConfiguracaoPartida,
     opcoes: OpcoesDaSala = {},
   ) {
     this.maxBots = opcoes.maxBots ?? LIMITES.maxBots;
@@ -166,16 +166,15 @@ export class Sala {
     return { expulsoId: alvo.id, eraHumano: !alvo.ehBot };
   }
 
-  configurar(solicitanteId: string, configuracao: unknown): void {
+  configurar(solicitanteId: string, configuracao: ConfiguracaoPartida): void {
     this.exigirAnfitriao(solicitanteId);
     this.exigirLobby();
     this.configuracao = validarConfiguracao(configuracao);
   }
 
   /** Diferente das outras opções, vale no meio da partida: só muda o que os eliminados enxergam. */
-  definirMortosVeemCartas(solicitanteId: string, permitir: unknown): void {
+  definirMortosVeemCartas(solicitanteId: string, mortosVeemCartas: boolean): void {
     this.exigirAnfitriao(solicitanteId);
-    const mortosVeemCartas = validarMortosVeemCartas(permitir);
     this.configuracao = { ...this.configuracao, mortosVeemCartas };
     this.partidaAtual?.definirMortosVeemCartas(mortosVeemCartas);
   }

@@ -1,7 +1,6 @@
 import {
   CONFIGURACAO_PADRAO,
   LIMITES,
-  REACOES,
   type ConfiguracaoPartida,
   type Reacao,
   type SessaoJogador,
@@ -36,9 +35,8 @@ const CONFIGURACAO_DE_CENARIO: ConfiguracaoPartida = {
 /** Evita que alguém inunde a mesa de emojis; vale por jogador, além do limitador do socket. */
 const INTERVALO_ENTRE_REACOES_MS = 1_500;
 
-function inteiroEntre(valor: unknown, minimo: number, maximo: number): number | null {
-  const ok = Number.isInteger(valor) && (valor as number) >= minimo && (valor as number) <= maximo;
-  return ok ? (valor as number) : null;
+function inteiroEntre(valor: number, minimo: number, maximo: number): number | null {
+  return Number.isInteger(valor) && valor >= minimo && valor <= maximo ? valor : null;
 }
 
 /** Quem está agindo: extraído da sessão do socket, nunca do payload do cliente. */
@@ -66,9 +64,9 @@ export class ServicoDeSalas {
   constructor(private readonly deps: DependenciasDoServico) {}
 
   criarSala(dados: {
-    apelido?: unknown;
-    configuracao?: unknown;
-    dispositivoId?: unknown;
+    apelido: string;
+    configuracao: ConfiguracaoPartida;
+    dispositivoId: string;
   }): SessaoJogador {
     const criador = this.novoHumano(
       normalizarApelido(dados.apelido),
@@ -83,10 +81,10 @@ export class ServicoDeSalas {
    * já em partida, para testar mesas cheias sem precisar de outras pessoas.
    */
   criarCenario(dados: {
-    apelido?: unknown;
-    dispositivoId?: unknown;
-    jogadores?: unknown;
-    cartas?: unknown;
+    apelido: string;
+    dispositivoId: string;
+    jogadores: number;
+    cartas: number;
   }): SessaoJogador {
     const jogadores = inteiroEntre(dados.jogadores, LIMITES.minJogadores, LIMITES.maxJogadores);
     const cartas = inteiroEntre(dados.cartas, 1, Number.MAX_SAFE_INTEGER);
@@ -116,11 +114,7 @@ export class ServicoDeSalas {
   }
 
   /** Funciona também com partida em andamento: quem entra senta na próxima rodada. */
-  entrarSala(dados: {
-    codigoSala?: unknown;
-    apelido?: unknown;
-    dispositivoId?: unknown;
-  }): SessaoJogador {
+  entrarSala(dados: { codigoSala: string; apelido: string; dispositivoId: string }): SessaoJogador {
     const sala = this.salaExistente(normalizarCodigoSala(dados.codigoSala));
     const participante = this.novoHumano(
       normalizarApelido(dados.apelido),
@@ -133,16 +127,13 @@ export class ServicoDeSalas {
   }
 
   reconectar(dados: {
-    codigoSala?: unknown;
-    tokenSessao?: unknown;
-    dispositivoId?: unknown;
+    codigoSala: string;
+    tokenSessao: string;
+    dispositivoId: string;
   }): SessaoJogador {
     normalizarDispositivo(dados.dispositivoId);
     const sala = this.salaExistente(normalizarCodigoSala(dados.codigoSala));
-    const participante =
-      typeof dados.tokenSessao === 'string'
-        ? sala.participantePorToken(dados.tokenSessao)
-        : undefined;
+    const participante = sala.participantePorToken(dados.tokenSessao);
     if (!participante) {
       throw new ErroDeRegra('SEM_PERMISSAO', 'Sessão expirada. Entre na sala novamente.');
     }
@@ -167,11 +158,11 @@ export class ServicoDeSalas {
     this.deps.condutor.aposMudanca(sala);
   }
 
-  configurar(ator: Ator, configuracao: unknown): void {
+  configurar(ator: Ator, configuracao: ConfiguracaoPartida): void {
     this.alterar(ator, (sala) => sala.configurar(ator.jogadorId, configuracao));
   }
 
-  definirMortosVeemCartas(ator: Ator, permitir: unknown): void {
+  definirMortosVeemCartas(ator: Ator, permitir: boolean): void {
     this.alterar(ator, (sala) => sala.definirMortosVeemCartas(ator.jogadorId, permitir));
   }
 
@@ -179,10 +170,7 @@ export class ServicoDeSalas {
     this.alterar(ator, (sala) => sala.adicionarBot(ator.jogadorId, this.novoBot(sala)));
   }
 
-  expulsar(ator: Ator, participanteId: unknown): Expulsao {
-    if (typeof participanteId !== 'string') {
-      throw new ErroDeRegra('ENTRADA_INVALIDA', 'Participante inválido.');
-    }
+  expulsar(ator: Ator, participanteId: string): Expulsao {
     return this.alterar(ator, (sala) => {
       const expulsao = sala.expulsar(ator.jogadorId, participanteId);
       this.resolverVotacoes(sala);
@@ -247,36 +235,23 @@ export class ServicoDeSalas {
     this.deps.condutor.aposMudanca(sala);
   }
 
-  votarEspera(ator: Ator, dados: { ausenteId?: unknown; esperar?: unknown }): void {
-    if (typeof dados.ausenteId !== 'string' || typeof dados.esperar !== 'boolean') {
-      throw new ErroDeRegra('ENTRADA_INVALIDA', 'Voto inválido.');
-    }
-    const { ausenteId, esperar } = dados;
+  votarEspera(ator: Ator, { ausenteId, esperar }: { ausenteId: string; esperar: boolean }): void {
     this.alterar(ator, (sala) => {
       sala.votar(ator.jogadorId, ausenteId, esperar);
       this.resolverVotacoes(sala);
     });
   }
 
-  palpitar(ator: Ator, quantidade: unknown): void {
-    if (typeof quantidade !== 'number') {
-      throw new ErroDeRegra('PALPITE_INVALIDO', 'Palpite inválido.');
-    }
+  palpitar(ator: Ator, quantidade: number): void {
     this.alterar(ator, (sala) => this.partidaEmJogo(sala).palpitar(ator.jogadorId, quantidade));
   }
 
-  jogarCarta(ator: Ator, cartaId: unknown): void {
-    if (typeof cartaId !== 'string') {
-      throw new ErroDeRegra('JOGADA_INVALIDA', 'Carta inválida.');
-    }
+  jogarCarta(ator: Ator, cartaId: string): void {
     this.alterar(ator, (sala) => this.partidaEmJogo(sala).jogarCarta(ator.jogadorId, cartaId));
   }
 
   /** Não passa por `alterar`: reação não muda a sala, então não há estado a republicar. */
-  reagir(ator: Ator, reacao: unknown): void {
-    if (!REACOES.includes(reacao as Reacao)) {
-      throw new ErroDeRegra('ENTRADA_INVALIDA', 'Reação inválida.');
-    }
+  reagir(ator: Ator, reacao: Reacao): void {
     const sala = this.salaExistente(ator.codigoSala);
     const participante = sala.participante(ator.jogadorId);
     if (!participante || participante.saindo) {
@@ -293,7 +268,7 @@ export class ServicoDeSalas {
     this.ultimaReacaoEm.set(ator.jogadorId, agora);
     this.deps.condutor.publicarReacao(sala, {
       jogadorId: ator.jogadorId,
-      reacao: reacao as Reacao,
+      reacao,
       em: agora,
     });
   }

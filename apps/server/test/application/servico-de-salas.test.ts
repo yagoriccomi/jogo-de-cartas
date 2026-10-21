@@ -280,7 +280,7 @@ describe('ServicoDeSalas — expulsar', () => {
     const dono = criarSala();
     servico.adicionarBot(ator(dono));
     const bot = salaDe(dono)?.participantes.find((p) => p.ehBot);
-    expect(servico.expulsar(ator(dono), bot?.id).eraHumano).toBe(false);
+    expect(servico.expulsar(ator(dono), bot?.id ?? '').eraHumano).toBe(false);
     expect(salaDe(dono)?.participantes).toHaveLength(1);
   });
 
@@ -682,14 +682,6 @@ describe('ServicoDeSalas — reações', () => {
     expect([...(envio?.destinatarios ?? [])].sort()).toEqual(
       [dono.jogadorId, bia.jogadorId].sort(),
     );
-  });
-
-  it('deveRejeitarReacaoForaDaLista', () => {
-    const { dono } = mesaComDoisHumanos();
-    const invalida = expect.objectContaining({ codigo: 'ENTRADA_INVALIDA' });
-    expect(() => servico.reagir(ator(dono), '💩')).toThrow(invalida);
-    expect(() => servico.reagir(ator(dono), 42)).toThrow(invalida);
-    expect(notificador.reacoes).toHaveLength(0);
   });
 
   it('deveLimitarReacoesEmSequenciaDoMesmoJogador', () => {

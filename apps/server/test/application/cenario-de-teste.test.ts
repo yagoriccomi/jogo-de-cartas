@@ -44,7 +44,6 @@ describe('ServicoDeSalas — criarCenario', () => {
       { jogadores: 11 },
       { jogadores: 2.5 },
       { cartas: 0 },
-      { cartas: '3' },
     ]) {
       expect(() => servico.criarCenario({ ...dados, ...invalido })).toThrow();
     }
