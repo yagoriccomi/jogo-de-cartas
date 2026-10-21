@@ -10,6 +10,7 @@ import {
   jogarAteAMesaTer,
   medir,
   MESA_CHEIA,
+  palpitarQualquerCoisa,
   telaDe,
 } from './apoio';
 
@@ -93,6 +94,17 @@ test.describe('Mesa cheia (10 jogadores, 13 cartas)', () => {
         FOLGA_DO_BOTAO_DE_REACOES_PX,
       );
     }
+  });
+
+  test('o botão de reações não cobre o selo da manilha', async ({ page }) => {
+    await abrirCenario(page);
+    await expect(page.locator('.palpite')).toBeVisible({ timeout: ESPERA_DA_MESA_MS });
+    await palpitarQualquerCoisa(page);
+    await esperarAnimacoes(page);
+
+    const botao = await medir(page.locator('.reacoes__botao'));
+    const selo = await medir(page.locator('.feltro__manilha'));
+    expect(distancia(botao, selo)).toBeGreaterThan(0);
   });
 
   test('o palpite cabe no feltro sem rolar e com botões tocáveis', async ({ page }) => {

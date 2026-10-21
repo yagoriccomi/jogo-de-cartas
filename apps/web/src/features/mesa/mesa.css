@@ -2188,7 +2188,11 @@ body:has(.mesa:not(.mesa--fim)) {
     padding-block: 10px;
   }
 
+  /* O botão de reações pousa no canto de baixo do feltro: a coluna da vira sobe, encolhe e
+     deita o selo da manilha para terminar acima dele. */
   .feltro__esquerda {
+    --l-carta: clamp(36px, calc((100cqh - 160px) / 1.4), 56px);
+    align-self: flex-start;
     gap: 2px;
   }
 
@@ -2196,8 +2200,18 @@ body:has(.mesa:not(.mesa--fim)) {
     --l-baralho: 22px;
   }
 
+  .feltro__manilha {
+    flex-direction: row;
+    gap: 5px;
+    padding: 2px 7px;
+  }
+
+  .feltro__manilha-rotulo {
+    font-size: 0.5rem;
+  }
+
   .feltro__manilha-valor {
-    font-size: 1.88rem;
+    font-size: 1.5rem;
   }
 
   .palpite {
