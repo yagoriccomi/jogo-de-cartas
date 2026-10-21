@@ -104,6 +104,7 @@ fodinha/
 │   │   ├── Dockerfile               # imagem de PRODUÇÃO (multi-stage, contexto = raiz)
 │   │   └── tsup.config.ts
 │   ├── web/                         # React + Vite + TS, organização por feature
+│   │   └── test/                    # Vitest: cálculos puros da mesa e coerência do tutorial
 │   └── e2e/                         # testes de tela (Playwright) contra servidor e web de dev
 ├── packages/
 │   └── shared/                      # contratos TS: cartas, configuração, estado visível, eventos
@@ -144,7 +145,7 @@ Serviços do compose: **`deps`** (one-shot, instala dependências dentro do cont
 - **Hot reload:** `CHOKIDAR_USEPOLLING=true` (bind mount no Windows não propaga eventos de arquivo).
 - **Healthchecks:** `server` expõe `GET /health`; `web` só sobe depois dele saudável. [#82]
 - **Portas:** `PORT` (servidor, padrão 3001) e `WEB_PORT` (web, padrão 5173) vêm do `.env`.
-- **Tutorial (`features/tutorial`):** roda só no navegador, sem servidor. Um roteiro fixo de estados (`roteiro.ts`, no formato que o servidor envia) alimenta a mesa de verdade; `interceptarAcoes` desvia palpitar/jogar/sair para o motor do tutorial. O roteiro descreve resultados já conhecidos e não recalcula regra; ao mudar regra ou layout da mesa, revise os textos e os alvos dos balões.
+- **Tutorial (`features/tutorial`):** roda só no navegador, sem servidor. Um roteiro fixo de estados (`roteiro.ts`, no formato que o servidor envia) alimenta a mesa de verdade; `interceptarAcoes` desvia palpitar/jogar/sair para o motor do tutorial. O roteiro descreve resultados já conhecidos e não recalcula regra; ao mudar regra ou layout da mesa, revise os textos e os alvos dos balões (`apps/web/test/features/tutorial/roteiro.test.ts` confere que cada momento do roteiro continua possível).
 - **Cenário de teste (só dev):** `http://localhost:5173/?cenario=10x13` cria uma partida sua com 9 bots já na rodada de 13 cartas (`CENARIOS_DE_TESTE=true` no servidor; ligado no compose de dev). Sobrevive a hot reload do web e a reinício do servidor (recria sozinho). Nunca ligar em produção.
 - **Nativo (sem Docker):** `npm install` e `npm run dev` na raiz (concurrently sobe server e web). Útil para depurar.
 - **Produção:** imagem do servidor em `apps/server/Dockerfile` (multi-stage, usuário não-root, `HEALTHCHECK`) [#85]; a Render pode usar o Blueprint `render.yaml` (build nativo Node) ou a imagem.
