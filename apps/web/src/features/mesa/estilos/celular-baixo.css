@@ -1,0 +1,60 @@
+/* Celulares baixos: a coluna da vira e o painel de palpite encolhem para caber no feltro. */
+@media (max-width: 899px) and (max-height: 700px) {
+  .feltro {
+    padding-block: 10px;
+  }
+
+  /* O botão de reações pousa no canto de baixo do feltro: a coluna da vira sobe, encolhe e
+     deita o selo da manilha para terminar acima dele. */
+  .feltro__esquerda {
+    --l-carta: clamp(36px, calc((100cqh - 160px) / 1.4), 56px);
+    align-self: flex-start;
+    gap: 2px;
+  }
+
+  .baralho {
+    --l-baralho: 22px;
+  }
+
+  .feltro__manilha {
+    flex-direction: row;
+    gap: 5px;
+    padding: 2px 7px;
+  }
+
+  .feltro__manilha-rotulo {
+    font-size: 0.5rem;
+  }
+
+  .feltro__manilha-valor {
+    font-size: 1.5rem;
+  }
+
+  .palpite {
+    inset: 4px;
+    gap: 4px;
+    padding: 6px 8px;
+  }
+
+  .palpite__vira {
+    --l-carta: 24px;
+  }
+
+  .palpite__titulo {
+    font-size: 1.15rem;
+  }
+
+  .palpite__grade {
+    gap: 4px;
+  }
+
+  .palpite__rodape .botao {
+    min-height: 36px;
+    font-size: 0.82rem;
+  }
+
+  /* Aqui o painel ocupa o feltro todo e o botão de reações pousa no canto de baixo: o link recua. */
+  .palpite__mais {
+    margin-left: 48px;
+  }
+}

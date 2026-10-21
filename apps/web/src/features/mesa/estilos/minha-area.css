@@ -1,0 +1,147 @@
+/* ---------- Minha área ---------- */
+
+.minha {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.minha__barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.minha__dados {
+  position: relative;
+  /* Ocupa a sobra da barra e nunca fica mais estreito que os corações: quem cede é o aviso da vez. */
+  flex: 1 1 auto;
+  min-width: min-content;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Símbolos de mão/pé no canto superior direito do meu status, sem cobrir o nome. */
+.minha__dados:has(.simbolos--minha) {
+  padding-right: 30px;
+}
+
+.minha__dados:has(.simbolo--mao):has(.simbolo--pe) {
+  padding-right: 58px;
+}
+
+.simbolos--minha {
+  top: 2px;
+  right: 0;
+}
+
+.minha__nome--apagado {
+  color: var(--texto-suave);
+}
+
+.minha__nome {
+  font-size: 1.7rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vez {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--superficie);
+  border: 1px solid var(--linha);
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+  text-align: center;
+}
+
+/* Uma linha só: "SUA VEZ 23s" quebrado em dois encolhia o feltro e fazia o palpite rolar. */
+.vez--minha {
+  flex: none;
+  white-space: nowrap;
+  border-color: var(--rosa);
+  background: var(--rosa-forte);
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  box-shadow: 0 0 16px var(--rosa);
+}
+
+.minha__aviso {
+  padding: 10px 14px;
+  border: 1px dashed var(--ciano);
+  border-radius: 12px;
+  font-size: 0.9rem;
+  color: var(--ciano-palido);
+  text-align: center;
+}
+
+/* ---------- Mão em leque ---------- */
+
+.mao {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+}
+
+.mao__dica {
+  width: 100%;
+  max-width: 1080px;
+  margin: 0;
+  font-size: 0.68rem;
+  text-align: center;
+  color: var(--ciano-palido);
+}
+
+/* Fora do fluxo, no respiro abaixo das cartas: não rouba altura do feltro (o palpite do 360×640). */
+.mao__ordem {
+  position: absolute;
+  top: calc(100% + 2px);
+  inset-inline: 0;
+  display: flex;
+  justify-content: space-between;
+  max-width: 1080px;
+  margin-inline: auto;
+  line-height: 1;
+  pointer-events: none;
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--texto-suave);
+  opacity: 0.6;
+}
+
+.mao__leque {
+  position: relative;
+  max-width: 100%;
+}
+
+.mao__posicao {
+  position: absolute;
+  transform-origin: 50% 140%;
+}
+
+.mao__posicao:hover,
+.mao__posicao:focus-within {
+  z-index: 30;
+}
+
+.mao__posicao--selecionada {
+  z-index: 40;
+}

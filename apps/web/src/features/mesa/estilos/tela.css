@@ -1,0 +1,53 @@
+/*
+ * Em jogo o documento fica preso à janela: no celular, arrastar para baixo não pode revelar a
+ * borda do site (o "quique" do iOS e o puxar-para-atualizar do Android). O que precisar aparecer
+ * se sobrepõe à mesa.
+ */
+html:has(.mesa:not(.mesa--fim)),
+body:has(.mesa:not(.mesa--fim)) {
+  height: 100%;
+  overflow: hidden;
+}
+
+body:has(.mesa:not(.mesa--fim)) {
+  position: fixed;
+  inset: 0;
+}
+
+/* Em jogo a página nunca rola: a mesa ocupa exatamente a tela e as áreas internas se ajustam. */
+.app:has(.mesa:not(.mesa--fim)) {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.app:has(.mesa:not(.mesa--fim)) .conteudo {
+  min-height: 0;
+}
+
+.mesa {
+  position: relative;
+  min-height: 0;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 14px 16px;
+  min-width: 0;
+}
+
+/* Toque duplo é o gesto de confirmar (cartas, palpite, reações): sem isto o iPhone dava zoom nele e
+   errar o alvo marcava as palavras em volta. Pinça e rolagem continuam; o :where não vence nenhuma
+   regra própria (o guia das regras, por exemplo, só rola na vertical). */
+:where(.mesa, .mesa *) {
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.mesa__cega {
+  margin-left: 8px;
+}

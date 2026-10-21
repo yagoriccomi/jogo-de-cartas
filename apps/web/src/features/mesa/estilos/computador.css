@@ -1,0 +1,211 @@
+/* ---------- Layout de computador (≥ 900px) ---------- */
+
+@media (min-width: 900px) {
+  .mesa {
+    gap: 16px;
+    padding: 20px 24px 24px;
+  }
+
+  /* Uma fileira só, mesmo com 9 adversários: a altura que sobra fica para a mesa. Se não couber,
+     a faixa rola e acompanha a vez (como no celular) em vez de cortar os nomes. */
+  .adversarios {
+    gap: 10px;
+    margin: 0;
+    padding: 12px 6px 6px;
+  }
+
+  .placa {
+    flex: 1 0 0;
+    min-width: 148px;
+    max-width: 260px;
+    padding: 8px 12px;
+  }
+
+  .placa--com-testa {
+    flex-basis: 260px;
+  }
+
+  .placa__nome {
+    font-size: 1rem;
+  }
+
+  .montes--placa {
+    --l-monte: 30px;
+    --folga-monte: 4px;
+  }
+
+  .montes--minha {
+    --l-monte: 38px;
+  }
+
+  .minha__vidas {
+    --l-coracao: 18px;
+  }
+
+  .feltro {
+    min-height: 0;
+    gap: 28px;
+    padding: 24px 6%;
+    border-width: 6px;
+    border-radius: 999px;
+    box-shadow:
+      0 0 0 3px var(--rosa),
+      0 0 22px 4px var(--rosa),
+      0 0 60px 10px rgb(255 42 138 / 0.4),
+      inset 0 0 0 10px var(--feltro-escuro),
+      inset 0 0 0 12px var(--ciano),
+      inset 0 0 100px rgb(0 0 0 / 0.55);
+  }
+
+  /* Computador: a vira continua à mostra na coluna dela; o painel ocupa a direita do feltro. */
+  .palpite {
+    inset: 50% 5% auto auto;
+    width: min(480px, 62%);
+    max-height: calc(100% - 20px);
+    gap: 10px;
+    padding: 16px 18px;
+    transform: translateY(-50%);
+  }
+
+  .palpite__titulo {
+    font-size: 2rem;
+  }
+
+  /* O feltro do computador é baixo: o selo do pé vai ao lado do título, não numa linha a mais. */
+  .palpite__cabeca {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 14px;
+  }
+
+  /* A coluna (vira, rótulos e manilha) ocupa ~1,4 carta + 150px: encolhe junto com a mesa. */
+  /* A coluna também leva o contador da vaza e, se houver, o monte de empates: a vira cede. */
+  .feltro__esquerda {
+    --l-carta: clamp(44px, calc((100cqh - 180px) / 1.4), 84px);
+    gap: 8px;
+  }
+
+  /* No computador o feltro é baixo e largo: com empates, a coluna vira duas (vira e baralho de um
+     lado; manilha e, abaixo dela, os empates do outro) em vez de crescer para baixo. */
+  .feltro__esquerda:has(.empates) {
+    display: grid;
+    grid-template-columns: auto auto;
+    align-items: center;
+    justify-items: center;
+    column-gap: 18px;
+    row-gap: 8px;
+  }
+
+  .feltro__esquerda:has(.empates) .feltro__monte {
+    grid-row: 1 / span 2;
+  }
+
+  /* Notebook (768 de altura) jogando: o feltro fica baixo e a coluna da vira passaria da borda. */
+  @container (max-height: 300px) {
+    .feltro {
+      padding-block: 10px;
+    }
+
+    /* Prefixo .feltro: vence as regras de tamanho do computador que vêm depois no arquivo. */
+    .feltro .feltro__esquerda {
+      gap: 2px;
+    }
+
+    .feltro .feltro__vaza {
+      font-size: 1.25rem;
+    }
+
+    .feltro .feltro__manilha-valor {
+      font-size: 2.2rem;
+    }
+  }
+
+  .empates {
+    --l-monte: 34px;
+  }
+
+  .feltro__vaza {
+    font-size: 2rem;
+  }
+
+  .feltro__monte {
+    gap: 14px;
+  }
+
+  .feltro__manilha-valor {
+    font-size: 3.44rem;
+  }
+
+  .feltro__rotulo {
+    font-size: 0.75rem;
+  }
+
+  .feltro__vazio {
+    font-size: 0.95rem;
+  }
+
+  .andamento__vez {
+    font-size: 1.1rem;
+  }
+
+  .andamento__saldo {
+    font-size: 2.2rem;
+  }
+
+  .andamento__quantos {
+    font-size: 0.85rem;
+  }
+
+  /* No desktop sobra feltro: a carta cresce até o limite da altura e o grupo fica centralizado,
+     com a largura exata da fila mais longa. */
+  .mesa-linhas {
+    --visivel: 0.45;
+    --altura-dono: 20px;
+    --l-carta: clamp(48px, min(var(--l-pela-largura), var(--l-pela-altura)), 132px);
+    gap: 14px;
+    width: min(
+      100%,
+      var(--l-carta) *
+        (
+          min(var(--n-max, 1), 2) + var(--folga-lider) + max(var(--n-max, 1) - 2, 0) *
+            var(--visivel)
+        )
+    );
+    margin-inline: auto;
+  }
+
+  .mesa-linha__dono {
+    font-size: 0.85rem;
+  }
+
+  .baralho {
+    --l-baralho: 52px;
+    --escala-em-cena: 1.45;
+  }
+
+  .palpite__rodape .botao {
+    min-height: clamp(40px, 14cqh, 52px);
+  }
+
+  .palpite__grade--grande .palpite__opcao {
+    font-size: 2.25rem;
+  }
+
+  .minha__nome {
+    font-size: 2rem;
+  }
+
+  .vez {
+    font-size: 0.9rem;
+  }
+
+  .mao__dica {
+    font-size: 0.75rem;
+  }
+}
+
+/* O "s" dos segundos não pode virar maiúsculo dentro da pílula "SUA VEZ". */
+.vez .pilula {
+  text-transform: none;
+}

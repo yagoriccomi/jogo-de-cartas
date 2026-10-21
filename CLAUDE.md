@@ -39,7 +39,7 @@
 
 **Identidade visual aprovada:** "Feltro + neon Vice City" (fundo #120720, feltro #0d3a3c, neon rosa #ff2a8a e ciano #2de2e6, `Yellowtail` + `Kanit`; números em `Jersey 15`, escolhida por distinguir bem 2, 3 e 8 em tamanho pequeno) com cartas em pixel art (valor grande; naipe pequeno nas comuns, grande e holográfico só na manilha; verso com uma estrela pixel neon, que não se confunde com valor nem naipe). Símbolos pixel de "mão" (abre a rodada) e "pé" (pegada; último a palpitar) no canto do status; no primeiro palpite da partida aparecem com o rótulo "MÃO"/"PÉ" por extenso, depois só o ícone. Manilha num selo próprio (moldura rosa com o brilho holográfico, rótulo dentro), que a vira nunca cobre.
 
-**Mesa (decisões de layout):**
+**Mesa (decisões de layout):** estilos em `features/mesa/estilos/`, um arquivo por área; `mesa.css` só os importa, e a ordem dos imports é a ordem da cascata (computador, celular e celular baixo por último, porque sobrescrevem as áreas).
 
 - **Sem rolagem:** a partida nunca rola a página nem deixa arrastar além da tela (`html`/`body` presos e `overscroll-behavior: none`; o que precisar aparecer se sobrepõe à mesa; `.app` com `100dvh`; as áreas internas encolhem, cartas da mesa medidas por `cqw/cqh`).
 - **Cartas no feltro:** linha de cima: a carta que está ganhando sozinha à esquerda e a pilha das demais válidas (forte → fraca, cada uma por cima da anterior). Linha de baixo: as anuladas. O dono da carta líder aparece sempre acima dela; nas demais, ao passar o mouse/focar/tocar (contorno rosa).

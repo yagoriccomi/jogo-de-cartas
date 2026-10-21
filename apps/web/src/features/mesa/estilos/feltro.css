@@ -1,0 +1,470 @@
+/* ---------- Mesa (feltro) ---------- */
+
+.palco {
+  position: relative;
+  /* Referência de altura (cqh) para a vira encolher quando a mesa fica baixa. */
+  container-type: size;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+.feltro {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 14px;
+  min-height: 0;
+  padding: 20px 26px;
+  border: 4px solid var(--rosa-palido);
+  border-radius: 64px;
+  background: var(--feltro);
+  box-shadow:
+    0 0 0 2px var(--rosa),
+    0 0 20px 3px var(--rosa),
+    inset 0 0 0 7px var(--feltro-escuro),
+    inset 0 0 0 9px var(--ciano),
+    inset 0 0 70px rgb(0 0 0 / 0.55);
+  text-align: center;
+}
+
+/* Vira, manilha e baralho ficam à esquerda, centralizados na vertical. */
+.feltro__esquerda {
+  --l-carta: 40px;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.feltro__monte {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.feltro__vira-bloco {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Contador da vaza (1/5): em que ponto da rodada a mesa está, acima da vira. */
+.feltro__vaza {
+  font-family: var(--fonte-numeros);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+/* Vazas em que tudo se anulou: um só monte abaixo da manilha, com o total ao lado. */
+.empates {
+  --l-monte: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  opacity: 0.9;
+}
+
+.empates--chegando {
+  visibility: hidden;
+}
+
+.empates__corpo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.empates__monte {
+  position: relative;
+  width: var(--l-monte);
+  filter: grayscale(0.5);
+}
+
+.empates__monte .carta {
+  --l-carta: var(--l-monte);
+}
+
+.empates__contagem {
+  font-family: var(--fonte-numeros);
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--ciano-palido);
+}
+
+.feltro__rotulo {
+  font-size: 0.65rem;
+}
+
+/* Selo da manilha: moldura pixel com o brilho holográfico das cartas de manilha. */
+.feltro__manilha {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  padding: 3px 10px 4px;
+  border: 2px solid var(--rosa);
+  border-radius: 3px;
+  background: var(--feltro-escuro);
+  box-shadow:
+    3px 3px 0 rgb(0 0 0 / 0.6),
+    0 0 12px rgb(255 42 138 / 0.55);
+}
+
+.feltro__manilha-holo {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: repeating-linear-gradient(
+    115deg,
+    rgb(255 42 138 / 0.22) 0 6px,
+    rgb(255 214 90 / 0.16) 6px 12px,
+    rgb(45 226 230 / 0.22) 12px 18px,
+    transparent 18px 30px
+  );
+  background-size: 200% 200%;
+  animation: holo 7s linear infinite alternate;
+}
+
+.feltro__manilha-rotulo {
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--texto);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feltro__manilha-holo {
+    animation: none;
+  }
+}
+
+.feltro__manilha-valor {
+  font-family: var(--fonte-numeros);
+  font-size: 2.12rem;
+  line-height: 1;
+  color: var(--texto-neon);
+  text-shadow: 0 0 10px var(--rosa);
+}
+
+.baralho {
+  --l-baralho: 28px;
+  --escala-em-cena: 2;
+  --l-carta: var(--l-baralho);
+  position: relative;
+  flex: none;
+  width: var(--l-baralho);
+  aspect-ratio: 120 / 168;
+  /* A escala (e não o tamanho) muda: o lugar na mesa não se mexe e o centro do voo é o mesmo. */
+  transition: scale 0.2s;
+}
+
+/* Fora da animação: monte pequeno e apagado, para não competir com as cartas jogadas. */
+.baralho:not(.baralho--em-cena) .carta {
+  box-shadow: 0 2px 0 rgb(0 0 0 / 0.8);
+}
+
+.baralho:not(.baralho--em-cena) .carta__neon {
+  opacity: 0.35;
+  box-shadow: none;
+}
+
+.baralho:not(.baralho--em-cena) .carta__selo {
+  filter: none;
+}
+
+.baralho--em-cena {
+  scale: var(--escala-em-cena);
+  z-index: 5;
+}
+
+.baralho__carta {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 100%;
+  translate: calc(var(--i) * 1px) calc(var(--i) * -1.5px);
+}
+
+.feltro__jogadas {
+  position: relative;
+  /* Referência de largura e altura (cqw/cqh) para as cartas da mesa caberem no feltro. */
+  container-type: size;
+  display: flex;
+  flex: 1;
+  align-self: stretch;
+  justify-content: center;
+  min-width: 0;
+}
+
+/* ---------- Montinhos das vazas empatadas (canto inferior direito da mesa) ---------- */
+
+/* Palpites dos outros: de quem é a vez e a soma, no meio do feltro (as jogadas ainda estão vazias). */
+.andamento {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding-inline: 8px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.andamento p {
+  margin: 0;
+  max-width: 100%;
+}
+
+/* Quebra equilibrada em vez de reticências: no celular o nome inteiro cabe em duas linhas. */
+.andamento__vez {
+  font-size: 0.85rem;
+  line-height: 1.2;
+  text-wrap: balance;
+  color: var(--texto);
+}
+
+.andamento__nome {
+  color: var(--rosa-claro);
+}
+
+.andamento__saldo {
+  font-size: 1.25rem;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.andamento__quantos {
+  font-size: 0.75rem;
+  color: var(--texto-suave);
+}
+
+.feltro__vazio {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: var(--ciano-palido);
+  pointer-events: none;
+}
+
+/* Duas linhas sem divisória; as cartas se sobrepõem e o canto com valor/naipe fica à mostra. */
+.mesa-linhas {
+  /* A carta encolhe até caber a fila mais longa: a líder inteira, a folga, a primeira da pilha
+     inteira e `--visivel` de cada uma das demais (o canto do valor). Também respeita a altura. */
+  --visivel: 0.55;
+  --folga-lider: 0.22;
+  --l-pela-largura: calc(
+    100cqw /
+      (min(var(--n-max, 1), 2) + var(--folga-lider) + max(var(--n-max, 1) - 2, 0) * var(--visivel))
+  );
+  /* Cada linha reserva em cima a altura da etiqueta com o nome de quem jogou. */
+  --altura-dono: 16px;
+  --l-pela-altura: calc((100cqh - 8px - 2 * var(--altura-dono)) / 2.85);
+  --l-carta: clamp(40px, min(var(--l-pela-largura), var(--l-pela-altura)), 68px);
+  --sobreposicao: calc(1 - var(--visivel));
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.mesa-linha {
+  /* Linha de cima: a folga depois da líder e uma carta a menos dividindo a sobreposição. */
+  --folga: calc(var(--l-carta) * var(--folga-lider));
+  --divisor: max(var(--n) - 2, 1);
+  display: flex;
+  align-items: center;
+  /* A fila começa à esquerda, na carta mais forte, e cresce para a direita. */
+  justify-content: flex-start;
+  width: 100%;
+  min-height: calc(var(--l-carta) * 1.4);
+  padding-top: var(--altura-dono);
+  list-style: none;
+}
+
+/* Linha de baixo (anuladas): sem líder, sem folga. */
+.mesa-linha--anuladas {
+  --folga: 0px;
+  --divisor: max(var(--n) - 1, 1);
+}
+
+/* Pilha: cada carta entra por cima da anterior (ordem do DOM), sobrepondo o necessário para caber
+   (a sobra da linha, descontada a folga da líder, dividida entre as cartas sobrepostas). */
+.mesa-linha__carta {
+  position: relative;
+  flex: none;
+  margin-left: min(
+    calc(var(--l-carta) * var(--sobreposicao) * -1),
+    calc((100% - var(--n) * var(--l-carta) - var(--folga)) / var(--divisor))
+  );
+  will-change: transform;
+}
+
+.mesa-linha__carta:first-child {
+  margin-left: 0;
+}
+
+/* A que está ganhando fica sozinha: a pilha das demais começa depois de uma folga. */
+.mesa-linha__carta--lider + .mesa-linha__carta {
+  margin-left: var(--folga);
+}
+
+.mesa-linha__carta--lider .carta {
+  box-shadow:
+    0 0 0 max(2px, calc(var(--l-carta) * 0.022)) var(--carta-aro),
+    0 0 16px rgb(255 248 252 / 0.45),
+    0 calc(var(--l-carta) * 0.06) 0 rgb(0 0 0 / 0.8);
+}
+
+.mesa-linha--anuladas .carta {
+  filter: grayscale(0.6) brightness(0.8);
+}
+
+/* Dono da carta: sempre visível na que está ganhando; nas demais, só ao passar o mouse, focar ou
+   tocar (o foco vem do `tabIndex`), junto com o contorno rosa. */
+.mesa-linha__dono {
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 50%;
+  z-index: 1;
+  max-width: calc(var(--l-carta) * 1.8);
+  padding: 0 6px;
+  overflow: hidden;
+  border: 1px solid var(--rosa);
+  border-radius: 999px;
+  background: var(--fundo);
+  color: var(--texto-neon);
+  font-size: 0.7rem;
+  line-height: calc(var(--altura-dono) - 2px);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  transform: translateX(-50%);
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.mesa-linha__carta--lider .mesa-linha__dono {
+  visibility: visible;
+}
+
+.mesa-linha__carta {
+  outline: none;
+  cursor: pointer;
+}
+
+.mesa-linha__carta:hover,
+.mesa-linha__carta:focus {
+  z-index: 5;
+}
+
+.mesa-linha__carta:hover .mesa-linha__dono,
+.mesa-linha__carta:focus .mesa-linha__dono {
+  z-index: 6;
+  visibility: visible;
+}
+
+.mesa-linha__carta:hover .carta,
+.mesa-linha__carta:focus .carta {
+  box-shadow:
+    0 0 0 max(3px, calc(var(--l-carta) * 0.035)) var(--rosa),
+    var(--brilho-rosa);
+}
+
+/* Durante o voo para o montinho, as etiquetas sairiam voando soltas. */
+.mesa-linhas--voando .mesa-linha__dono {
+  visibility: hidden;
+}
+
+/* ---------- Montinhos de vazas ganhas ---------- */
+
+.montes {
+  --l-monte: 22px;
+  --folga-monte: 3px;
+  --camadas-max: 3;
+  display: flex;
+  align-items: flex-end;
+  min-width: 0;
+  /* Reserva o espaço das folhas que espiam acima/à direita da carta. */
+  padding: calc(var(--camadas-max) * 2px) calc(var(--camadas-max) * 2px) 0 0;
+  list-style: none;
+}
+
+.monte {
+  position: relative;
+  flex: none;
+  width: var(--l-monte);
+  /* Sobrepõe só quando não cabe: o espaço livre dividido entre os montinhos (negativo = sobreposto). */
+  margin-left: min(
+    var(--folga-monte),
+    calc((100% - var(--n) * var(--l-monte)) / max(var(--n) - 1, 1))
+  );
+}
+
+.monte:first-child {
+  margin-left: 0;
+}
+
+.monte .carta {
+  --l-carta: var(--l-monte);
+}
+
+.monte__camada {
+  position: absolute;
+  inset: 0;
+  transform: translate(calc(var(--camada) * 2px), calc(var(--camada) * -2px));
+  border: 1px solid var(--carta-borda);
+  border-radius: calc(var(--l-monte) * 0.1);
+  background: var(--carta-fundo);
+  filter: brightness(calc(1 - var(--camada) * 0.12));
+}
+
+.monte--oculto {
+  visibility: hidden;
+}
+
+.montes--placa {
+  min-height: calc(var(--l-monte) * 1.4);
+}
+
+.montes--minha {
+  --l-monte: 30px;
+  --folga-monte: 4px;
+  flex: 1;
+  justify-content: center;
+}
+
+.minha__vidas {
+  --l-coracao: 15px;
+  margin-top: 2px;
+}
+
+/* No computador há espaço: o montinho precisa deixar ler a carta vencedora de relance. */
+@media (min-width: 900px) {
+  .montes {
+    --l-monte: 34px;
+    --folga-monte: 5px;
+  }
+
+  .montes--minha {
+    --l-monte: 46px;
+    --folga-monte: 6px;
+  }
+}
