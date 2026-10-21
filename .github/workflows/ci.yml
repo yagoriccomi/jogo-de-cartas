@@ -64,7 +64,7 @@ jobs:
 
       - name: Guardar relatório (falhas)
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: relatorio-testes-de-tela
           path: |
