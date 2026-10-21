@@ -14,6 +14,10 @@ const AFUNDAMENTO_MAXIMO_NAS_PONTAS = 28;
 const MARGEM_LATERAL = 12;
 /** Largura de tela usada enquanto o elemento ainda não foi medido. */
 const LARGURA_PADRAO = 360;
+/** Menor carta ainda legível quando a mão encolhe para caber na altura. */
+const LARGURA_MINIMA_NO_COMPUTADOR = 64;
+const LARGURA_MINIMA_NO_CELULAR = 52;
+const PASSO_DE_ENCOLHIMENTO = 2;
 
 interface Perfil {
   readonly larguraCarta: number;
@@ -98,6 +102,8 @@ interface Entrada {
   readonly quantidade: number;
   readonly larguraDisponivel: number;
   readonly computador: boolean;
+  /** Acima desta altura as cartas encolhem (até um mínimo legível): o feltro e o palpite não somem. */
+  readonly alturaMaxima?: number;
 }
 
 /**
@@ -110,12 +116,35 @@ export function calcularLeque({
   quantidade,
   larguraDisponivel,
   computador,
+  alturaMaxima = Number.POSITIVE_INFINITY,
 }: Entrada): LayoutDoLeque {
   const disponivel =
     (larguraDisponivel > 0 ? larguraDisponivel : LARGURA_PADRAO) - 2 * MARGEM_LATERAL;
   const perfil = computador
     ? perfilDoComputador(quantidade)
     : perfilDoCelular(quantidade, disponivel);
+  const larguraMinima = Math.min(
+    perfil.larguraCarta,
+    computador ? LARGURA_MINIMA_NO_COMPUTADOR : LARGURA_MINIMA_NO_CELULAR,
+  );
+
+  let layout = montarLeque(quantidade, disponivel, perfil);
+  for (
+    let largura = perfil.larguraCarta - PASSO_DE_ENCOLHIMENTO;
+    layout.alturaTotal > alturaMaxima && largura >= larguraMinima;
+    largura -= PASSO_DE_ENCOLHIMENTO
+  ) {
+    const escala = largura / perfil.larguraCarta;
+    layout = montarLeque(quantidade, disponivel, {
+      ...perfil,
+      larguraCarta: largura,
+      passoMaximo: perfil.passoMaximo * escala,
+    });
+  }
+  return layout;
+}
+
+function montarLeque(quantidade: number, disponivel: number, perfil: Perfil): LayoutDoLeque {
   const { larguraCarta, passoMinimo, passoMaximo } = perfil;
   const alturaCarta = Math.round(larguraCarta * PROPORCAO_ALTURA);
 

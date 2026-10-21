@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Carta as DadosDaCarta, Valor } from '@fodinha/shared';
 import { classes } from '../../lib/classes';
 import { useDuploToque } from '../../lib/useDuploToque';
+import { CONSULTA_COMPUTADOR, useMediaQuery } from '../../lib/useMediaQuery';
 import type { EstiloComVariaveis } from '../../lib/estiloComVariaveis';
 import { verboDeToque } from '../tutorial/ponteiro';
 import { descreverSaldo } from './AndamentoDosPalpites';
@@ -11,9 +12,11 @@ import { SimbolosMaoEPe } from './SimbolosMaoEPe';
 
 /** Até esta quantidade de opções os botões são grandes e ocupam uma linha. */
 const OPCOES_GRANDES = 4;
-/** Até esta quantidade cada opção ganha a sua coluna; acima disso a grade fixa em 7 colunas. */
+/** Até esta quantidade cada opção ganha a sua coluna; acima disso a grade tem colunas fixas. */
 const OPCOES_EM_UMA_LINHA = 7;
+/** No celular 7 colunas mantêm o alvo tocável; no computador o painel é largo e 10 poupam fileiras. */
 const COLUNAS_DA_GRADE_LONGA = 7;
+const COLUNAS_DA_GRADE_LONGA_NO_COMPUTADOR = 10;
 
 interface Props {
   readonly cartasNaRodada: number;
@@ -61,12 +64,16 @@ export function PainelPalpite({
   );
   const [detalhesAbertos, definirDetalhesAbertos] = useState(false);
   const verbo = verboDeToque();
+  const computador = useMediaQuery(CONSULTA_COMPUTADOR);
   const dicaDoGesto = useDicaDoGesto('palpite');
   const opcoes = Array.from({ length: cartasNaRodada + 1 }, (_, quantidade) => quantidade);
   const soma = palpitesAnteriores.reduce((total, anterior) => total + anterior.palpite, 0);
   // Vazas ainda "sem dono" nos palpites: negativo quando a mesa já pediu mais do que há.
   const saldo = cartasNaRodada - soma;
-  const colunas = Math.min(opcoes.length, COLUNAS_DA_GRADE_LONGA);
+  const colunas = Math.min(
+    opcoes.length,
+    computador ? COLUNAS_DA_GRADE_LONGA_NO_COMPUTADOR : COLUNAS_DA_GRADE_LONGA,
+  );
   const estiloGrade: EstiloComVariaveis = { '--colunas': colunas };
 
   function confirmar(quantidade: number) {

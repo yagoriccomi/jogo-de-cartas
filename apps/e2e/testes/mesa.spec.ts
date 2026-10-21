@@ -11,6 +11,7 @@ import {
   medir,
   MESA_CHEIA,
   palpitarQualquerCoisa,
+  RODADA_LONGA,
   telaDe,
 } from './apoio';
 
@@ -201,5 +202,31 @@ test.describe('Mesa cheia (10 jogadores, 13 cartas)', () => {
     await expect(regras).toBeVisible();
     await esperarAnimacoes(page);
     expect(contem(telaDe(page), await medir(regras))).toBe(true);
+  });
+});
+
+test.describe('Rodada longa (2 jogadores, 19 cartas)', () => {
+  test('só a grade do palpite rola: título e Confirmar à vista', async ({ page }) => {
+    await abrirCenario(page, RODADA_LONGA);
+    const painel = page.locator('.palpite');
+    await expect(painel).toBeVisible({ timeout: ESPERA_DA_MESA_MS });
+    await esperarAnimacoes(page);
+    await esperarSemRolagem(page);
+
+    const rolagemInterna = await painel.evaluate((el) => el.scrollHeight - el.clientHeight);
+    expect(rolagemInterna, 'quem rola é a grade, não o painel').toBeLessThanOrEqual(1);
+    const caixaDoPainel = await medir(painel);
+    expect(contem(telaDe(page), caixaDoPainel)).toBe(true);
+    for (const parte of ['.palpite__titulo', '.palpite__rodape .botao']) {
+      expect(contem(caixaDoPainel, await medir(page.locator(parte))), parte).toBe(true);
+    }
+
+    // O último número alcançável rolando a grade, e a escolha chega ao Confirmar.
+    const ultima = page.locator('.palpite__opcao:not([disabled])').last();
+    await ultima.scrollIntoViewIfNeeded();
+    await ultima.click();
+    await expect(page.locator('.palpite__confirmar')).toContainText(
+      `Confirmar ${await ultima.textContent()}`,
+    );
   });
 });
