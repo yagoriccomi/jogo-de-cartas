@@ -1,5 +1,6 @@
 import { CONFIGURACAO_PADRAO } from '@fodinha/shared';
 import type { EstrategiaDeJogo } from '../../src/domain/estrategia-bot';
+import { jogarAVez } from '../../src/domain/jogar-a-vez';
 import { Partida } from '../../src/domain/partida';
 import { geradorComSemente } from '../apoio';
 
@@ -90,13 +91,7 @@ function jogarPartida(
       continue;
     }
     const id = partida.idDaVez as string;
-    const estrategia = estrategias[ladoDe(id)];
-    const visao = partida.visaoPara(id);
-    if (partida.faseAtual === 'palpites') {
-      partida.palpitar(id, estrategia.escolherPalpite(visao, id, partida.palpitesPermitidos(id)));
-    } else {
-      partida.jogarCarta(id, estrategia.escolherCarta(visao, id));
-    }
+    jogarAVez(partida, id, estrategias[ladoDe(id)]);
   }
   throw new Error(`Partida da semente ${semente} não terminou.`);
 }

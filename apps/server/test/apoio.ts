@@ -18,6 +18,7 @@ import {
   criarEstrategiasDosPerfis,
   type EstrategiasDosPerfis,
 } from '../src/domain/estrategia-bot';
+import { jogarAVez } from '../src/domain/jogar-a-vez';
 import { Partida } from '../src/domain/partida';
 import { RepositorioDeSalasEmMemoria } from '../src/infrastructure/adaptadores';
 
@@ -63,13 +64,7 @@ export function avancarPartida(partida: Partida): void {
     partida.iniciarProximaRodada();
     return;
   }
-  const id = partida.idDaVez as string;
-  const visao = partida.visaoPara(id);
-  if (partida.faseAtual === 'palpites') {
-    partida.palpitar(id, estrategia.escolherPalpite(visao, id, partida.palpitesPermitidos(id)));
-    return;
-  }
-  partida.jogarCarta(id, estrategia.escolherCarta(visao, id));
+  jogarAVez(partida, partida.idDaVez as string, estrategia);
 }
 
 export function jogarRodadaAteOFim(partida: Partida): void {

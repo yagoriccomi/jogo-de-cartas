@@ -3,6 +3,7 @@ import { mesmoPasso, type ProximoPasso, type TemposDaMesa } from '../domain/agen
 import type { GeradorAleatorio } from '../domain/aleatoriedade';
 import { PERFIL_DA_JOGADA_AUTOMATICA } from '../domain/bot/perfis';
 import type { EstrategiasDosPerfis } from '../domain/estrategia-bot';
+import { jogarAVez } from '../domain/jogar-a-vez';
 import type { Partida } from '../domain/partida';
 import type { Desfecho, Sala } from '../domain/sala';
 import type { Cancelamento, Notificador, Registrador, Relogio } from './portas';
@@ -199,19 +200,12 @@ export class CondutorDePartidas {
   }
 
   private jogarPor(sala: Sala, partida: Partida, jogadorId: string): void {
-    const visao = partida.visaoPara(jogadorId);
     const perfil = sala.participante(jogadorId)?.perfilDoBot ?? PERFIL_DA_JOGADA_AUTOMATICA;
-    const estrategia = this.deps.estrategias[perfil];
-    if (partida.faseAtual === 'palpites') {
-      partida.palpitar(
-        jogadorId,
-        estrategia.escolherPalpite(visao, jogadorId, partida.palpitesPermitidos(jogadorId)),
-      );
-      return;
-    }
-    partida.jogarCarta(jogadorId, estrategia.escolherCarta(visao, jogadorId));
+    const jogada = jogarAVez(partida, jogadorId, this.deps.estrategias[perfil]);
     // Só bot de verdade: quem estourou o prazo ou está saindo é humano e fala por si.
-    if (sala.participante(jogadorId)?.ehBot) this.talvezReagirComoBot(sala, jogadorId);
+    if (jogada.tipo === 'carta' && sala.participante(jogadorId)?.ehBot) {
+      this.talvezReagirComoBot(sala, jogadorId);
+    }
   }
 
   private talvezReagirComoBot(sala: Sala, jogadorId: string): void {
