@@ -1,5 +1,6 @@
 import { MARCADORES, TEMPOS_DA_ANIMACAO, seletor } from './animacao-compartilhada';
 import type { LayoutDoLeque, PosicaoNoLeque } from './leque';
+import type { VooDaCarta } from './planoDaMao';
 
 /** Verso desenhado por cima da face enquanto a carta ainda não foi "desvirada". */
 export const SELETOR_VERSO = '.mao__verso';
@@ -21,36 +22,23 @@ export interface AnimacaoEmCurso {
 interface EntradaDaDistribuicao {
   /** Um `li` por carta, na ordem recebida do servidor. */
   readonly itens: readonly HTMLElement[];
-  /** Cartas que já são verso por natureza (rodada cega) não precisam do giro. */
-  readonly ocultas: readonly boolean[];
+  /** Plano de cada carta (`planejarDistribuicao`), na mesma ordem dos itens. */
+  readonly voos: readonly VooDaCarta[];
   readonly leque: HTMLElement;
   readonly layout: LayoutDoLeque;
-  readonly jogadoresNaMesa: number;
 }
 
 function transformar(posicao: PosicaoNoLeque, dx: number, dy: number, escala = 1): string {
   return `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) translateY(${posicao.deslocamentoY.toFixed(1)}px) rotate(${posicao.rotacao.toFixed(1)}deg) scale(${escala})`;
 }
 
-/** Sorteio de posições: a carta recebida em i-ésimo lugar pousa em `resultado[i]`, fora de ordem. */
-function sortearLugares(quantidade: number): number[] {
-  const lugares = Array.from({ length: quantidade }, (_, indice) => indice);
-  for (let i = lugares.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    const guardado = lugares[i] ?? 0;
-    lugares[i] = lugares[j] ?? 0;
-    lugares[j] = guardado;
-  }
-  return lugares;
-}
-
 /**
- * Distribuição: espera o baralho ser embaralhado, as cartas voam viradas do baralho até lugares
- * sorteados da mão (desvirando ao pousar) e, quando todas chegam, a mão se organiza na ordem do
- * servidor. As posições finais já estão no DOM; aqui só se anima a diferença (FLIP).
+ * Executa o plano da distribuição: as cartas voam viradas do baralho até os lugares do plano
+ * (desvirando ao pousar) e, quando todas chegam, a mão se organiza na ordem do servidor. As
+ * posições finais já estão no DOM; aqui só se anima a diferença (FLIP).
  */
 export function animarDistribuicao(entrada: EntradaDaDistribuicao): AnimacaoEmCurso {
-  const { itens, ocultas, leque, layout, jogadoresNaMesa } = entrada;
+  const { itens, voos: plano, leque, layout } = entrada;
   const { posicoes, larguraCarta, alturaCarta } = layout;
   const todas: Animation[] = [];
   const cancelar = () => todas.forEach((a) => a.cancel());
@@ -65,14 +53,14 @@ export function animarDistribuicao(entrada: EntradaDaDistribuicao): AnimacaoEmCu
       }
     : { x: window.innerWidth / 2, y: -alturaCarta };
 
-  const lugares = sortearLugares(itens.length);
   const pouso: { animacao: Animation; item: HTMLElement; deLanding: string; base: string }[] = [];
   const voos: Animation[] = [];
 
   itens.forEach((item, indice) => {
     const posicao = posicoes[indice];
-    const alvo = posicoes[lugares[indice] ?? indice];
-    if (!posicao || !alvo) return;
+    const planoDoVoo = plano[indice];
+    const alvo = planoDoVoo && posicoes[planoDoVoo.lugar];
+    if (!posicao || !planoDoVoo || !alvo) return;
 
     const centroX = caixa.left + posicao.esquerda + larguraCarta / 2;
     const centroY = caixa.top + posicao.topo + alturaCarta / 2;
@@ -80,9 +68,7 @@ export function animarDistribuicao(entrada: EntradaDaDistribuicao): AnimacaoEmCu
     const chegada = transformar(alvo, alvo.esquerda - posicao.esquerda, alvo.topo - posicao.topo);
     const opcoes: KeyframeAnimationOptions = {
       duration: TEMPOS_DA_ANIMACAO.vooDaCartaMs,
-      delay:
-        TEMPOS_DA_ANIMACAO.embaralharMs +
-        indice * TEMPOS_DA_ANIMACAO.intervaloDaDistribuicaoMs * jogadoresNaMesa,
+      delay: planoDoVoo.atrasoMs,
       fill: 'both',
     };
 
@@ -105,7 +91,11 @@ export function animarDistribuicao(entrada: EntradaDaDistribuicao): AnimacaoEmCu
 
     const frente = item.firstElementChild;
     const verso = item.querySelector(SELETOR_VERSO);
-    if (ocultas[indice] || !(frente instanceof HTMLElement) || !(verso instanceof HTMLElement)) {
+    if (
+      !planoDoVoo.desvira ||
+      !(frente instanceof HTMLElement) ||
+      !(verso instanceof HTMLElement)
+    ) {
       return;
     }
     todas.push(

@@ -22,6 +22,15 @@ import { Carta } from './Carta';
 import { useDicaDoGesto } from './dicaDoGesto';
 import { calcularLeque } from './leque';
 import { animarDistribuicao } from './mao-animacoes';
+import {
+  comecaDistribuindo,
+  idsDasOcultas,
+  mudancaDaMao,
+  planejarDistribuicao,
+  registrarMao,
+  vistaDaMao,
+  type RegistroDaMao,
+} from './planoDaMao';
 
 const JOGADORES_PADRAO_NA_MESA = 4;
 /** Fatia da tela que a mão pode ocupar: nas rodadas longas o resto fica para o feltro e o palpite. */
@@ -42,23 +51,6 @@ interface Props {
   readonly jogadoresNaMesa?: number;
   /** Anima a distribuição também na primeira montagem (ao reconectar, deixe `false`). */
   readonly animarAoMontar?: boolean;
-}
-
-interface Registro {
-  readonly assinatura: string;
-  readonly ids: ReadonlySet<string>;
-  readonly ocultas: ReadonlySet<string>;
-  readonly rodada: number | undefined;
-}
-
-function registrar(cartas: readonly CartaNaMao[], rodada: number | undefined): Registro {
-  const ocultas = cartas.filter(ehCartaOculta).map((carta) => carta.id);
-  return {
-    assinatura: `${rodada ?? ''}:${cartas.map((c) => c.id + (ehCartaOculta(c) ? '!' : '')).join('|')}`,
-    ids: new Set(cartas.map((carta) => carta.id)),
-    ocultas: new Set(ocultas),
-    rodada,
-  };
 }
 
 export function Mao({
@@ -84,20 +76,26 @@ export function Mao({
     jogar(id, evento.currentTarget),
   );
 
-  const comecaAnimando = animarAoMontar && cartas.length > 0 && !prefereMenosMovimento();
-  const [registro, definirRegistro] = useState<Registro>(() => registrar(cartas, numeroRodada));
+  const [comecaAnimando] = useState(() =>
+    comecaDistribuindo({
+      animarAoMontar,
+      quantidade: cartas.length,
+      menosMovimento: prefereMenosMovimento(),
+    }),
+  );
+  const [registro, definirRegistro] = useState<RegistroDaMao>(() =>
+    registrarMao(cartas, numeroRodada),
+  );
   const [chegando, definirChegando] = useState(comecaAnimando);
   const [lote, definirLote] = useState(comecaAnimando ? 1 : 0);
 
-  // Rodada nova (ids inéditos) refaz a distribuição. Decidido na renderização para o verso já
-  // existir no DOM antes da pintura.
-  const registroAtual = registrar(cartas, numeroRodada);
-  if (registroAtual.assinatura !== registro.assinatura) {
+  // Mão nova refaz a distribuição. Decidido na renderização para o verso já existir no DOM antes
+  // da pintura.
+  const registroAtual = registrarMao(cartas, numeroRodada);
+  const mudanca = mudancaDaMao(registro, registroAtual);
+  if (mudanca !== 'nenhuma') {
     definirRegistro(registroAtual);
-    const rodadaMudou = numeroRodada !== undefined && numeroRodada !== registro.rodada;
-    const novaMao =
-      cartas.length > 0 && (rodadaMudou || cartas.some((carta) => !registro.ids.has(carta.id)));
-    if (novaMao && !prefereMenosMovimento()) {
+    if (mudanca === 'maoNova' && !prefereMenosMovimento()) {
       definirChegando(true);
       definirLote((atual) => atual + 1);
     }
@@ -131,12 +129,16 @@ export function Mao({
       return;
     }
     let cancelado = false;
+    const voos = planejarDistribuicao({
+      ocultas: atuais.map(ehCartaOculta),
+      jogadoresNaMesa: jogadores,
+      sortear: Math.random,
+    });
     const animacao = animarDistribuicao({
       itens: itens.filter((item): item is HTMLLIElement => item !== undefined),
-      ocultas: atuais.map(ehCartaOculta),
+      voos,
       leque,
       layout: leiaute,
-      jogadoresNaMesa: jogadores,
     });
     void animacao.terminou.then(() => {
       if (cancelado) return;
@@ -152,10 +154,7 @@ export function Mao({
   // Na rodada cega não há fase de jogar: o servidor joga a carta oculta sozinho e ela some da mão.
   // Como não existe clique, a origem do voo é registrada quando a carta sai (ou a mão desmonta),
   // medindo o elemento que ainda está no DOM durante a limpeza do efeito.
-  const chaveDasOcultas = cartas
-    .filter(ehCartaOculta)
-    .map((carta) => carta.id)
-    .join('|');
+  const chaveDasOcultas = idsDasOcultas(cartas).join('|');
   useLayoutEffect(() => {
     if (chaveDasOcultas === '') return;
     const elementos = chaveDasOcultas.split('|').flatMap((id) => {
@@ -198,8 +197,14 @@ export function Mao({
 
   if (cartas.length === 0) return null;
 
-  const todasOcultas = cartas.every(ehCartaOculta);
-  const bloqueada = chegando || todasOcultas;
+  const vista = vistaDaMao({
+    cartas,
+    chegando,
+    podeJogar,
+    toque,
+    destacarDica: dicaDoGesto.destacar,
+  });
+  const { interativa, ensinandoGesto, dica } = vista;
 
   function jogar(cartaId: string, elemento: HTMLElement) {
     // A mesa usa este retângulo para animar o voo da mão até o centro.
@@ -210,7 +215,7 @@ export function Mao({
   }
 
   function aoClicar(cartaId: string, evento: EventoDeMouse<HTMLButtonElement>) {
-    if (!podeJogar || bloqueada) return;
+    if (!interativa) return;
     toqueNaCarta.tocar(cartaId, evento);
   }
 
@@ -219,16 +224,6 @@ export function Mao({
     evento.preventDefault();
     toqueNaCarta.esquecer();
     definirSelecionadaId(null);
-  }
-
-  const contagem = `Sua mão · ${cartas.length} ${cartas.length === 1 ? 'carta' : 'cartas'}`;
-  let dica = contagem;
-  const ensinandoGesto = podeJogar && !bloqueada && dicaDoGesto.destacar;
-  if (todasOcultas) dica = 'Rodada cega · sua carta fica virada e é revelada na mesa';
-  else if (podeJogar && !bloqueada) {
-    dica = toque
-      ? 'Toque para escolher, toque duas vezes para jogar'
-      : 'Clique para escolher, dois cliques rápidos para jogar · botão direito cancela';
   }
 
   return (
@@ -247,7 +242,7 @@ export function Mao({
           const posicao = layout.posicoes[indice];
           if (!posicao) return null;
           const selecionada = selecionadaId === carta.id;
-          const comVerso = !ehCartaOculta(carta) && chegando;
+          const comVerso = vista.versos[indice] ?? false;
           const estilo: EstiloComVariaveis = {
             left: posicao.esquerda,
             top: posicao.topo,
@@ -270,11 +265,9 @@ export function Mao({
                 largura={layout.larguraCarta}
                 densa={layout.densa}
                 estado={selecionada ? 'selecionada' : apagar ? 'apagada' : 'normal'}
-                pressionada={podeJogar && !bloqueada ? selecionada : undefined}
+                pressionada={interativa ? selecionada : undefined}
                 atributosDeDados={{ [MARCADORES.cartaNaMao]: carta.id }}
-                onClick={
-                  podeJogar && !bloqueada ? (evento) => aoClicar(carta.id, evento) : undefined
-                }
+                onClick={interativa ? (evento) => aoClicar(carta.id, evento) : undefined}
               />
               {comVerso && (
                 <div className="mao__verso" aria-hidden="true">
@@ -286,7 +279,7 @@ export function Mao({
         })}
       </ul>
       {/* Sob as cartas e apagada: orienta sem competir com a mão. Com 1 carta não há ordem. */}
-      {cartas.length > 1 && (
+      {vista.mostrarOrdem && (
         <div className="mao__ordem" aria-hidden="true">
           <span>◀ Mais forte</span>
           <span>Mais fraca ▶</span>
