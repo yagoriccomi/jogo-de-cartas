@@ -202,6 +202,20 @@ describe('Partida — mão, saídas e entradas', () => {
     expect(seguinte.cartasPorJogador).toBe(2);
   });
 
+  it('deveLembrarQuemDeixaAMesaMesmoDepoisDeOAssentoSumir', () => {
+    const partida = novaPartida(4, 9);
+    partida.agendarSaida('j1', 'eliminar');
+    partida.agendarSaida('j2', 'remover');
+    expect(partida.deixaAMesa('j1')).toBe(false);
+    expect(partida.deixaAMesa('j2')).toBe(true);
+
+    jogarAteFimDaRodada(partida);
+    partida.iniciarProximaRodada();
+    expect(partida.participa('j2')).toBe(false);
+    expect(partida.deixaAMesa('j2')).toBe(true);
+    expect(partida.deixaAMesa('j1')).toBe(false);
+  });
+
   it('deveEncerrarQuandoAsSaidasDeixamUmUnicoJogador', () => {
     const partida = novaPartida(2, 4);
     partida.agendarSaida('j1', 'remover');

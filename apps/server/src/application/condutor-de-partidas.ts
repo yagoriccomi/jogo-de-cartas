@@ -62,7 +62,10 @@ export class CondutorDePartidas {
 
   publicar(sala: Sala): void {
     // Quem saiu não recebe mais nada, mesmo enquanto um bot termina a rodada por ele.
-    const humanos = sala.todos.filter((p) => !p.ehBot && !p.saindo).map((p) => p.id);
+    const humanos = sala
+      .ativos()
+      .filter((p) => !p.ehBot)
+      .map((p) => p.id);
     this.deps.notificador.enviarEstadoSala(humanos, sala.estado());
 
     const partida = sala.partida;
@@ -74,7 +77,10 @@ export class CondutorDePartidas {
 
   /** Reação é efêmera: vai a quem está na sala agora e não altera nem agenda nada. */
   publicarReacao(sala: Sala, reacao: ReacaoNaMesa): void {
-    const humanos = sala.todos.filter((p) => !p.ehBot && !p.saindo).map((p) => p.id);
+    const humanos = sala
+      .ativos()
+      .filter((p) => !p.ehBot)
+      .map((p) => p.id);
     this.deps.notificador.enviarReacao(humanos, reacao);
   }
 
@@ -212,8 +218,8 @@ export class CondutorDePartidas {
 
   /** Humano estourou o prazo: a mesa inteira de bots reage, cada um com um emoji sorteado. */
   private botsZoamQuemPerdeuAVez(sala: Sala): void {
-    for (const bot of sala.todos) {
-      if (bot.ehBot && !bot.saindo) this.reagirComoBot(sala, bot.id);
+    for (const bot of sala.ativos()) {
+      if (bot.ehBot) this.reagirComoBot(sala, bot.id);
     }
   }
 

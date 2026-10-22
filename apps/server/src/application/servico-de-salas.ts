@@ -260,8 +260,7 @@ export class ServicoDeSalas {
   /** Não passa por `alterar`: reação não muda a sala, então não há estado a republicar. */
   reagir(ator: Ator, reacao: Reacao): void {
     const sala = this.salaExistente(ator.codigoSala);
-    const participante = sala.participante(ator.jogadorId);
-    if (!participante || participante.saindo) {
+    if (!sala.participanteAtivo(ator.jogadorId)) {
       throw new ErroDeRegra('SEM_PERMISSAO', 'Você não está nesta sala.');
     }
     if (!sala.emPartida) {
@@ -282,8 +281,7 @@ export class ServicoDeSalas {
 
   private alterar<T>(ator: Ator, mudanca: (sala: Sala) => T): T {
     const sala = this.salaExistente(ator.codigoSala);
-    const participante = sala.participante(ator.jogadorId);
-    if (!participante || participante.saindo) {
+    if (!sala.participanteAtivo(ator.jogadorId)) {
       throw new ErroDeRegra('SEM_PERMISSAO', 'Você não está nesta sala.');
     }
     const resultado = mudanca(sala);
@@ -352,7 +350,6 @@ export class ServicoDeSalas {
       ehBot: false,
       perfilDoBot: null,
       conectado: true,
-      saindo: false,
       tokenSessao: this.deps.identificadores.novoToken(),
       dispositivoId,
     };
@@ -372,7 +369,6 @@ export class ServicoDeSalas {
       ehBot: true,
       perfilDoBot: null,
       conectado: true,
-      saindo: false,
       tokenSessao: null,
       dispositivoId: null,
     };
