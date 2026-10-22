@@ -155,6 +155,14 @@ Serviços do compose: **`deps`** (one-shot, instala dependências dentro do cont
 
 `npm run dev` · `npm run build` · `npm test` · `npm run typecheck` · `npm run lint` · `npm run format` · `npm run test:e2e` (testes de tela, Playwright em `apps/e2e`; ao mudar layout da mesa, do palpite ou do tutorial, rode-os)
 
+## Deploy (automático a cada merge na `main`)
+
+**Depois de todo merge na `main`, acompanhe os dois deploys e avise o usuário quando ambos terminarem**, com o estado de cada um (ou o erro, se falhar). Não encerre a tarefa só com o merge.
+
+- **Vercel (web):** projeto `jogo-de-cartas` (`prj_9E6hAaZqI1octiX3pNlpMVmhRiP4`, time `team_ZAm2WtQRBFWlkdJvPlSUhe1u`). Pelo MCP da Vercel: `list_deployments` com esse `projectId`/`teamId` e `sha` do commit de merge; pronto quando `target: production` e `state: READY` (`ERROR`/`CANCELED` = falhou: leia os logs de build).
+- **Render (servidor):** serviço `fodinha-server` (`srv-db7p6avavr4c7392fkkg`, workspace `tea-d1hc27mr433s738ri6u0`), autodeploy da `main`. Pelo MCP da Render: `list_deploys` do serviço e `get_deploy` do deploy com o commit do merge; pronto quando `status: live` (`build_failed`/`update_failed` = falhou). O deploy leva ~40 s.
+- **Confirmação final:** `GET https://fodinha-server-2sg2.onrender.com/health` deve responder 200 (no plano grátis, a primeira chamada pode demorar enquanto o serviço acorda).
+
 ## Protocolo de Atualização do README.md (CRÍTICO)
 
 O arquivo `README.md` é a documentação pública deste projeto. **Sempre que ocorrer
