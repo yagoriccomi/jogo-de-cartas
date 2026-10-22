@@ -16,7 +16,11 @@ import type { VisaoDaPartida } from './projecao';
  * Também joga por quem estourou o prazo da vez. Regras: `answers/2026_10_22 bot-situacoes 001.md`.
  */
 export interface EstrategiaDeJogo {
-  escolherPalpite(visao: VisaoDaPartida, palpitesPermitidos: readonly number[]): number;
+  escolherPalpite(
+    visao: VisaoDaPartida,
+    jogadorId: string,
+    palpitesPermitidos: readonly number[],
+  ): number;
   escolherCarta(visao: VisaoDaPartida, jogadorId: string): string;
 }
 
@@ -53,8 +57,11 @@ export class EstrategiaDoBot implements EstrategiaDeJogo {
     this.ajustes = AJUSTES_DOS_PERFIS[perfil];
   }
 
-  escolherPalpite(visao: VisaoDaPartida, palpitesPermitidos: readonly number[]): number {
-    const jogadorId = visao.idDaVez ?? '';
+  escolherPalpite(
+    visao: VisaoDaPartida,
+    jogadorId: string,
+    palpitesPermitidos: readonly number[],
+  ): number {
     const contexto = contextoDe(visao);
     const desejado = visao.rodadaCega
       ? chanceNaRodadaCega(visao, jogadorId, contexto)

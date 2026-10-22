@@ -205,7 +205,7 @@ export class CondutorDePartidas {
     if (partida.faseAtual === 'palpites') {
       partida.palpitar(
         jogadorId,
-        estrategia.escolherPalpite(visao, partida.palpitesPermitidos(jogadorId)),
+        estrategia.escolherPalpite(visao, jogadorId, partida.palpitesPermitidos(jogadorId)),
       );
       return;
     }

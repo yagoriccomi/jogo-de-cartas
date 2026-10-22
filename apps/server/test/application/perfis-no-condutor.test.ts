@@ -14,9 +14,9 @@ function estrategiasQueAnotam() {
   for (const perfil of PERFIS_DE_BOT) {
     const real = new EstrategiaDoBot(BOT_SEM_ERRO, perfil);
     estrategias[perfil] = {
-      escolherPalpite: (visao, permitidos) => {
-        decisoes.push({ perfil, jogadorId: visao.idDaVez ?? '' });
-        return real.escolherPalpite(visao, permitidos);
+      escolherPalpite: (visao, jogadorId, permitidos) => {
+        decisoes.push({ perfil, jogadorId });
+        return real.escolherPalpite(visao, jogadorId, permitidos);
       },
       escolherCarta: (visao, jogadorId) => {
         decisoes.push({ perfil, jogadorId });

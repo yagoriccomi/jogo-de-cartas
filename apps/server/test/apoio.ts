@@ -66,7 +66,7 @@ export function avancarPartida(partida: Partida): void {
   const id = partida.idDaVez as string;
   const visao = partida.visaoPara(id);
   if (partida.faseAtual === 'palpites') {
-    partida.palpitar(id, estrategia.escolherPalpite(visao, partida.palpitesPermitidos(id)));
+    partida.palpitar(id, estrategia.escolherPalpite(visao, id, partida.palpitesPermitidos(id)));
     return;
   }
   partida.jogarCarta(id, estrategia.escolherCarta(visao, id));
