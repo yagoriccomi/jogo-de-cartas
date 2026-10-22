@@ -4,7 +4,7 @@ import type { GeradorAleatorio } from '../domain/aleatoriedade';
 import { PERFIL_DA_JOGADA_AUTOMATICA } from '../domain/bot/perfis';
 import type { EstrategiasDosPerfis } from '../domain/estrategia-bot';
 import type { Partida } from '../domain/partida';
-import type { Sala } from '../domain/sala';
+import type { Desfecho, Sala } from '../domain/sala';
 import type { Cancelamento, Notificador, Registrador, Relogio } from './portas';
 
 /** Chance de o bot mandar uma reação a cada carta que joga: dá vida à mesa sem virar spam. */
@@ -45,9 +45,12 @@ export class CondutorDePartidas {
 
   constructor(private readonly deps: DependenciasDoCondutor) {}
 
-  /** Deve ser chamado após QUALQUER mudança na sala: reagenda o próximo passo e notifica todos. */
-  aposMudanca(sala: Sala): void {
-    sala.descartarQuemSaiu();
+  /**
+   * Deve ser chamado após QUALQUER mudança na sala: registra o desfecho dela, reagenda o próximo
+   * passo e notifica todos.
+   */
+  aposMudanca(sala: Sala, desfecho?: Desfecho): void {
+    if (desfecho) this.registrarEliminados(sala, desfecho.eliminados);
     this.reconciliarCarencias(sala);
     this.agendarProximoPasso(sala);
     this.publicar(sala);
@@ -133,16 +136,16 @@ export class CondutorDePartidas {
       if (daSala.has(jogadorId)) continue;
       const cancelar = this.deps.relogio.agendar(this.deps.tempos.carenciaDeDesconexaoMs, () => {
         daSala.delete(jogadorId);
-        if (!sala.abrirVotacao(jogadorId, this.deps.relogio.agora())) return;
+        const desfecho = sala.abrirVotacao(jogadorId, this.deps.relogio.agora());
+        if (!desfecho) return;
         this.deps.registrador.info({ sala: sala.codigo }, 'Partida pausada por desconexão');
-        // O ausente deixou de ser eleitor: alguma votação aberta pode se resolver agora.
-        this.registrarEliminados(sala, sala.resolverVotacoes());
-        this.aposMudanca(sala);
+        this.aposMudanca(sala, desfecho);
       });
       daSala.set(jogadorId, cancelar);
     }
   }
 
+  /** Único registro das eliminações por votação, venham do serviço ou da carência vencida. */
   private registrarEliminados(sala: Sala, eliminados: readonly string[]): void {
     if (eliminados.length === 0) return;
     this.deps.registrador.info(
