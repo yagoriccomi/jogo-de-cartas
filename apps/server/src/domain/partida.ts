@@ -76,6 +76,7 @@ export class Partida {
   private vazasEmpatadas: VazaEmpatada[] = [];
   private resultadoRodada: ResultadoJogadorNaRodada[] | null = null;
   private vencedores: string[] = [];
+  private acoes = 0;
 
   private constructor(
     private configuracao: ConfiguracaoPartida,
@@ -124,6 +125,14 @@ export class Partida {
 
   get idDaVez(): string | null {
     return this.indiceDaVez === null ? null : this.jogador(this.indiceDaVez).id;
+  }
+
+  /**
+   * Conta cada ação que faz a partida andar (palpite, carta, nova rodada): identifica a etapa em
+   * curso mesmo quando o mesmo jogador fica com a vez duas vezes seguidas.
+   */
+  get andamento(): number {
+    return this.acoes;
   }
 
   get rodadaCega(): boolean {
@@ -190,6 +199,7 @@ export class Partida {
     }
 
     this.jogador(indice).palpite = quantidade;
+    this.acoes += 1;
     if (indice !== this.indiceDoPe) {
       this.indiceDaVez = this.proximoVivo(indice);
       return;
@@ -225,6 +235,7 @@ export class Partida {
 
     const [carta] = jogador.mao.splice(posicaoNaMao, 1) as [Carta];
     this.mesa.push({ jogadorId, carta });
+    this.acoes += 1;
 
     if (this.mesa.length < this.vivos().length) {
       this.indiceDaVez = this.proximoVivo(indice);
@@ -238,6 +249,7 @@ export class Partida {
     if (this.fase !== 'fim_de_rodada') {
       throw new ErroDeRegra('JOGADA_INVALIDA', 'A rodada atual ainda não terminou.');
     }
+    this.acoes += 1;
     const idDoProximoPe = this.jogador(this.proximoVivo(this.indiceDoPe)).id;
     this.retirarAssentosRemovidos();
     this.sentarEntrantes();
