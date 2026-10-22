@@ -21,8 +21,7 @@ import { Mao } from './Mao';
 import { MesaLinhas } from './MesaLinhas';
 import { Montinhos } from './Montinhos';
 import { NumerosDaRodada } from './NumerosDaRodada';
-import { emOrdemDeJogo } from './ordemDeJogo';
-import { PainelPalpite, type PalpiteAnterior } from './PainelPalpite';
+import { PainelPalpite } from './PainelPalpite';
 import { PainelPausa } from './PainelPausa';
 import { PainelResultado } from './PainelResultado';
 import { SimbolosMaoEPe } from './SimbolosMaoEPe';
@@ -35,6 +34,7 @@ import { useAnimacaoDeVaza } from './useAnimacaoDeVaza';
 import { useRolarAtePlacaDaVez, useTituloDaVez } from './useSinaisDaVez';
 import { aberturaDaPartida, useBaralho } from './useBaralho';
 import { useMesaJogadas } from './useMesaJogadas';
+import { idDaVezAtiva, visaoDaMesa } from './visaoDaMesa';
 import './mesa.css';
 
 const SEM_CARTAS: readonly JogadaNaMesa[] = [];
@@ -57,10 +57,8 @@ export function TelaMesa() {
   useSonsDaMesa(jogo, sessao?.jogadorId ?? null);
   const viraRef = useRef<HTMLDivElement>(null);
   const adversariosRef = useRef<HTMLUListElement>(null);
-  // Hooks antes dos retornos antecipados; o cálculo completo de "minha vez" fica mais abaixo.
-  const vezEmRodada =
-    jogo !== null && (jogo.fase === 'palpites' || jogo.fase === 'jogando') && jogo.pausa === null;
-  const idDaVezAtivo = vezEmRodada ? jogo.idDaVez : null;
+  // Hooks antes dos retornos antecipados; o resto da visão da mesa é calculado mais abaixo.
+  const idDaVezAtivo = jogo === null ? null : idDaVezAtiva(jogo);
   useTituloDaVez(idDaVezAtivo !== null && idDaVezAtivo === sessao?.jogadorId);
   useRolarAtePlacaDaVez(adversariosRef, idDaVezAtivo);
   // Enquanto a vaza fechada está em cena, é ela que as linhas exibem (a mesa já foi limpa).
@@ -87,69 +85,26 @@ export function TelaMesa() {
     return <TelaFimDePartida jogo={jogo} meuId={meuId} />;
   }
 
-  const eu = jogo.jogadores.find((j) => j.id === meuId);
-  const participante = sala?.participantes.find((p) => p.id === meuId);
-  const aguardandoProximaRodada = participante?.aguardandoProximaRodada ?? eu === undefined;
-  // Placas na ordem de jogo: a mão fica à esquerda e o pé à direita.
-  const ordemDeJogo = emOrdemDeJogo(jogo.jogadores, jogo.idDoPrimeiro, jogo.idDoPe);
-  const adversarios = ordemDeJogo.filter((j) => j.id !== meuId);
-  const nomeDe = (id: string | null) => {
-    if (id === null) return null;
-    if (id === meuId) return 'Você';
-    return jogo.jogadores.find((j) => j.id === id)?.apelido ?? 'Jogador';
-  };
-
-  // Pausa por votação de ausente ou pelo dono: em ambos a mesa fica congelada.
-  const pausado = jogo.pausa !== null;
-  const emRodada = jogo.fase === 'palpites' || jogo.fase === 'jogando';
-  const souDaVez = emRodada && jogo.idDaVez === meuId && !pausado;
-  const estouEliminado = eu?.eliminado ?? false;
+  const visao = visaoDaMesa({ jogo, sala, meuId, recebidoEm: jogoRecebidoEm });
+  const {
+    eu,
+    pausado,
+    souDaVez,
+    estouEliminado,
+    aguardandoProximaRodada,
+    palpitando,
+    podeJogar,
+    prazoFinal,
+    vazaAtual,
+    nomeDe,
+  } = visao;
   const jogadorDaMaoAberta = jogo.jogadores.find((j) => j.id === maoAbertaDe);
-  const palpitando = jogo.fase === 'palpites' && souDaVez && !estouEliminado;
-  const podeJogar = jogo.fase === 'jogando' && souDaVez && !estouEliminado;
-  // Primeiro palpite da partida: nas placas, mão e pé aparecem com o nome, depois só o ícone. Na
-  // minha barra não: o rótulo cortaria o "Você", e o painel de palpite já diz "Você é o pé".
-  const rotularMaoEPe = jogo.numeroRodada === 1 && jogo.fase === 'palpites';
-
-  // Contagem a partir do "tempo restante" que o servidor mandou, não do relógio dele.
-  const prazoFinal =
-    emRodada && !pausado && jogo.prazoDaVezRestanteMs !== null
-      ? jogoRecebidoEm + jogo.prazoDaVezRestanteMs
-      : null;
-
-  const vivosEmOrdem = ordemDeJogo.filter((j) => !j.eliminado);
-  const minhaPosicao = vivosEmOrdem.findIndex((j) => j.id === meuId);
-  const palpitesAnteriores: PalpiteAnterior[] = vivosEmOrdem
-    .slice(0, Math.max(minhaPosicao, 0))
-    .flatMap((j) =>
-      j.palpite === null
-        ? []
-        : [{ id: j.id, nome: j.apelido, palpite: j.palpite, ehMao: j.id === jogo.idDoPrimeiro }],
-    );
-  const depoisDeVoce = minhaPosicao === -1 ? 0 : vivosEmOrdem.length - minhaPosicao - 1;
-  const jaPalpitaram = vivosEmOrdem.filter((j) => j.palpite !== null);
-  const somaDosPalpites = jaPalpitaram.reduce((soma, j) => soma + (j.palpite ?? 0), 0);
-
-  let situacao: string;
-  if (aguardandoProximaRodada) situacao = 'Você entra na próxima rodada';
-  else if (pausado) situacao = 'Partida pausada';
-  else if (jogo.fase === 'fim_de_rodada') situacao = 'Fim da rodada';
-  else if (souDaVez)
-    situacao = jogo.fase === 'palpites' ? 'Sua vez de palpitar' : 'Sua vez de jogar';
-  else if (jogo.idDaVez !== null)
-    // Só o primeiro nome: "Paula Tejano" inteiro espremeria o meu status na barra.
-    situacao = `Vez de ${nomeDe(jogo.idDaVez)?.split(' ')[0]} ${jogo.fase === 'palpites' ? 'palpitar' : 'jogar'}`;
-  else situacao = 'Aguardando…';
 
   const vazaEmCena = animacao.vaza;
   // O montinho novo só aparece quando a animação chega; até lá fica reservado (invisível).
   const donoDoMonteOculto = vazaEmCena ? (vazaEmCena.vencedorId ?? DESTINO_DOS_EMPATES) : null;
   const cartasTexto = jogo.cartasPorJogador === 1 ? 'carta' : 'cartas';
-  // Vazas já decididas na rodada (ganhas por alguém ou todas anuladas); a da vez é a seguinte.
-  const vazasDecididas =
-    jogo.jogadores.reduce((soma, j) => soma + j.vazasFeitas, 0) + jogo.vazasEmpatadas.length;
-  const vazaAtual = Math.min(vazasDecididas + 1, jogo.cartasPorJogador);
-  const minhasFeitas = (eu?.vazasFeitas ?? 0) - (eu && eu.id === donoDoMonteOculto ? 1 : 0);
+  const minhasFeitas = visao.minhasFeitas - (eu && eu.id === donoDoMonteOculto ? 1 : 0);
 
   return (
     <div className="mesa">
@@ -184,15 +139,15 @@ export function TelaMesa() {
 
       <div className="adversarios-area">
         <ul ref={adversariosRef} className="adversarios" aria-label="Adversários">
-          {adversarios.map((jogador) => {
-            const ehDaVez = jogador.id === jogo.idDaVez && emRodada;
+          {visao.adversarios.map((jogador) => {
+            const ehDaVez = jogador.id === visao.idDaVez;
             return (
               <PlacaJogador
                 key={jogador.id}
                 jogador={jogador}
                 ehPe={jogador.id === jogo.idDoPe}
                 ehPrimeiro={jogador.id === jogo.idDoPrimeiro}
-                rotularMaoEPe={rotularMaoEPe}
+                rotularMaoEPe={visao.rotularMaoEPe}
                 ehDaVez={ehDaVez}
                 prazoFinal={ehDaVez ? prazoFinal : null}
                 manilha={jogo.manilha}
@@ -240,11 +195,11 @@ export function TelaMesa() {
           <div className="feltro__jogadas">
             {jogo.fase === 'palpites' && !palpitando && (
               <AndamentoDosPalpites
-                nomeDaVez={pausado ? null : nomeDe(jogo.idDaVez)}
-                soma={somaDosPalpites}
+                nomeDaVez={nomeDe(visao.idDaVez)}
+                soma={visao.palpite.soma}
                 cartasNaRodada={jogo.cartasPorJogador}
-                palpitaram={jaPalpitaram.length}
-                vivos={vivosEmOrdem.length}
+                palpitaram={visao.palpite.palpitaram}
+                vivos={visao.palpite.vivos}
               />
             )}
             {cartasNaMesa.length === 0 && jogo.fase !== 'palpites' && (
@@ -263,7 +218,7 @@ export function TelaMesa() {
           </div>
 
           {/* Chamada de atenção a cada vez nova; a chave remonta o elemento e reinicia a animação. */}
-          {souDaVez && !estouEliminado && (
+          {visao.devoAgir && (
             <p
               key={`${jogo.numeroRodada}-${jogo.fase}-${jogo.mesa.length}`}
               className="faixa-da-vez"
@@ -278,12 +233,9 @@ export function TelaMesa() {
             <PainelPalpite
               key={jogo.numeroRodada}
               cartasNaRodada={jogo.cartasPorJogador}
-              palpiteProibido={jogo.palpiteProibido}
-              souOPe={jogo.idDoPe === meuId}
+              palpite={visao.palpite}
               vira={jogo.vira}
               manilha={jogo.manilha}
-              palpitesAnteriores={palpitesAnteriores}
-              depoisDeVoce={depoisDeVoce}
               ocupado={ocupado}
               onConfirmar={(quantidade) => void executar(() => palpitar(quantidade))}
             />
@@ -308,7 +260,7 @@ export function TelaMesa() {
             <span
               className={classes(
                 'minha__nome',
-                souDaVez && emRodada ? 'neon neon--ciano' : 'minha__nome--apagado',
+                souDaVez ? 'neon neon--ciano' : 'minha__nome--apagado',
               )}
             >
               {eu?.apelido ?? sala?.participantes.find((p) => p.id === meuId)?.apelido ?? 'Você'}
@@ -344,7 +296,7 @@ export function TelaMesa() {
             role="status"
             aria-live="polite"
           >
-            {souDaVez ? 'Sua vez' : situacao}
+            {souDaVez ? 'Sua vez' : visao.situacao.texto}
             {souDaVez && prazoFinal !== null && (
               <ContagemRegressiva
                 prazoFinal={prazoFinal}
@@ -371,10 +323,10 @@ export function TelaMesa() {
             cartas={jogo.minhaMao}
             manilha={jogo.manilha}
             numeroRodada={jogo.numeroRodada}
-            jogadoresNaMesa={jogo.jogadores.filter((j) => !j.eliminado).length}
+            jogadoresNaMesa={visao.vivosNaMesa}
             animarAoMontar={aberturaDaPartida(jogo, jogoRecebidoEm)}
             podeJogar={podeJogar && !ocupado}
-            apagar={jogo.fase === 'jogando' && !souDaVez}
+            apagar={visao.apagarMao}
             onJogar={(cartaId) => void executar(() => jogarCarta(cartaId))}
           />
         )}
