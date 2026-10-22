@@ -3,7 +3,6 @@ import {
   CONFIGURACAO_PADRAO,
   type EstadoPartidaVisivel,
   type EstadoSala,
-  type JogadorVisivel,
   type PausaVisivel,
 } from '@fodinha/shared';
 import {
@@ -12,58 +11,10 @@ import {
   visaoDaMesa,
   type EntradaDaVisao,
 } from '../../../src/features/mesa/visaoDaMesa';
+import { EU, jogador, partida } from '../../apoio/partida';
 
-const EU = 'eu';
 const RECEBIDO_EM = 1_000;
 const PAUSA_DO_DONO: PausaVisivel = { votacoes: [], pausadaPeloDono: true, lendoRegras: null };
-
-function jogador(id: string, campos: Partial<JogadorVisivel> = {}): JogadorVisivel {
-  return {
-    id,
-    apelido: id === EU ? 'Eu Mesmo' : `${id.toUpperCase()} Silva`,
-    ehBot: false,
-    conectado: true,
-    vidas: 5,
-    eliminado: false,
-    palpite: null,
-    vazasFeitas: 0,
-    vazasGanhas: [],
-    cartasNaMao: 3,
-    cartaNaTesta: null,
-    maoRevelada: null,
-    saiAoFimDaRodada: false,
-    ...campos,
-  };
-}
-
-/** Mesa de 4 na ordem a (mão), b, eu, d (pé), 3 cartas, ninguém palpitou ainda. */
-function partida(campos: Partial<EstadoPartidaVisivel> = {}): EstadoPartidaVisivel {
-  return {
-    configuracao: CONFIGURACAO_PADRAO,
-    fase: 'palpites',
-    numeroRodada: 2,
-    cartasPorJogador: 3,
-    rodadaCega: false,
-    vira: null,
-    manilha: '5',
-    jogadores: [jogador('a'), jogador('b'), jogador(EU), jogador('d')],
-    idDoPe: 'd',
-    idDoPrimeiro: 'a',
-    idDaVez: 'a',
-    prazoDaVezEm: null,
-    prazoDaVezRestanteMs: 20_000,
-    minhaMao: [],
-    mesa: [],
-    ultimaVaza: null,
-    vazasEmpatadas: [],
-    palpiteProibido: null,
-    resultadoRodada: null,
-    proximaRodada: null,
-    vencedores: [],
-    pausa: null,
-    ...campos,
-  };
-}
 
 function visao(jogo: EstadoPartidaVisivel, extra: Partial<EntradaDaVisao> = {}) {
   return visaoDaMesa({
