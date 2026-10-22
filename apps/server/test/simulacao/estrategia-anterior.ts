@@ -151,7 +151,11 @@ function abrirVaza(cartasEmOrdem: readonly Carta[], faltam: number): Carta {
 }
 
 export class EstrategiaAnterior implements EstrategiaDeJogo {
-  escolherPalpite(visao: VisaoDaPartida, palpitesPermitidos: readonly number[]): number {
+  escolherPalpite(
+    visao: VisaoDaPartida,
+    _jogadorId: string,
+    palpitesPermitidos: readonly number[],
+  ): number {
     const contexto = contextoDe(visao);
     if (visao.rodadaCega) {
       return maisProximoPermitido(palpiteCego(visao, contexto), palpitesPermitidos);

@@ -1,145 +1,30 @@
-import {
-  CONFIGURACAO_PADRAO,
-  LIMITES,
-  type EstadoPartidaVisivel,
-  type EstadoSala,
-  type ReacaoNaMesa,
-} from '@fodinha/shared';
+import { CONFIGURACAO_PADRAO, LIMITES } from '@fodinha/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { CondutorDePartidas } from '../../src/application/condutor-de-partidas';
-import type { Notificador, Relogio } from '../../src/application/portas';
-import { ServicoDeSalas } from '../../src/application/servico-de-salas';
-import { criarEstrategiasDosPerfis } from '../../src/domain/estrategia-bot';
-import { RepositorioDeSalasEmMemoria } from '../../src/infrastructure/adaptadores';
-import { BOT_SEM_ERRO, BOTS_CALADOS, geradorComSemente } from '../apoio';
+import {
+  ABANDONO_MS,
+  ATRASO_BOT_MS,
+  CARENCIA_MS,
+  PAUSA_FIM_RODADA_MS,
+  PRAZO_MS,
+  ator,
+  montarCenario,
+  type Cenario,
+} from '../apoio';
 
-const PRAZO_MS = 30_000;
-const CARENCIA_MS = 10_000;
-const ATRASO_BOT_MS = 900;
-const PAUSA_FIM_RODADA_MS = 4_000;
-
-/** Relógio controlado manualmente: `avancar` dispara os agendamentos vencidos, em ordem. */
-class RelogioFalso implements Relogio {
-  private instante = 0;
-  private sequencia = 0;
-  private agendados: { quando: number; ordem: number; acao: () => void }[] = [];
-
-  agora(): number {
-    return this.instante;
-  }
-
-  agendar(atrasoMs: number, acao: () => void): () => void {
-    const item = { quando: this.instante + atrasoMs, ordem: this.sequencia++, acao };
-    this.agendados.push(item);
-    return () => {
-      this.agendados = this.agendados.filter((a) => a !== item);
-    };
-  }
-
-  avancar(ms: number): void {
-    const alvo = this.instante + ms;
-    for (;;) {
-      const proximo = [...this.agendados]
-        .filter((a) => a.quando <= alvo)
-        .sort((a, b) => a.quando - b.quando || a.ordem - b.ordem)[0];
-      if (!proximo) break;
-      this.agendados = this.agendados.filter((a) => a !== proximo);
-      this.instante = proximo.quando;
-      proximo.acao();
-    }
-    this.instante = alvo;
-  }
-}
-
-class NotificadorFalso implements Notificador {
-  readonly salas = new Map<string, EstadoSala>();
-  readonly partidas = new Map<string, EstadoPartidaVisivel>();
-  readonly reacoes: { destinatarios: readonly string[]; reacao: ReacaoNaMesa }[] = [];
-
-  enviarEstadoSala(ids: readonly string[], estado: EstadoSala): void {
-    for (const id of ids) this.salas.set(id, estado);
-  }
-
-  enviarEstadoPartida(id: string, estado: EstadoPartidaVisivel): void {
-    this.partidas.set(id, estado);
-  }
-
-  enviarReacao(destinatarios: readonly string[], reacao: ReacaoNaMesa): void {
-    this.reacoes.push({ destinatarios, reacao });
-  }
-}
-
-const silencioso = { info: () => {}, warn: () => {}, error: () => {} };
-
-let relogio: RelogioFalso;
-let notificador: NotificadorFalso;
-let servico: ServicoDeSalas;
-let contador: number;
+// Atalhos para o cenário de cada teste: os casos abaixo leem como chamadas diretas ao serviço.
+let relogio: Cenario['relogio'];
+let notificador: Cenario['notificador'];
+let servico: Cenario['servico'];
+let criarSala: Cenario['criarSala'];
+let entrar: Cenario['entrar'];
+let partidaDe: Cenario['partidaDe'];
+let salaDe: Cenario['salaDe'];
+let humanosJogam: Cenario['humanosJogam'];
 
 beforeEach(() => {
-  relogio = new RelogioFalso();
-  notificador = new NotificadorFalso();
-  contador = 0;
-  const condutor = new CondutorDePartidas({
-    notificador,
-    relogio,
-    estrategias: criarEstrategiasDosPerfis(BOT_SEM_ERRO),
-    registrador: silencioso,
-    gerarAleatorio: BOTS_CALADOS,
-    tempos: {
-      atrasoDoBotMs: ATRASO_BOT_MS,
-      pausaFimDeRodadaMs: PAUSA_FIM_RODADA_MS,
-      pausaExtraRodadaCegaMs: 0,
-      carenciaDeDesconexaoMs: CARENCIA_MS,
-    },
-  });
-  servico = new ServicoDeSalas({
-    repositorio: new RepositorioDeSalasEmMemoria(),
-    condutor,
-    identificadores: {
-      novoId: () => `id${++contador}`,
-      novoToken: () => `token${++contador}`,
-      novoCodigoSala: () => `SALA${++contador}`,
-    },
-    relogio,
-    gerarAleatorio: geradorComSemente(3),
-    registrador: silencioso,
-    tempoDeAbandonoMs: 600_000,
-  });
+  ({ relogio, notificador, servico, criarSala, entrar, partidaDe, salaDe, humanosJogam } =
+    montarCenario());
 });
-
-type Sessao = ReturnType<ServicoDeSalas['criarSala']>;
-
-function criarSala(dispositivoId = 'disp-ana') {
-  return servico.criarSala({ apelido: 'Ana', configuracao: CONFIGURACAO_PADRAO, dispositivoId });
-}
-
-function entrar(sala: Sessao, apelido: string, dispositivoId = `disp-${apelido}`) {
-  return servico.entrarSala({ codigoSala: sala.codigoSala, apelido, dispositivoId });
-}
-
-const ator = (sessao: { codigoSala: string; jogadorId: string }) => ({
-  codigoSala: sessao.codigoSala,
-  jogadorId: sessao.jogadorId,
-});
-
-const partidaDe = (sessao: Sessao) => notificador.partidas.get(sessao.jogadorId);
-const salaDe = (sessao: Sessao) => notificador.salas.get(sessao.jogadorId);
-
-/** Faz cada humano da lista agir (palpite ou carta) quando for a vez dele. */
-function humanosJogam(humanos: readonly Sessao[]): void {
-  for (let passo = 0; passo < 200; passo++) {
-    const humano = humanos.find((h) => partidaDe(h)?.idDaVez === h.jogadorId);
-    if (!humano) return;
-    const estado = partidaDe(humano) as EstadoPartidaVisivel;
-    if (estado.fase === 'palpites') {
-      const proibido = estado.palpiteProibido;
-      servico.palpitar(ator(humano), proibido === 0 ? 1 : 0);
-    } else {
-      servico.jogarCarta(ator(humano), (estado.minhaMao[0] as { id: string }).id);
-    }
-  }
-}
 
 describe('ServicoDeSalas — lobby', () => {
   it('deveCriarSalaComOCriadorComoDono', () => {
@@ -240,7 +125,7 @@ describe('ServicoDeSalas — lobby', () => {
   it('deveRemoverASalaAbandonadaDepoisDoTempoLimite', () => {
     const dono = criarSala();
     servico.desconectar(ator(dono));
-    relogio.avancar(600_000);
+    relogio.avancar(ABANDONO_MS);
     expect(() =>
       servico.reconectar({
         codigoSala: dono.codigoSala,
@@ -447,7 +332,7 @@ describe('ServicoDeSalas — pausa por desconexão', () => {
     servico.reconectar({
       codigoSala: bia.codigoSala,
       tokenSessao: bia.tokenSessao,
-      dispositivoId: 'disp-Bia',
+      dispositivoId: 'disp-bia',
     });
     relogio.avancar(CARENCIA_MS);
     expect(partidaDe(dono)?.pausa).toBeNull();
@@ -507,7 +392,7 @@ describe('ServicoDeSalas — pausa por desconexão', () => {
     servico.reconectar({
       codigoSala: bia.codigoSala,
       tokenSessao: bia.tokenSessao,
-      dispositivoId: 'disp-Bia',
+      dispositivoId: 'disp-bia',
     });
     expect(partidaDe(dono)?.pausa).toBeNull();
   });
@@ -537,7 +422,7 @@ describe('ServicoDeSalas — saída voluntária', () => {
       servico.reconectar({
         codigoSala: dono.codigoSala,
         tokenSessao: bia.tokenSessao,
-        dispositivoId: 'disp-Bia',
+        dispositivoId: 'disp-bia',
       }),
     ).toThrow();
   });

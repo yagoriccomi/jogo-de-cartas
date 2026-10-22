@@ -66,8 +66,8 @@ describe('EstrategiaDoBot — palpite', () => {
       minhaMao: [c('a', '4', 'paus'), c('b', '6', 'copas'), c('c', '7', 'ouros')],
     });
 
-    expect(estrategia.escolherPalpite(forte, permitidos)).toBe(2);
-    expect(estrategia.escolherPalpite(fraca, permitidos)).toBe(0);
+    expect(estrategia.escolherPalpite(forte, 'eu', permitidos)).toBe(2);
+    expect(estrategia.escolherPalpite(fraca, 'eu', permitidos)).toBe(0);
   });
 
   it('deve valorizar mais cartas altas quando há poucos adversários', () => {
@@ -83,8 +83,8 @@ describe('EstrategiaDoBot — palpite', () => {
       jogadores: ['eu', 'j1', 'j2', 'j3', 'j4', 'j5', 'j6', 'j7'].map((id) => jogador(id)),
     });
 
-    expect(estrategia.escolherPalpite(dupla, permitidos)).toBeGreaterThan(
-      estrategia.escolherPalpite(mesaCheia, permitidos),
+    expect(estrategia.escolherPalpite(dupla, 'eu', permitidos)).toBeGreaterThan(
+      estrategia.escolherPalpite(mesaCheia, 'eu', permitidos),
     );
   });
 
@@ -95,7 +95,7 @@ describe('EstrategiaDoBot — palpite', () => {
       palpiteProibido: 2,
     });
 
-    const palpite = estrategia.escolherPalpite(visao, [0, 1, 3]);
+    const palpite = estrategia.escolherPalpite(visao, 'eu', [0, 1, 3]);
 
     // Espera ~2,25 vazas: o 3 fica mais perto que o 1.
     expect(palpite).toBe(3);
@@ -114,7 +114,7 @@ describe('EstrategiaDoBot — palpite', () => {
       ],
     });
 
-    expect(estrategia.escolherPalpite(visao, [0, 1])).toBe(1);
+    expect(estrategia.escolherPalpite(visao, 'eu', [0, 1])).toBe(1);
   });
 
   it('deve palpitar 0 na rodada cega quando alguém tem manilha ou carta muito forte', () => {
@@ -138,8 +138,8 @@ describe('EstrategiaDoBot — palpite', () => {
       ],
     });
 
-    expect(estrategia.escolherPalpite(comManilha, [0, 1])).toBe(0);
-    expect(estrategia.escolherPalpite(comTres, [0, 1])).toBe(0);
+    expect(estrategia.escolherPalpite(comManilha, 'eu', [0, 1])).toBe(0);
+    expect(estrategia.escolherPalpite(comTres, 'eu', [0, 1])).toBe(0);
   });
 });
 

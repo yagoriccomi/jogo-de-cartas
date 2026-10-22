@@ -442,8 +442,8 @@ describe('Bot — palpite', () => {
       jogador('j2', { palpite: 3 }),
     ]);
 
-    expect(bot.escolherPalpite(mesaContida, [0, 1, 2, 3])).toBe(2);
-    expect(bot.escolherPalpite(mesaGulosa, [0, 1, 2, 3])).toBe(0);
+    expect(bot.escolherPalpite(mesaContida, 'eu', [0, 1, 2, 3])).toBe(2);
+    expect(bot.escolherPalpite(mesaGulosa, 'eu', [0, 1, 2, 3])).toBe(0);
   });
 });
 
@@ -471,8 +471,8 @@ describe('Bot — rodada cega: os palpites dos outros são pista da própria car
       jogador('j2', { cartaNaTesta: c('y', 'J'), palpite: 1 }),
     ]);
 
-    expect(bot.escolherPalpite(semPista, [0, 1])).toBe(1);
-    expect(bot.escolherPalpite(comPista, [0, 1])).toBe(0);
+    expect(bot.escolherPalpite(semPista, 'eu', [0, 1])).toBe(1);
+    expect(bot.escolherPalpite(comPista, 'eu', [0, 1])).toBe(0);
   });
 
   it('quem pediu 0 vendo só carta fraca além da minha indica que a minha é forte', () => {
@@ -486,8 +486,8 @@ describe('Bot — rodada cega: os palpites dos outros são pista da própria car
       jogador('j2', { cartaNaTesta: c('y', 'Q'), palpite: null }),
     ]);
 
-    expect(bot.escolherPalpite(semPista, [0, 1])).toBe(0);
-    expect(bot.escolherPalpite(comPista, [0, 1])).toBe(1);
+    expect(bot.escolherPalpite(semPista, 'eu', [0, 1])).toBe(0);
+    expect(bot.escolherPalpite(comPista, 'eu', [0, 1])).toBe(1);
   });
 });
 
@@ -620,7 +620,7 @@ describe.each([3, 10])('Bot — mesa de %i jogadores', (total) => {
       },
     });
 
-    expect(sempreErra.escolherPalpite(visao, [0, 1])).toBe(1);
+    expect(sempreErra.escolherPalpite(visao, 'eu', [0, 1])).toBe(1);
   });
 });
 
@@ -630,6 +630,7 @@ describe('Bot — palpite conforme o tamanho da mesa', () => {
     const palpiteNaMesaDe = (total: number) =>
       bot.escolherPalpite(
         cena({ mao, jogadores: mesaDePalpites(total), extra: { fase: 'palpites' } }),
+        'eu',
         [0, 1, 2, 3],
       );
 

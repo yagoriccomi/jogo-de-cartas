@@ -11,13 +11,14 @@ import {
 } from '@fodinha/shared';
 import { CondutorDePartidas, type TemposDoCondutor } from '../src/application/condutor-de-partidas';
 import type { Notificador, Relogio } from '../src/application/portas';
-import { ServicoDeSalas } from '../src/application/servico-de-salas';
+import { ServicoDeSalas, type Ator } from '../src/application/servico-de-salas';
 import type { GeradorAleatorio } from '../src/domain/aleatoriedade';
 import {
   EstrategiaDoBot,
   criarEstrategiasDosPerfis,
   type EstrategiasDosPerfis,
 } from '../src/domain/estrategia-bot';
+import { jogarAVez } from '../src/domain/jogar-a-vez';
 import { Partida } from '../src/domain/partida';
 import { RepositorioDeSalasEmMemoria } from '../src/infrastructure/adaptadores';
 
@@ -63,13 +64,7 @@ export function avancarPartida(partida: Partida): void {
     partida.iniciarProximaRodada();
     return;
   }
-  const id = partida.idDaVez as string;
-  const visao = partida.visaoPara(id);
-  if (partida.faseAtual === 'palpites') {
-    partida.palpitar(id, estrategia.escolherPalpite(visao, partida.palpitesPermitidos(id)));
-    return;
-  }
-  partida.jogarCarta(id, estrategia.escolherCarta(visao, id));
+  jogarAVez(partida, partida.idDaVez as string, estrategia);
 }
 
 export function jogarRodadaAteOFim(partida: Partida): void {
@@ -143,11 +138,6 @@ const silencioso = { info: () => {}, warn: () => {}, error: () => {} };
 
 /** Sorteio que nunca cai na chance de reação: deixa os bots calados nos testes que não tratam disso. */
 export const BOTS_CALADOS = (): number => 1;
-
-export interface Ator {
-  readonly codigoSala: string;
-  readonly jogadorId: string;
-}
 
 export const ator = (sessao: Ator): Ator => ({
   codigoSala: sessao.codigoSala,

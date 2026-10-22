@@ -6,32 +6,9 @@ import {
   type Valor,
 } from '@fodinha/shared';
 import { describe, expect, it } from 'vitest';
-import { EstrategiaDoBot } from '../../src/domain/estrategia-bot';
 import { forcaDaCarta } from '../../src/domain/forca';
 import { Partida } from '../../src/domain/partida';
-import { BOT_SEM_ERRO, geradorComSemente } from '../apoio';
-
-const estrategia = new EstrategiaDoBot(BOT_SEM_ERRO);
-
-function novaPartida(jogadores = 4, semente = 42, configuracao = CONFIGURACAO_PADRAO): Partida {
-  const jogadorIds = Array.from({ length: jogadores }, (_, i) => `j${i}`);
-  return Partida.iniciar({ configuracao, jogadorIds, gerarAleatorio: geradorComSemente(semente) });
-}
-
-/** Executa uma ação (palpite ou carta) pelo jogador da vez usando a estratégia do bot. */
-function avancar(partida: Partida): void {
-  if (partida.faseAtual === 'fim_de_rodada') {
-    partida.iniciarProximaRodada();
-    return;
-  }
-  const id = partida.idDaVez as string;
-  const visao = partida.visaoPara(id);
-  if (partida.faseAtual === 'palpites') {
-    partida.palpitar(id, estrategia.escolherPalpite(visao, partida.palpitesPermitidos(id)));
-    return;
-  }
-  partida.jogarCarta(id, estrategia.escolherCarta(visao, id));
-}
+import { avancarPartida as avancar, criarPartida as novaPartida } from '../apoio';
 
 function palpitarTodos(partida: Partida): void {
   while (partida.faseAtual === 'palpites') avancar(partida);
