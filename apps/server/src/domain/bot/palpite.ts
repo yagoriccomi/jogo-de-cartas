@@ -1,6 +1,7 @@
 import { NAIPES, ehCartaOculta, type Carta, type Valor } from '@fodinha/shared';
 import type { JogadorNaVisao, VisaoDaPartida } from '../projecao';
 import { forca, vivos, type Contexto } from './leitura-da-mesa';
+import type { AjustesDoPerfil } from './perfis';
 
 // Probabilidade estimada de uma manilha vencer a vaza: sobe com o naipe (ouros → paus).
 const CHANCE_MANILHA_MAIS_FRACA = 0.7;
@@ -11,12 +12,14 @@ const CHANCE_MAXIMA = 0.97;
 const CORTE_RELATIVO_COMUM = 0.6;
 const CHANCE_MAXIMA_COMUM = 0.4;
 
-// Com poucos adversários uma carta alta vale mais; com muitos, vale menos (4 jogadores = neutro).
-const JOGADORES_NEUTROS = 4;
-const FATOR_MAXIMO_POR_MESA_PEQUENA = 1.5;
+// Com poucos adversários uma carta alta vale mais; com muitos, vale menos (5 jogadores = neutro).
+// Calibrado na simulação nas duas pontas: mesa de 3 e mesa de 10.
+const JOGADORES_NEUTROS = 5;
+const FATOR_MAXIMO_POR_MESA_PEQUENA = 2;
 
-// Quanto o bot desconta do próprio palpite por vaza que a mesa já pediu acima da média.
-const PESO_DOS_PALPITES_DA_MESA = 0.35;
+// O peso dos palpites da mesa vale cheio na mesa de 3 e cai com mais gente: numa mesa grande,
+// o palpite de cada um diz pouco sobre as minhas cartas.
+const MESA_DE_PESO_CHEIO = 3;
 
 // Rodada cega: o que os palpites dos outros (que veem a carta do bot) dizem sobre ela.
 const DESCONTO_POR_QUEM_PEDIU_1 = 0.65;
@@ -52,6 +55,7 @@ export function vazasEsperadas(
   visao: VisaoDaPartida,
   jogadorId: string,
   contexto: Contexto,
+  { pesoDosPalpitesDaMesa, viesPorCarta }: AjustesDoPerfil,
 ): number {
   const adversarios = vivos(visao).length - 1;
   const pelasCartas = visao.minhaMao
@@ -63,7 +67,8 @@ export function vazasEsperadas(
   const mediaPorJogador = visao.cartasPorJogador / vivos(visao).length;
   const pedido = outros.reduce((soma, jogador) => soma + (jogador.palpite ?? 0), 0);
   const excesso = pedido - outros.length * mediaPorJogador;
-  const ajustado = pelasCartas - excesso * PESO_DOS_PALPITES_DA_MESA;
+  const peso = (pesoDosPalpitesDaMesa * MESA_DE_PESO_CHEIO) / vivos(visao).length;
+  const ajustado = pelasCartas - excesso * peso + viesPorCarta * visao.cartasPorJogador;
   return Math.min(visao.cartasPorJogador, Math.max(0, ajustado));
 }
 

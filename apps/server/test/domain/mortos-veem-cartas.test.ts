@@ -21,6 +21,7 @@ function humano(id: string): Participante {
     id,
     apelido: id,
     ehBot: false,
+    perfilDoBot: null,
     conectado: true,
     saindo: false,
     tokenSessao: `token-${id}`,

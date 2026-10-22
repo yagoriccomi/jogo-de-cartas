@@ -1,7 +1,7 @@
 export const LIMITES = {
   minJogadores: 2,
   maxJogadores: 10,
-  maxBots: 4,
+  maxBots: 6,
   minBaralhos: 1,
   maxBaralhos: 4,
   minVidas: 5,

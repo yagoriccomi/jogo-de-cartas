@@ -1,6 +1,7 @@
 import { LIMITES, REACOES, type EstadoPartidaVisivel, type ReacaoNaMesa } from '@fodinha/shared';
 import type { GeradorAleatorio } from '../domain/aleatoriedade';
-import type { EstrategiaDeJogo } from '../domain/estrategia-bot';
+import { PERFIL_DA_JOGADA_AUTOMATICA } from '../domain/bot/perfis';
+import type { EstrategiasDosPerfis } from '../domain/estrategia-bot';
 import type { Partida } from '../domain/partida';
 import type { Sala } from '../domain/sala';
 import type { Cancelamento, Notificador, Registrador, Relogio } from './portas';
@@ -27,7 +28,8 @@ export interface TemposDoCondutor {
 export interface DependenciasDoCondutor {
   readonly notificador: Notificador;
   readonly relogio: Relogio;
-  readonly estrategia: EstrategiaDeJogo;
+  /** Bot joga com o próprio perfil; quem estourou o prazo ou está saindo, com o neutro. */
+  readonly estrategias: EstrategiasDosPerfis;
   readonly registrador: Registrador;
   readonly tempos: TemposDoCondutor;
   /** Sorteia as reações dos bots; injetado para os testes serem determinísticos. */
@@ -231,7 +233,8 @@ export class CondutorDePartidas {
 
   private jogarPor(sala: Sala, partida: Partida, jogadorId: string): void {
     const visao = partida.visaoPara(jogadorId);
-    const { estrategia } = this.deps;
+    const perfil = sala.participante(jogadorId)?.perfilDoBot ?? PERFIL_DA_JOGADA_AUTOMATICA;
+    const estrategia = this.deps.estrategias[perfil];
     if (partida.faseAtual === 'palpites') {
       partida.palpitar(
         jogadorId,

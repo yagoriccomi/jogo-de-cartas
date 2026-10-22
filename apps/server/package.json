@@ -9,7 +9,8 @@
     "start": "node dist/main.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "simular": "esbuild test/simulacao/simular-em-paralelo.ts --bundle --platform=node --format=esm --log-level=warning --outfile=node_modules/.cache/simulacao/simular.mjs && node node_modules/.cache/simulacao/simular.mjs"
   },
   "dependencies": {
     "@fastify/cors": "^10.0.1",
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
+    "esbuild": "^0.28.2",
     "socket.io-client": "^4.8.1",
     "tsup": "^8.3.5",
     "tsx": "^4.19.2",

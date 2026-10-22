@@ -7,7 +7,7 @@
 
 ## Objetivo e Escopo
 
-**Fodinha** é um jogo de cartas multiplayer online (variação do truco/"fodinha"): salas por código, até 10 participantes (humanos + até 4 bots), partida completa no navegador.
+**Fodinha** é um jogo de cartas multiplayer online (variação do truco/"fodinha"): salas por código, até 10 participantes (humanos + até 6 bots), partida completa no navegador.
 
 **Servidor autoritativo:** o servidor é a única fonte de verdade. O cliente recebe somente o que pode ver: a própria mão, a vira, as cartas já jogadas e, na rodada cega, a carta na testa dos outros jogadores. Nenhuma carta oculta trafega para quem não deve vê-la.
 
@@ -28,7 +28,9 @@
 - Saída/expulsão no meio da rodada: efetiva-se entre rodadas (`Partida.agendarSaida`), para não desfazer palpites e vazas.
 - Seletores do jogador em jogo (cartas, palpite, reações): 1 toque seleciona, 2 rápidos confirmam (`useDuploToque`; Enter/Espaço confirmam direto).
 - A mão vai ao cliente ordenada da mais forte para a mais fraca (o cliente não reordena).
-- Bot único (`EstrategiaDoBot`, `domain/bot/`), também usado na jogada automática de quem estoura o prazo: decisões em `answers/2026_10_22 bot-situacoes 001.md` (escada para não ganhar a vaza, esperar a posição de último, sabotagem sem custo próprio, memória só da última vaza e manilhas à vista, 10% de erro com sorteio injetado). Mudou a estratégia: rode a simulação contra o bot anterior (`apps/server/test/simulacao`, `SIMULACAO_PARES=2000` para medir com folga).
+- Bot (`EstrategiaDoBot`, `domain/bot/`): decisões em `answers/2026_10_22 bot-situacoes 001.md` (escada para não ganhar a vaza, esperar a posição de último, sabotagem sem custo próprio, memória só da última vaza e manilhas à vista, erro com sorteio injetado; no palpite, só erra na dúvida).
+- Perfis dos bots (`domain/bot/perfis.ts`, decisões em `answers/2026_10_22 bot-perfis 001.md`): 6 estilos em 3 grupos (cautelosos, equilibrados, agressivos), o mesmo cérebro com outros números (`AjustesDoPerfil`). Sorteados em `Sala.comecarPartida` conforme quantos bots jogam (`sortearPerfis`; no lobby o bot não tem perfil). Quem estoura o prazo joga com o Equilibrado (`PERFIL_DA_JOGADA_AUTOMATICA`).
+- Mudou bot ou perfil: meça nas duas pontas, mesa de 3 e de 10 (`npm run simular -w apps/server -- --pares 2000`, mesas em paralelo, só números); os testes de `apps/server/test/simulacao` cobram que cada perfil vença o bot anterior na mesa de 3 e não fique muito atrás na de 10.
 - Bots reagem: a cada carta jogada, 10% de chance de um emoji sorteado (`CHANCE_DE_REACAO_DO_BOT`, sorteio injetado no `CondutorDePartidas`).
 - Plano dessas regras: `docs/planos/PLANO-pausa-entrada-moderacao.md`.
 
@@ -154,6 +156,14 @@ Serviços do compose: **`deps`** (one-shot, instala dependências dentro do cont
 ## Comandos Úteis
 
 `npm run dev` · `npm run build` · `npm test` · `npm run typecheck` · `npm run lint` · `npm run format` · `npm run test:e2e` (testes de tela, Playwright em `apps/e2e`; ao mudar layout da mesa, do palpite ou do tutorial, rode-os)
+
+## Deploy (automático a cada merge na `main`)
+
+**Depois de todo merge na `main`, acompanhe os dois deploys e avise o usuário quando ambos terminarem**, com o estado de cada um (ou o erro, se falhar). Não encerre a tarefa só com o merge.
+
+- **Vercel (web):** projeto `jogo-de-cartas` (`prj_9E6hAaZqI1octiX3pNlpMVmhRiP4`, time `team_ZAm2WtQRBFWlkdJvPlSUhe1u`). Pelo MCP da Vercel: `list_deployments` com esse `projectId`/`teamId` e `sha` do commit de merge; pronto quando `target: production` e `state: READY` (`ERROR`/`CANCELED` = falhou: leia os logs de build).
+- **Render (servidor):** serviço `fodinha-server` (`srv-db7p6avavr4c7392fkkg`, workspace `tea-d1hc27mr433s738ri6u0`), autodeploy da `main`. Pelo MCP da Render: `list_deploys` do serviço e `get_deploy` do deploy com o commit do merge; pronto quando `status: live` (`build_failed`/`update_failed` = falhou). O deploy leva ~40 s.
+- **Confirmação final:** `GET https://fodinha-server-2sg2.onrender.com/health` deve responder 200 (no plano grátis, a primeira chamada pode demorar enquanto o serviço acorda).
 
 ## Protocolo de Atualização do README.md (CRÍTICO)
 
