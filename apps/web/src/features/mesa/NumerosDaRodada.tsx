@@ -1,4 +1,5 @@
 import { classes } from '../../lib/classes';
+import { ALVOS, marcarAlvo } from './alvos';
 import { MARCADORES } from './animacao-compartilhada';
 
 interface Props {
@@ -28,7 +29,12 @@ export function NumerosDaRodada({ palpite, feitas, destinoDoMonte, className }: 
   const situacao = situacaoDe(palpite, feitas);
   const descricao = `Palpite ${palpite ?? 'ainda não dado'}, fez ${feitas}`;
   return (
-    <div className={classes('numeros', className)} role="img" aria-label={descricao}>
+    <div
+      className={classes('numeros', className)}
+      role="img"
+      aria-label={descricao}
+      {...marcarAlvo(ALVOS.numeros)}
+    >
       <span className="numeros__item">
         <span className="numeros__rotulo">Palpite</span>
         <span className="numeros__valor">{palpite ?? '–'}</span>

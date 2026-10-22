@@ -3,6 +3,7 @@ import { Coracoes } from '../../componentes/Coracoes';
 import { IconeOlho } from '../../componentes/Icones';
 import { classes } from '../../lib/classes';
 import { CONSULTA_COMPUTADOR, useMediaQuery } from '../../lib/useMediaQuery';
+import { ALVOS, marcarAlvo } from './alvos';
 import { MARCADORES } from './animacao-compartilhada';
 import { Carta } from './Carta';
 import { ContagemRegressiva } from './ContagemRegressiva';
@@ -101,7 +102,7 @@ export function PlacaJogador({
         </div>
 
         {jogador.cartaNaTesta && (
-          <div className="placa__testa">
+          <div className="placa__testa" {...marcarAlvo(ALVOS.testa)}>
             <Carta
               carta={jogador.cartaNaTesta}
               manilha={manilha}

@@ -4,6 +4,7 @@ import { Dialogo } from '../../componentes/Dialogo';
 import { classes } from '../../lib/classes';
 import type { EstiloComVariaveis } from '../../lib/estiloComVariaveis';
 import { useAgora } from '../../lib/useAgora';
+import { ALVOS, marcarAlvo } from './alvos';
 
 const INTERVALO_BARRA_MS = 100;
 const MS_POR_SEGUNDO = 1000;
@@ -50,7 +51,7 @@ export function PainelResultado({ jogo, meuId, recebidoEm }: Props) {
 
       {/* Só a tabela rola: com 10 jogadores numa tela baixa, a contagem da próxima rodada some. */}
       <div className="folha__tabela">
-        <table className="resultado">
+        <table className="resultado" {...marcarAlvo(ALVOS.resultado)}>
           <thead>
             <tr>
               <th scope="col">Jogador</th>

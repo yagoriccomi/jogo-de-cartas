@@ -1,4 +1,5 @@
 import { classes } from '../../lib/classes';
+import { ALVOS, marcarAlvo } from './alvos';
 import { caminhoDoDesenho } from './pixel';
 
 // Desenhos em pixel (mesma grade das cartas): "X" é pixel aceso.
@@ -53,6 +54,7 @@ function Simbolo({ desenho, nome, tipo, rotulo }: SimboloProps) {
       role="img"
       aria-label={nome}
       title={nome}
+      {...(tipo === 'mao' && marcarAlvo(ALVOS.simboloDaMao))}
     >
       <svg viewBox={VIEWBOX} shapeRendering="crispEdges" aria-hidden="true">
         <path fill="currentColor" d={caminhoDoDesenho(desenho)} />
@@ -66,7 +68,10 @@ function Simbolo({ desenho, nome, tipo, rotulo }: SimboloProps) {
 export function SimbolosMaoEPe({ ehMao, ehPe, className, comRotulo = false }: Props) {
   if (!ehMao && !ehPe) return null;
   return (
-    <span className={classes('simbolos', comRotulo && 'simbolos--com-rotulo', className)}>
+    <span
+      className={classes('simbolos', comRotulo && 'simbolos--com-rotulo', className)}
+      {...marcarAlvo(ALVOS.simbolos)}
+    >
       {ehMao && (
         <Simbolo
           desenho={DESENHO_MAO}

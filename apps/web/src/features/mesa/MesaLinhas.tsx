@@ -2,6 +2,7 @@ import type { JogadaNaMesa, Valor } from '@fodinha/shared';
 import type { RefObject } from 'react';
 import { classes } from '../../lib/classes';
 import type { EstiloComVariaveis } from '../../lib/estiloComVariaveis';
+import { ALVOS, marcarAlvo } from './alvos';
 import { MARCADORES } from './animacao-compartilhada';
 import { Carta } from './Carta';
 
@@ -67,6 +68,7 @@ export function MesaLinhas({ cartas, manilha, nomeDe, voando, raiz }: Props) {
     <div
       ref={raiz}
       className={classes('mesa-linhas', voando && 'mesa-linhas--voando')}
+      {...marcarAlvo(ALVOS.cartasNaMesa)}
       style={estilo}
     >
       <LinhaDeCartas cartas={valendo} manilha={manilha} nomeDe={nomeDe} anuladas={false} />
