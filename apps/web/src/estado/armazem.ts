@@ -6,6 +6,7 @@ import type {
   SessaoJogador,
 } from '@fodinha/shared';
 import { lerSessao } from '../lib/sessao';
+import { FONTE_DO_SERVIDOR, type FonteDaPartida } from './fonteDaPartida';
 
 export type TipoAviso = 'erro' | 'info' | 'sucesso';
 export type StatusConexao = 'conectando' | 'conectado' | 'desconectado';
@@ -33,15 +34,10 @@ export interface EstadoApp {
   /** Mensagem fixa exibida na tela inicial (ex.: "você foi expulso"). */
   readonly avisoEntrada: string | null;
   readonly avisos: readonly Aviso[];
-  /** Tutorial em andamento: a mesa é alimentada por um roteiro local, não pelo servidor. */
-  readonly tutorial: EstadoTutorial | null;
+  /** Quem alimenta a mesa e responde às ações: o servidor ou o roteiro local do tutorial. */
+  readonly fonte: FonteDaPartida;
   /** Reações recentes na mesa (uma por jogador); cada uma some sozinha após o TTL. */
   readonly reacoes: readonly ReacaoNaMesa[];
-}
-
-export interface EstadoTutorial {
-  /** Passo atual do roteiro (índice). */
-  readonly passo: number;
 }
 
 const DURACAO_AVISO_MS = 6000;
@@ -58,7 +54,7 @@ let estado: EstadoApp = {
   voltouAoLobby: false,
   avisoEntrada: null,
   avisos: [],
-  tutorial: null,
+  fonte: FONTE_DO_SERVIDOR,
   reacoes: [],
 };
 let proximoIdAviso = 1;
@@ -74,6 +70,17 @@ export function atualizar(
   const mudanca = typeof parcial === 'function' ? parcial(estado) : parcial;
   estado = { ...estado, ...mudanca };
   ouvintes.forEach((ouvinte) => ouvinte());
+}
+
+/**
+ * Entrada de tudo o que chega do socket. Com outra fonte ligada (o tutorial), o que o servidor
+ * manda é descartado: um `jogo:estado` atrasado não pode trocar a mesa do roteiro.
+ */
+export function receberDoServidor(
+  parcial: Partial<EstadoApp> | ((atual: EstadoApp) => Partial<EstadoApp>),
+): void {
+  if (estado.fonte.origem !== 'servidor') return;
+  atualizar(parcial);
 }
 
 function assinar(ouvinte: () => void): () => void {
@@ -99,7 +106,7 @@ export function dispensarAviso(id: number): void {
 
 /** Uma reação nova do mesmo jogador substitui a anterior, para o balão não empilhar. */
 export function registrarReacao(reacao: ReacaoNaMesa): void {
-  atualizar((atual) => ({
+  receberDoServidor((atual) => ({
     reacoes: [...atual.reacoes.filter((r) => r.jogadorId !== reacao.jogadorId), reacao],
   }));
   setTimeout(() => {

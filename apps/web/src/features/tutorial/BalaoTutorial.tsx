@@ -153,7 +153,8 @@ function posicionar(alvo: Medida, balao: { largura: number; altura: number }): P
  * escurecido) e aponta para ele. O destaque não bloqueia toques: dá para jogar a carta indicada.
  */
 export function BalaoTutorial() {
-  const { tutorial } = useApp();
+  const { fonte } = useApp();
+  const tutorial = fonte.origem === 'tutorial' ? fonte : null;
   const passo = tutorial === null ? null : passoAtual();
   const seletor = passo?.balao?.alvo ?? null;
   const alvo = useMedidaDoAlvo(seletor);

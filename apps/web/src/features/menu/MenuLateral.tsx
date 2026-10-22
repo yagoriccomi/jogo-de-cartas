@@ -42,7 +42,8 @@ type Confirmacao =
 
 /** Gaveta lateral: convite, regras e, só para o dono, pausar, reiniciar e expulsar jogadores. */
 export function MenuLateral({ onFechar }: Props) {
-  const { sala, sessao, jogo, tutorial } = useApp();
+  const { sala, sessao, jogo, fonte } = useApp();
+  const comServidor = fonte.origem === 'servidor';
   const [regrasAbertas, definirRegrasAbertas] = useState(false);
   const [listaAberta, definirListaAberta] = useState(false);
   const [confirmacao, definirConfirmacao] = useState<Confirmacao | null>(null);
@@ -97,7 +98,7 @@ export function MenuLateral({ onFechar }: Props) {
 
         <nav className="menu" aria-label="Menu da partida">
           {/* No tutorial não há sala de verdade para convidar ninguém. */}
-          {!tutorial && (
+          {comServidor && (
             <div className="menu__sala">
               <div>
                 <span className="rotulo-pequeno">Sala</span>
@@ -124,7 +125,7 @@ export function MenuLateral({ onFechar }: Props) {
           <OpcaoSom />
 
           {/* No tutorial não há servidor para guardar a opção. */}
-          {!tutorial && (
+          {comServidor && (
             <OpcaoMortosVeemCartas ligada={sala.configuracao.mortosVeemCartas} souDono={souDono} />
           )}
 

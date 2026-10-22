@@ -2,26 +2,11 @@ import type { ConfiguracaoPartida, Reacao, SessaoJogador } from '@fodinha/shared
 import { descreverErro, registrar } from '../lib/log';
 import { limparSessao, lerSessao, obterDispositivoId, salvarSessao } from '../lib/sessao';
 import { ErroDeRequisicao, requisitar, socket, type Envio } from '../lib/socket';
-import { atualizar, avisar, obterEstado, registrarReacao } from './armazem';
+import { atualizar, avisar, obterEstado, receberDoServidor, registrarReacao } from './armazem';
 import { lerCenarioDaUrl, type CenarioDeTeste } from './cenario';
+import type { AcoesDaPartida } from './fonteDaPartida';
 
 const MENSAGEM_GENERICA = 'Algo deu errado. Tente novamente.';
-
-/**
- * Quem responde às ações da mesa no lugar do servidor (o tutorial). Assim a mesa de verdade é
- * reaproveitada sem saber que está num roteiro, e `estado/` não depende de `features/`.
- */
-export interface InterceptadorDeAcoes {
-  palpitar(quantidade: number): boolean;
-  jogarCarta(cartaId: string): boolean;
-  sair(): void;
-}
-
-let interceptador: InterceptadorDeAcoes | null = null;
-
-export function interceptarAcoes(novo: InterceptadorDeAcoes | null): void {
-  interceptador = novo;
-}
 
 /** Ponto único de tratamento: loga o detalhe técnico e mostra só a mensagem limpa ao usuário. */
 function tratarErro(operacao: string, erro: unknown): void {
@@ -96,6 +81,8 @@ function esquecerSessao(): void {
 
 /** Tenta reentrar no assento guardado; qualquer falha devolve o usuário à tela inicial. */
 export async function retomarSessao(): Promise<void> {
+  // A sessão do tutorial é local: uma reconexão do socket no meio dele não pode substituí-la.
+  if (obterEstado().fonte.origem !== 'servidor') return;
   const salva = lerSessao();
   // A checagem aqui (e não só dentro de `lerCenarioDaUrl`) deixa o build de produção sem o cenário.
   const cenario = import.meta.env.DEV ? lerCenarioDaUrl() : null;
@@ -139,89 +126,76 @@ export function cancelarRetomada(): void {
   esquecerSessao();
 }
 
-export async function sairDaSala(): Promise<void> {
-  if (interceptador) {
-    interceptador.sair();
-    return;
-  }
-  // Sai localmente mesmo se o servidor não confirmar: o usuário pediu para sair.
-  await comando('sala:sair', (r) => socket.emit('sala:sair', r));
-  esquecerSessao();
+/** O servidor: cada ação vira um emit com ack, e os erros caem no tratamento único. */
+export const acoesDoServidor: AcoesDaPartida = {
+  async sair() {
+    // Sai localmente mesmo se o servidor não confirmar: o usuário pediu para sair.
+    await comando('sala:sair', (r) => socket.emit('sala:sair', r));
+    esquecerSessao();
+  },
+  configurarSala: (configuracao) =>
+    comando('sala:configurar', (r) => socket.emit('sala:configurar', { configuracao }, r)),
+  definirMortosVeemCartas: (permitir) =>
+    comando('sala:definirMortosVeemCartas', (r) =>
+      socket.emit('sala:definirMortosVeemCartas', { permitir }, r),
+    ),
+  adicionarBot: () => comando('sala:adicionarBot', (r) => socket.emit('sala:adicionarBot', r)),
+  expulsarParticipante: (participanteId) =>
+    comando('sala:expulsar', (r) => socket.emit('sala:expulsar', { participanteId }, r)),
+  iniciarPartida: () =>
+    comando('sala:iniciarPartida', (r) => socket.emit('sala:iniciarPartida', r)),
+  reiniciarSala: () => comando('sala:reiniciar', (r) => socket.emit('sala:reiniciar', r)),
+  pausarPartida: () => comando('sala:pausar', (r) => socket.emit('sala:pausar', r)),
+  retomarPartida: () => comando('sala:retomar', (r) => socket.emit('sala:retomar', r)),
+  /**
+   * A pausa de leitura é cortesia: se o servidor recusar (já usada nesta partida, outro lendo), o
+   * resumo abre do mesmo jeito, sem pausar e sem aviso de erro.
+   */
+  async lerRegras() {
+    try {
+      await requisitar<null>((r) => socket.emit('jogo:lerRegras', r));
+      return true;
+    } catch (erro) {
+      registrar('warn', 'leitura_das_regras.recusada', descreverErro(erro));
+      return false;
+    }
+  },
+  pararDeLerRegras: () =>
+    comando('jogo:pararDeLerRegras', (r) => socket.emit('jogo:pararDeLerRegras', r)),
+  palpitar: (quantidade) =>
+    comando('jogo:palpitar', (r) => socket.emit('jogo:palpitar', { quantidade }, r)),
+  jogarCarta: (cartaId) =>
+    comando('jogo:jogarCarta', (r) => socket.emit('jogo:jogarCarta', { cartaId }, r)),
+  votarEspera: (ausenteId, esperar) =>
+    comando('jogo:votarEspera', (r) => socket.emit('jogo:votarEspera', { ausenteId, esperar }, r)),
+  reagir: (reacao) => comando('jogo:reagir', (r) => socket.emit('jogo:reagir', { reacao }, r)),
+};
+
+/** A fonte ligada no armazém decide quem responde: a tela nunca sabe se é roteiro ou servidor. */
+function acoes(): AcoesDaPartida {
+  const { fonte } = obterEstado();
+  return fonte.origem === 'servidor' ? acoesDoServidor : fonte.acoes;
 }
 
-export function configurarSala(configuracao: ConfiguracaoPartida): Promise<boolean> {
-  return comando('sala:configurar', (r) => socket.emit('sala:configurar', { configuracao }, r));
-}
-
-export function definirMortosVeemCartas(permitir: boolean): Promise<boolean> {
-  return comando('sala:definirMortosVeemCartas', (r) =>
-    socket.emit('sala:definirMortosVeemCartas', { permitir }, r),
-  );
-}
-
-export function adicionarBot(): Promise<boolean> {
-  return comando('sala:adicionarBot', (r) => socket.emit('sala:adicionarBot', r));
-}
-
-export function expulsarParticipante(participanteId: string): Promise<boolean> {
-  return comando('sala:expulsar', (r) => socket.emit('sala:expulsar', { participanteId }, r));
-}
-
-export function iniciarPartida(): Promise<boolean> {
-  return comando('sala:iniciarPartida', (r) => socket.emit('sala:iniciarPartida', r));
-}
-
-export function reiniciarSala(): Promise<boolean> {
-  return comando('sala:reiniciar', (r) => socket.emit('sala:reiniciar', r));
-}
-
-export function pausarPartida(): Promise<boolean> {
-  return comando('sala:pausar', (r) => socket.emit('sala:pausar', r));
-}
-
-export function retomarPartida(): Promise<boolean> {
-  return comando('sala:retomar', (r) => socket.emit('sala:retomar', r));
-}
-
-/**
- * A pausa de leitura é cortesia: se o servidor recusar (já usada nesta partida, outro lendo), o
- * resumo abre do mesmo jeito, sem pausar e sem aviso de erro.
- */
-export async function lerRegras(): Promise<boolean> {
-  if (interceptador) return false;
-  try {
-    await requisitar<null>((r) => socket.emit('jogo:lerRegras', r));
-    return true;
-  } catch (erro) {
-    registrar('warn', 'leitura_das_regras.recusada', descreverErro(erro));
-    return false;
-  }
-}
-
-export function pararDeLerRegras(): Promise<boolean> {
-  if (interceptador) return Promise.resolve(true);
-  return comando('jogo:pararDeLerRegras', (r) => socket.emit('jogo:pararDeLerRegras', r));
-}
-
-export function palpitar(quantidade: number): Promise<boolean> {
-  if (interceptador) return Promise.resolve(interceptador.palpitar(quantidade));
-  return comando('jogo:palpitar', (r) => socket.emit('jogo:palpitar', { quantidade }, r));
-}
-
-export function jogarCarta(cartaId: string): Promise<boolean> {
-  if (interceptador) return Promise.resolve(interceptador.jogarCarta(cartaId));
-  return comando('jogo:jogarCarta', (r) => socket.emit('jogo:jogarCarta', { cartaId }, r));
-}
-
-export function votarEspera(ausenteId: string, esperar: boolean): Promise<boolean> {
-  return comando('jogo:votarEspera', (r) =>
-    socket.emit('jogo:votarEspera', { ausenteId, esperar }, r),
-  );
-}
-
-export function reagir(reacao: Reacao): Promise<boolean> {
-  return comando('jogo:reagir', (r) => socket.emit('jogo:reagir', { reacao }, r));
-}
+export const sairDaSala = (): Promise<void> => acoes().sair();
+export const configurarSala = (configuracao: ConfiguracaoPartida): Promise<boolean> =>
+  acoes().configurarSala(configuracao);
+export const definirMortosVeemCartas = (permitir: boolean): Promise<boolean> =>
+  acoes().definirMortosVeemCartas(permitir);
+export const adicionarBot = (): Promise<boolean> => acoes().adicionarBot();
+export const expulsarParticipante = (participanteId: string): Promise<boolean> =>
+  acoes().expulsarParticipante(participanteId);
+export const iniciarPartida = (): Promise<boolean> => acoes().iniciarPartida();
+export const reiniciarSala = (): Promise<boolean> => acoes().reiniciarSala();
+export const pausarPartida = (): Promise<boolean> => acoes().pausarPartida();
+export const retomarPartida = (): Promise<boolean> => acoes().retomarPartida();
+export const lerRegras = (): Promise<boolean> => acoes().lerRegras();
+export const pararDeLerRegras = (): Promise<boolean> => acoes().pararDeLerRegras();
+export const palpitar = (quantidade: number): Promise<boolean> => acoes().palpitar(quantidade);
+export const jogarCarta = (cartaId: string): Promise<boolean> => acoes().jogarCarta(cartaId);
+export const votarEspera = (ausenteId: string, esperar: boolean): Promise<boolean> =>
+  acoes().votarEspera(ausenteId, esperar);
+export const reagir = (reacao: Reacao): Promise<boolean> => acoes().reagir(reacao);
 
 export function voltarAoLobby(): void {
   atualizar({ voltouAoLobby: true });
@@ -243,10 +217,10 @@ export function iniciarConexao(): void {
     registrar('warn', 'socket.connect_error', descreverErro(erro));
     atualizar({ conexao: 'desconectado' });
   });
-  socket.on('sala:estado', (sala) => atualizar({ sala }));
+  socket.on('sala:estado', (sala) => receberDoServidor({ sala }));
   socket.on('jogo:estado', (jogo) => {
     const agora = Date.now();
-    atualizar((atual) => ({
+    receberDoServidor((atual) => ({
       jogo,
       jogoRecebidoEm: agora,
       voltouAoLobby: jogo.fase === 'encerrada' ? atual.voltouAoLobby : false,
@@ -254,6 +228,8 @@ export function iniciarConexao(): void {
   });
   socket.on('jogo:reacao', registrarReacao);
   socket.on('sala:expulso', ({ mensagem }) => {
+    // Fora do servidor (tutorial) não há sala de verdade de onde ser expulso.
+    if (obterEstado().fonte.origem !== 'servidor') return;
     // O servidor já desvinculou este socket da sala: só falta limpar o que é local.
     esquecerSessao();
     atualizar({ avisoEntrada: mensagem });

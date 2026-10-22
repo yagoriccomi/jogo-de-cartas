@@ -62,9 +62,10 @@ function Rotas() {
 }
 
 export function App() {
-  const { conexao, sessao, tutorial } = useApp();
+  const { conexao, sessao, fonte } = useApp();
+  const emTutorial = fonte.origem === 'tutorial';
   // O tutorial roda sem servidor: a queda ou o cold start não devem aparecer no meio dele.
-  const semConexao = conexao !== 'conectado' && tutorial === null;
+  const semConexao = conexao !== 'conectado' && !emTutorial;
   const demorando = useDemorandoParaConectar(semConexao);
 
   return (
@@ -84,7 +85,7 @@ export function App() {
         <Rotas />
       </main>
       <Avisos />
-      {tutorial && <BalaoTutorial />}
+      {emTutorial && <BalaoTutorial />}
     </div>
   );
 }
