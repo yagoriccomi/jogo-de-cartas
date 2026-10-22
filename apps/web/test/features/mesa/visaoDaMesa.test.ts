@@ -66,7 +66,14 @@ function partida(campos: Partial<EstadoPartidaVisivel> = {}): EstadoPartidaVisiv
 }
 
 function visao(jogo: EstadoPartidaVisivel, extra: Partial<EntradaDaVisao> = {}) {
-  return visaoDaMesa({ jogo, sala: null, meuId: EU, recebidoEm: RECEBIDO_EM, ...extra });
+  return visaoDaMesa({
+    jogo,
+    sala: null,
+    meuId: EU,
+    recebidoEm: RECEBIDO_EM,
+    monteEmVoo: null,
+    ...extra,
+  });
 }
 
 function sala(aguardando: boolean): EstadoSala {
@@ -222,7 +229,13 @@ describe('visaoDaMesa — palpite', () => {
       idDaVez: 'd',
       palpiteProibido: 1,
     });
-    const doPe = visaoDaMesa({ jogo, sala: null, meuId: 'd', recebidoEm: RECEBIDO_EM });
+    const doPe = visaoDaMesa({
+      jogo,
+      sala: null,
+      meuId: 'd',
+      recebidoEm: RECEBIDO_EM,
+      monteEmVoo: null,
+    });
     expect(doPe.palpite).toMatchObject({ souOPe: true, proibido: 1, soma: 2, depoisDeVoce: 0 });
     expect(doPe.palpite.anteriores.map((anterior) => anterior.id)).toEqual(['a', 'b', EU]);
   });
@@ -266,6 +279,15 @@ describe('visaoDaMesa — contadores', () => {
     expect(v.minhasFeitas).toBe(1);
   });
 
+  it('deveEsconderDasMinhasFeitasAVazaQueAindaVoaAteMim', () => {
+    const jogo = partida({
+      fase: 'jogando',
+      jogadores: [jogador('a'), jogador('b'), jogador(EU, { vazasFeitas: 2 }), jogador('d')],
+    });
+    expect(visao(jogo, { monteEmVoo: EU }).minhasFeitas).toBe(1);
+    expect(visao(jogo, { monteEmVoo: 'a' }).minhasFeitas).toBe(2);
+  });
+
   it('naoDevePassarDaUltimaVazaQuandoTodasForamDecididas', () => {
     const jogo = partida({
       fase: 'fim_de_rodada',
@@ -288,6 +310,7 @@ describe('visaoDaMesa — espectador e eliminado', () => {
       sala: null,
       meuId: 'novato',
       recebidoEm: RECEBIDO_EM,
+      monteEmVoo: null,
     });
     expect(v).toMatchObject({
       eu: undefined,

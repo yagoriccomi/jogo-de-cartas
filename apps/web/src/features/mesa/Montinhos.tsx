@@ -1,6 +1,7 @@
 import type { Valor, VazaGanha } from '@fodinha/shared';
 import { classes } from '../../lib/classes';
 import type { EstiloComVariaveis } from '../../lib/estiloComVariaveis';
+import { MARCADORES } from './animacao-compartilhada';
 import { Carta } from './Carta';
 
 /** Quantas "folhas" aparecem atrás da carta vencedora; mais que isso só poluiria a miniatura. */
@@ -11,8 +12,11 @@ interface Props {
   readonly jogadorId: string;
   readonly vazas: readonly VazaGanha[];
   readonly manilha: Valor | null;
-  /** Esconde o montinho mais novo enquanto a animação ainda o leva até aqui. */
-  readonly ocultarUltimo: boolean;
+  /**
+   * Quantos montinhos aparecem (`contagemVisivel`); os de depois continuam no DOM, invisíveis,
+   * porque o mais novo é o destino do voo que ainda o traz.
+   */
+  readonly visiveis: number;
   readonly className?: string;
   readonly rotulo?: string;
 }
@@ -22,7 +26,7 @@ interface Props {
  * sugerindo quantas cartas vieram junto. O espaçamento é calculado no CSS a partir de `--n`, de
  * modo que muitas vazas se sobrepõem em vez de estourar a placa.
  */
-export function Montinhos({ jogadorId, vazas, manilha, ocultarUltimo, className, rotulo }: Props) {
+export function Montinhos({ jogadorId, vazas, manilha, visiveis, className, rotulo }: Props) {
   if (vazas.length === 0) return null;
 
   const estilo: EstiloComVariaveis = { '--n': vazas.length };
@@ -39,8 +43,8 @@ export function Montinhos({ jogadorId, vazas, manilha, ocultarUltimo, className,
           // O índice é estável: os montinhos só crescem no fim e são zerados a cada rodada.
           <li
             key={indice}
-            className={classes('monte', ehUltimo && ocultarUltimo && 'monte--oculto')}
-            data-monte-destino={ehUltimo ? jogadorId : undefined}
+            className={classes('monte', indice >= visiveis && 'monte--oculto')}
+            {...(ehUltimo && { [MARCADORES.monteDestino]: jogadorId })}
             title={`${vaza.quantidadeDeCartas} ${vaza.quantidadeDeCartas === 1 ? 'carta' : 'cartas'}`}
           >
             {Array.from({ length: camadas }, (_, camada) => {

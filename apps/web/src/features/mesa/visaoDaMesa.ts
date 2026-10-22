@@ -1,4 +1,5 @@
 import type { EstadoPartidaVisivel, EstadoSala, JogadorVisivel } from '@fodinha/shared';
+import { contagemVisivel } from './cenaDaVaza';
 import { emOrdemDeJogo } from './ordemDeJogo';
 
 /** O que a mesa precisa saber para decidir; nada de React, DOM ou relógio. */
@@ -8,6 +9,8 @@ export interface EntradaDaVisao {
   readonly meuId: string;
   /** Instante local em que o estado chegou: a contagem parte dele, não do relógio do servidor. */
   readonly recebidoEm: number;
+  /** Montinho que a cena da vaza ainda leva ao dono (`VistaDaCena.monteEmVoo`). */
+  readonly monteEmVoo: string | null;
 }
 
 export type TipoDaSituacao =
@@ -64,7 +67,7 @@ export interface VisaoDaMesa {
   readonly palpite: DadosDoPalpite;
   /** Vaza em disputa (1 a cartasPorJogador); a da vez é a seguinte às já decididas. */
   readonly vazaAtual: number;
-  /** Vazas que fiz segundo o servidor (a animação pode esconder a que ainda voa). */
+  /** Vazas que fiz à vista: a que ainda voa até o meu montinho só conta ao pousar. */
   readonly minhasFeitas: number;
   readonly nomeDe: (id: string | null) => string | null;
 }
@@ -154,7 +157,8 @@ function vazaEmDisputa(jogo: EstadoPartidaVisivel): number {
 }
 
 /** Tudo o que a mesa decide a partir do estado, num lugar só e testável. */
-export function visaoDaMesa({ jogo, sala, meuId, recebidoEm }: EntradaDaVisao): VisaoDaMesa {
+export function visaoDaMesa(entrada: EntradaDaVisao): VisaoDaMesa {
+  const { jogo, sala, meuId, recebidoEm, monteEmVoo } = entrada;
   const eu = jogo.jogadores.find((j) => j.id === meuId);
   const participante = sala?.participantes.find((p) => p.id === meuId);
   // Sem assento na partida e sem dado da sala: só pode ser quem chegou no meio.
@@ -195,7 +199,7 @@ export function visaoDaMesa({ jogo, sala, meuId, recebidoEm }: EntradaDaVisao): 
     vivosNaMesa: vivosEmOrdem.length,
     palpite: dadosDoPalpite(jogo, vivosEmOrdem, meuId),
     vazaAtual: vazaEmDisputa(jogo),
-    minhasFeitas: eu?.vazasFeitas ?? 0,
+    minhasFeitas: contagemVisivel(monteEmVoo, meuId, eu?.vazasFeitas ?? 0),
     nomeDe,
   };
 }

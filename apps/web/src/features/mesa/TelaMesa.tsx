@@ -30,6 +30,7 @@ import { ReacoesDaMesa } from './ReacoesDaMesa';
 import { AndamentoDosPalpites } from './AndamentoDosPalpites';
 import { TelaFimDePartida } from './TelaFimDePartida';
 import { MonteDeEmpates } from './MonteDeEmpates';
+import { contagemVisivel } from './cenaDaVaza';
 import { useAnimacaoDeVaza } from './useAnimacaoDeVaza';
 import { useRolarAtePlacaDaVez, useTituloDaVez } from './useSinaisDaVez';
 import { aberturaDaPartida, useBaralho } from './useBaralho';
@@ -48,12 +49,12 @@ export function TelaMesa() {
   const [maoAbertaDe, definirMaoAbertaDe] = useState<string | null>(null);
   const computador = useMediaQuery(CONSULTA_COMPUTADOR);
   // Hook antes dos retornos antecipados: a ordem dos hooks não pode depender do estado do jogo.
-  const animacao = useAnimacaoDeVaza(
-    jogo?.ultimaVaza ?? null,
-    (jogo?.mesa.length ?? 0) === 0,
-    jogo?.rodadaCega ?? false,
-    jogo?.fase === 'fim_de_rodada' || jogo?.fase === 'encerrada',
-  );
+  const animacao = useAnimacaoDeVaza({
+    ultimaVaza: jogo?.ultimaVaza ?? null,
+    mesaVazia: (jogo?.mesa.length ?? 0) === 0,
+    rodadaCega: jogo?.rodadaCega ?? false,
+    fase: jogo?.fase ?? null,
+  });
   useSonsDaMesa(jogo, sessao?.jogadorId ?? null);
   const viraRef = useRef<HTMLDivElement>(null);
   const adversariosRef = useRef<HTMLUListElement>(null);
@@ -80,12 +81,13 @@ export function TelaMesa() {
   if (!jogo || !sessao) return null;
 
   const meuId = sessao.jogadorId;
-  // A última vaza da partida ainda voa para o montinho antes de o vencedor ser celebrado.
-  if (jogo.fase === 'encerrada' && animacao.vaza === null) {
+  if (animacao.fimDePartidaPodeAparecer) {
     return <TelaFimDePartida jogo={jogo} meuId={meuId} />;
   }
 
-  const visao = visaoDaMesa({ jogo, sala, meuId, recebidoEm: jogoRecebidoEm });
+  // O montinho novo só aparece quando a animação chega; até lá fica reservado (invisível).
+  const { monteEmVoo } = animacao;
+  const visao = visaoDaMesa({ jogo, sala, meuId, recebidoEm: jogoRecebidoEm, monteEmVoo });
   const {
     eu,
     pausado,
@@ -100,11 +102,7 @@ export function TelaMesa() {
   } = visao;
   const jogadorDaMaoAberta = jogo.jogadores.find((j) => j.id === maoAbertaDe);
 
-  const vazaEmCena = animacao.vaza;
-  // O montinho novo só aparece quando a animação chega; até lá fica reservado (invisível).
-  const donoDoMonteOculto = vazaEmCena ? (vazaEmCena.vencedorId ?? DESTINO_DOS_EMPATES) : null;
   const cartasTexto = jogo.cartasPorJogador === 1 ? 'carta' : 'cartas';
-  const minhasFeitas = visao.minhasFeitas - (eu && eu.id === donoDoMonteOculto ? 1 : 0);
 
   return (
     <div className="mesa">
@@ -152,7 +150,8 @@ export function TelaMesa() {
                 prazoFinal={ehDaVez ? prazoFinal : null}
                 manilha={jogo.manilha}
                 vidasIniciais={jogo.configuracao.vidasIniciais}
-                ocultarUltimoMonte={jogador.id === donoDoMonteOculto}
+                feitasVisiveis={contagemVisivel(monteEmVoo, jogador.id, jogador.vazasFeitas)}
+                montesVisiveis={contagemVisivel(monteEmVoo, jogador.id, jogador.vazasGanhas.length)}
                 onVerMao={jogador.maoRevelada ? () => definirMaoAbertaDe(jogador.id) : undefined}
               />
             );
@@ -188,7 +187,11 @@ export function TelaMesa() {
             <MonteDeEmpates
               vazas={jogo.vazasEmpatadas}
               manilha={jogo.manilha}
-              ocultarUltimo={donoDoMonteOculto === DESTINO_DOS_EMPATES}
+              visiveis={contagemVisivel(
+                monteEmVoo,
+                DESTINO_DOS_EMPATES,
+                jogo.vazasEmpatadas.length,
+              )}
             />
           </div>
 
@@ -276,7 +279,7 @@ export function TelaMesa() {
           {eu && !eu.eliminado && (
             <NumerosDaRodada
               palpite={eu.palpite}
-              feitas={minhasFeitas}
+              feitas={visao.minhasFeitas}
               destinoDoMonte={computador ? undefined : eu.id}
               className="numeros--minha"
             />
@@ -287,7 +290,7 @@ export function TelaMesa() {
               jogadorId={eu.id}
               vazas={eu.vazasGanhas}
               manilha={jogo.manilha}
-              ocultarUltimo={eu.id === donoDoMonteOculto}
+              visiveis={contagemVisivel(monteEmVoo, eu.id, eu.vazasGanhas.length)}
               className="montes--minha"
             />
           )}
@@ -332,8 +335,7 @@ export function TelaMesa() {
         )}
       </section>
 
-      {/* O resultado espera a última vaza chegar ao montinho; senão cobre a animação. */}
-      {jogo.fase === 'fim_de_rodada' && !pausado && vazaEmCena === null && (
+      {animacao.resultadoPodeAparecer && !pausado && (
         <PainelResultado jogo={jogo} meuId={meuId} recebidoEm={jogoRecebidoEm} />
       )}
       {pausado && <PainelPausa jogo={jogo} meuId={meuId} />}

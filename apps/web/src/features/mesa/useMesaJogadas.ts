@@ -1,13 +1,12 @@
 import { useLayoutEffect, useRef, type RefObject } from 'react';
 import type { JogadaNaMesa } from '@fodinha/shared';
-import { MARCADORES, prefereMenosMovimento, retirarOrigemDaJogada } from './animacao-compartilhada';
 import {
-  ESCALONAMENTO_DA_REVELACAO_MS,
-  origemNaMao,
-  origemNaPlaca,
-  reacomodar,
-  voarAteAMesa,
-} from './mesa-voos';
+  MARCADORES,
+  prefereMenosMovimento,
+  retirarOrigemDaJogada,
+  TEMPOS_DA_ANIMACAO,
+} from './animacao-compartilhada';
+import { origemNaMao, origemNaPlaca, reacomodar, voarAteAMesa } from './mesa-voos';
 
 interface Entrada {
   /** Cartas exibidas nas linhas (a mesa, ou a vaza fechada enquanto ela é mostrada). */
@@ -68,7 +67,7 @@ export function useMesaJogadas({ cartas, meuId, rodadaCega, raiz }: Entrada): vo
       if (!origem) continue;
       voarAteAMesa(elemento, {
         origem,
-        atrasoMs: novasNoLote * ESCALONAMENTO_DA_REVELACAO_MS,
+        atrasoMs: novasNoLote * TEMPOS_DA_ANIMACAO.escalonamentoDaRevelacaoMs,
         desvirar: !souEu || rodadaCega,
       });
       novasNoLote += 1;
