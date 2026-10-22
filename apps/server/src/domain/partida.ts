@@ -62,6 +62,8 @@ export class Partida {
   private readonly jogadores: JogadorNaPartida[];
   private readonly valores: readonly Valor[];
   private readonly saidasPendentes = new Map<string, DestinoDaSaida>();
+  /** Assentos já retirados: a sala ainda precisa saber que essas pessoas saíram. */
+  private readonly assentosRetirados = new Set<string>();
   private entrantes: string[] = [];
   private fase: FasePartida = 'palpites';
   private numeroRodada = 0;
@@ -157,6 +159,16 @@ export class Partida {
   /** Quem tem saída marcada é conduzido por um bot até a rodada terminar. */
   saiAoFimDaRodada(jogadorId: string): boolean {
     return this.saidasPendentes.has(jogadorId);
+  }
+
+  /**
+   * Saiu ou foi expulso: o assento some (ou já sumiu) entre as rodadas. É a única fonte do
+   * "está saindo" — a sala deriva dela quem ainda pertence à mesa.
+   */
+  deixaAMesa(jogadorId: string): boolean {
+    return (
+      this.saidasPendentes.get(jogadorId) === 'remover' || this.assentosRetirados.has(jogadorId)
+    );
   }
 
   adicionarJogador(jogadorId: string): void {
@@ -479,6 +491,7 @@ export class Partida {
       if (destino !== 'remover') continue;
       this.jogadores.splice(this.indiceDe(id), 1);
       this.saidasPendentes.delete(id);
+      this.assentosRetirados.add(id);
     }
   }
 

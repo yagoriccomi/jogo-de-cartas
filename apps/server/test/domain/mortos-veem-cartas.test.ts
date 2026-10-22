@@ -23,7 +23,6 @@ function humano(id: string): Participante {
     ehBot: false,
     perfilDoBot: null,
     conectado: true,
-    saindo: false,
     tokenSessao: `token-${id}`,
     dispositivoId: `disp-${id}`,
   };

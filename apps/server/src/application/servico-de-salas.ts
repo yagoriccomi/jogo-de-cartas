@@ -7,7 +7,7 @@ import {
 } from '@fodinha/shared';
 import type { GeradorAleatorio } from '../domain/aleatoriedade';
 import { ErroDeRegra } from '../domain/erros';
-import { Sala, type Expulsao, type Participante } from '../domain/sala';
+import { Sala, type Desfecho, type Expulsao, type Participante } from '../domain/sala';
 import { normalizarApelido, normalizarCodigoSala, normalizarDispositivo } from './apelido';
 import type { CondutorDePartidas } from './condutor-de-partidas';
 import type {
@@ -144,9 +144,9 @@ export class ServicoDeSalas {
     if (!participante) {
       throw new ErroDeRegra('SEM_PERMISSAO', 'Sessão expirada. Entre na sala novamente.');
     }
-    sala.marcarConexao(participante.id, true);
+    const desfecho = sala.marcarConexao(participante.id, true);
     this.cancelarLimpeza(sala.codigo);
-    this.deps.condutor.aposMudanca(sala);
+    this.deps.condutor.aposMudanca(sala, desfecho);
     return this.sessao(sala, participante);
   }
 
@@ -160,9 +160,9 @@ export class ServicoDeSalas {
   desconectar(ator: Ator): void {
     const sala = this.deps.repositorio.buscar(ator.codigoSala);
     if (!sala?.participante(ator.jogadorId)) return;
-    sala.marcarConexao(ator.jogadorId, false);
+    const desfecho = sala.marcarConexao(ator.jogadorId, false);
     if (sala.humanosConectados === 0) this.agendarLimpeza(sala);
-    this.deps.condutor.aposMudanca(sala);
+    this.deps.condutor.aposMudanca(sala, desfecho);
   }
 
   configurar(ator: Ator, configuracao: ConfiguracaoPartida): void {
@@ -178,12 +178,12 @@ export class ServicoDeSalas {
   }
 
   expulsar(ator: Ator, participanteId: string): Expulsao {
-    return this.alterar(ator, (sala) => {
+    const { expulsoId, eraHumano } = this.alterar(ator, (sala) => {
       const expulsao = sala.expulsar(ator.jogadorId, participanteId);
-      this.resolverVotacoes(sala);
       this.deps.registrador.info({ sala: sala.codigo }, 'Participante expulso');
       return expulsao;
     });
+    return { expulsoId, eraHumano };
   }
 
   iniciarPartida(ator: Ator): void {
@@ -230,7 +230,7 @@ export class ServicoDeSalas {
 
   sair(ator: Ator): void {
     const sala = this.salaExistente(ator.codigoSala);
-    sala.sair(ator.jogadorId);
+    const desfecho = sala.sair(ator.jogadorId);
     this.ultimaReacaoEm.delete(ator.jogadorId);
     if (sala.humanosPresentes === 0) {
       this.removerSala(sala);
@@ -238,15 +238,11 @@ export class ServicoDeSalas {
     }
     // Sobrou gente na sala, mas talvez ninguém conectado: a sala não pode ficar para sempre.
     if (sala.humanosConectados === 0) this.agendarLimpeza(sala);
-    this.resolverVotacoes(sala);
-    this.deps.condutor.aposMudanca(sala);
+    this.deps.condutor.aposMudanca(sala, desfecho);
   }
 
   votarEspera(ator: Ator, { ausenteId, esperar }: { ausenteId: string; esperar: boolean }): void {
-    this.alterar(ator, (sala) => {
-      sala.votar(ator.jogadorId, ausenteId, esperar);
-      this.resolverVotacoes(sala);
-    });
+    this.alterar(ator, (sala) => sala.votar(ator.jogadorId, ausenteId, esperar));
   }
 
   palpitar(ator: Ator, quantidade: number): void {
@@ -260,8 +256,7 @@ export class ServicoDeSalas {
   /** Não passa por `alterar`: reação não muda a sala, então não há estado a republicar. */
   reagir(ator: Ator, reacao: Reacao): void {
     const sala = this.salaExistente(ator.codigoSala);
-    const participante = sala.participante(ator.jogadorId);
-    if (!participante || participante.saindo) {
+    if (!sala.participanteAtivo(ator.jogadorId)) {
       throw new ErroDeRegra('SEM_PERMISSAO', 'Você não está nesta sala.');
     }
     if (!sala.emPartida) {
@@ -280,14 +275,14 @@ export class ServicoDeSalas {
     });
   }
 
-  private alterar<T>(ator: Ator, mudanca: (sala: Sala) => T): T {
+  /** Quando a mudança devolve um desfecho (sair, expulsar, votar), o condutor o registra. */
+  private alterar<T extends Desfecho | void>(ator: Ator, mudanca: (sala: Sala) => T): T {
     const sala = this.salaExistente(ator.codigoSala);
-    const participante = sala.participante(ator.jogadorId);
-    if (!participante || participante.saindo) {
+    if (!sala.participanteAtivo(ator.jogadorId)) {
       throw new ErroDeRegra('SEM_PERMISSAO', 'Você não está nesta sala.');
     }
     const resultado = mudanca(sala);
-    this.deps.condutor.aposMudanca(sala);
+    this.deps.condutor.aposMudanca(sala, resultado || undefined);
     return resultado;
   }
 
@@ -299,15 +294,6 @@ export class ServicoDeSalas {
       throw new ErroDeRegra('JOGO_PAUSADO', 'A partida está pausada.');
     }
     return sala.partida;
-  }
-
-  private resolverVotacoes(sala: Sala): void {
-    const eliminados = sala.resolverVotacoes();
-    if (eliminados.length === 0) return;
-    this.deps.registrador.info(
-      { sala: sala.codigo, quantidade: eliminados.length },
-      'Ausente eliminado por votação',
-    );
   }
 
   private salaExistente(codigo: string): Sala {
@@ -352,7 +338,6 @@ export class ServicoDeSalas {
       ehBot: false,
       perfilDoBot: null,
       conectado: true,
-      saindo: false,
       tokenSessao: this.deps.identificadores.novoToken(),
       dispositivoId,
     };
@@ -372,7 +357,6 @@ export class ServicoDeSalas {
       ehBot: true,
       perfilDoBot: null,
       conectado: true,
-      saindo: false,
       tokenSessao: null,
       dispositivoId: null,
     };

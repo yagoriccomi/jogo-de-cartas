@@ -4,7 +4,7 @@ import type { GeradorAleatorio } from '../domain/aleatoriedade';
 import { PERFIL_DA_JOGADA_AUTOMATICA } from '../domain/bot/perfis';
 import type { EstrategiasDosPerfis } from '../domain/estrategia-bot';
 import type { Partida } from '../domain/partida';
-import type { Sala } from '../domain/sala';
+import type { Desfecho, Sala } from '../domain/sala';
 import type { Cancelamento, Notificador, Registrador, Relogio } from './portas';
 
 /** Chance de o bot mandar uma reação a cada carta que joga: dá vida à mesa sem virar spam. */
@@ -45,9 +45,12 @@ export class CondutorDePartidas {
 
   constructor(private readonly deps: DependenciasDoCondutor) {}
 
-  /** Deve ser chamado após QUALQUER mudança na sala: reagenda o próximo passo e notifica todos. */
-  aposMudanca(sala: Sala): void {
-    sala.descartarQuemSaiu();
+  /**
+   * Deve ser chamado após QUALQUER mudança na sala: registra o desfecho dela, reagenda o próximo
+   * passo e notifica todos.
+   */
+  aposMudanca(sala: Sala, desfecho?: Desfecho): void {
+    if (desfecho) this.registrarEliminados(sala, desfecho.eliminados);
     this.reconciliarCarencias(sala);
     this.agendarProximoPasso(sala);
     this.publicar(sala);
@@ -62,7 +65,10 @@ export class CondutorDePartidas {
 
   publicar(sala: Sala): void {
     // Quem saiu não recebe mais nada, mesmo enquanto um bot termina a rodada por ele.
-    const humanos = sala.todos.filter((p) => !p.ehBot && !p.saindo).map((p) => p.id);
+    const humanos = sala
+      .ativos()
+      .filter((p) => !p.ehBot)
+      .map((p) => p.id);
     this.deps.notificador.enviarEstadoSala(humanos, sala.estado());
 
     const partida = sala.partida;
@@ -74,7 +80,10 @@ export class CondutorDePartidas {
 
   /** Reação é efêmera: vai a quem está na sala agora e não altera nem agenda nada. */
   publicarReacao(sala: Sala, reacao: ReacaoNaMesa): void {
-    const humanos = sala.todos.filter((p) => !p.ehBot && !p.saindo).map((p) => p.id);
+    const humanos = sala
+      .ativos()
+      .filter((p) => !p.ehBot)
+      .map((p) => p.id);
     this.deps.notificador.enviarReacao(humanos, reacao);
   }
 
@@ -127,16 +136,16 @@ export class CondutorDePartidas {
       if (daSala.has(jogadorId)) continue;
       const cancelar = this.deps.relogio.agendar(this.deps.tempos.carenciaDeDesconexaoMs, () => {
         daSala.delete(jogadorId);
-        if (!sala.abrirVotacao(jogadorId, this.deps.relogio.agora())) return;
+        const desfecho = sala.abrirVotacao(jogadorId, this.deps.relogio.agora());
+        if (!desfecho) return;
         this.deps.registrador.info({ sala: sala.codigo }, 'Partida pausada por desconexão');
-        // O ausente deixou de ser eleitor: alguma votação aberta pode se resolver agora.
-        this.registrarEliminados(sala, sala.resolverVotacoes());
-        this.aposMudanca(sala);
+        this.aposMudanca(sala, desfecho);
       });
       daSala.set(jogadorId, cancelar);
     }
   }
 
+  /** Único registro das eliminações por votação, venham do serviço ou da carência vencida. */
   private registrarEliminados(sala: Sala, eliminados: readonly string[]): void {
     if (eliminados.length === 0) return;
     this.deps.registrador.info(
@@ -212,8 +221,8 @@ export class CondutorDePartidas {
 
   /** Humano estourou o prazo: a mesa inteira de bots reage, cada um com um emoji sorteado. */
   private botsZoamQuemPerdeuAVez(sala: Sala): void {
-    for (const bot of sala.todos) {
-      if (bot.ehBot && !bot.saindo) this.reagirComoBot(sala, bot.id);
+    for (const bot of sala.ativos()) {
+      if (bot.ehBot) this.reagirComoBot(sala, bot.id);
     }
   }
 

@@ -92,21 +92,23 @@ Unidade no domínio (agenda, invariantes, projeção, diário, visão da mesa, c
 
 ## Fatias
 
-| Fatia                      | Nível | Depende de | Branch                          | Estado  |
-| -------------------------- | ----- | ---------- | ------------------------------- | ------- |
-| S1 agenda da mesa          | alto  | —          | `refactor/servidor-arquitetura` | rodando |
-| W1 visão da mesa           | alto  | —          | `refactor/web-mesa`             | rodando |
-| P1 preferência do aparelho | alto  | —          | `refactor/web-preferencias`     | rodando |
-| S2 invariantes da Sala     | alto  | S1         | `refactor/servidor-arquitetura` | na fila |
-| S3 jogar a vez             | alto  | S2         | `refactor/servidor-arquitetura` | na fila |
-| S4 projeção completa       | alto  | S3         | `refactor/servidor-arquitetura` | na fila |
-| S5 Sala esconde a Partida  | alto  | S4         | `refactor/servidor-arquitetura` | na fila |
-| W2 cena da vaza            | alto  | W1         | `refactor/web-mesa`             | na fila |
-| W3 fonte da partida        | alto  | W2         | `refactor/web-mesa`             | na fila |
-| W4 planejadores dos hooks  | alto  | W3         | `refactor/web-mesa`             | na fila |
-| H1 diário + Turso + export | alto  | S5         | `feat/historico-de-partidas`    | na fila |
-| L1 login Google            | alto  | H1         | `feat/login-google`             | na fila |
-| R1 histórico e replay      | alto  | L1, W4     | `feat/replay-de-partidas`       | na fila |
+Uma branch e um PR por fatia, em série dentro do módulo. O usuário autorizou o merge com tudo verde e pediu para vigiar os deploys.
+
+| Fatia                      | Nível | Depende de | Branch (PR)                           | Estado                                       |
+| -------------------------- | ----- | ---------- | ------------------------------------- | -------------------------------------------- |
+| S1 agenda da mesa          | alto  | —          | `refactor/servidor-arquitetura` (#25) | revisada: pronta (e2e instável reexecutando) |
+| W1 visão da mesa           | alto  | —          | `refactor/web-mesa` (#27)             | mergeada, deploy ok                          |
+| P1 preferência do aparelho | alto  | —          | `refactor/web-preferencias` (#26)     | mergeada, deploy ok                          |
+| S2 invariantes da Sala     | alto  | S1         | `refactor/servidor-sala` (#28)        | revisada: pronta                             |
+| W2 cena da vaza            | alto  | W1         | `refactor/web-cena-da-vaza`           | rodando                                      |
+| S3 jogar a vez             | alto  | S2         | `refactor/servidor-jogar-a-vez`       | na fila                                      |
+| S4 projeção completa       | alto  | S3         | —                                     | na fila                                      |
+| S5 Sala esconde a Partida  | alto  | S4         | —                                     | na fila                                      |
+| W3 fonte da partida        | alto  | W2         | —                                     | na fila                                      |
+| W4 planejadores dos hooks  | alto  | W3         | —                                     | na fila                                      |
+| H1 diário + Turso + export | alto  | S5         | `feat/historico-de-partidas`          | na fila                                      |
+| L1 login Google            | alto  | H1         | `feat/login-google`                   | na fila                                      |
+| R1 histórico e replay      | alto  | L1, W4     | `feat/replay-de-partidas`             | na fila                                      |
 
 ## 10. Definição de Pronto
 

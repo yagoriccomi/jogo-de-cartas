@@ -27,8 +27,6 @@ export interface Participante {
   /** Estilo de jogo do bot, sorteado a cada partida; `null` nos humanos e no lobby. */
   perfilDoBot: PerfilDeBot | null;
   conectado: boolean;
-  /** Saiu ou foi expulso no meio da rodada: some da sala quando a rodada terminar. */
-  saindo: boolean;
   /** Só humanos têm token; é o que permite reassumir o assento após queda de conexão. */
   readonly tokenSessao: string | null;
   /** Identificador do navegador (só humanos): base do banimento e da volta do criador. */
@@ -44,6 +42,14 @@ export interface LeituraDasRegras {
 interface Votacao {
   readonly desde: number;
   readonly votos: Map<string, boolean>;
+}
+
+/**
+ * O que uma mudança na sala provocou além dela mesma: ao fim de cada mutação a sala resolve as
+ * votações de espera, e a aplicação registra os eliminados uma vez só.
+ */
+export interface Desfecho {
+  readonly eliminados: readonly string[];
 }
 
 /** Resultado de uma expulsão, para a infraestrutura avisar e desconectar o expulso. */
@@ -117,25 +123,40 @@ export class Sala {
     return this.emPartida ? this.leitura : null;
   }
 
+  /** Todos na sala, inclusive quem está saindo e ainda tem o assento até a rodada terminar. */
   get todos(): readonly Participante[] {
-    return this.participantes;
+    return this.participantes.filter((p) => this.continuaNaSala(p));
+  }
+
+  /** Quem pertence à sala: tudo o que é de quem está saindo (votos, vaga, avisos) passa por aqui. */
+  ativos(): Participante[] {
+    return this.participantes.filter((p) => !this.estaSaindo(p.id));
   }
 
   get humanosConectados(): number {
-    return this.participantes.filter((p) => !p.ehBot && !p.saindo && p.conectado).length;
+    return this.ativos().filter((p) => !p.ehBot && p.conectado).length;
   }
 
   /** Humanos que ainda pertencem à sala (conectados ou com queda temporária). */
   get humanosPresentes(): number {
-    return this.participantes.filter((p) => !p.ehBot && !p.saindo).length;
+    return this.ativos().filter((p) => !p.ehBot).length;
   }
 
   participante(id: string): Participante | undefined {
-    return this.participantes.find((p) => p.id === id);
+    return this.todos.find((p) => p.id === id);
+  }
+
+  participanteAtivo(id: string): Participante | undefined {
+    return this.ativos().find((p) => p.id === id);
   }
 
   participantePorToken(token: string): Participante | undefined {
-    return this.participantes.find((p) => p.tokenSessao === token && !p.saindo);
+    return this.ativos().find((p) => p.tokenSessao === token);
+  }
+
+  /** Saiu ou foi expulso no meio da rodada: um bot termina por ele e o assento some depois. */
+  estaSaindo(id: string): boolean {
+    return !!this.partidaAtual?.deixaAMesa(id);
   }
 
   /** Em partida, quem chega senta na próxima rodada (premissa P7). */
@@ -167,16 +188,17 @@ export class Sala {
   }
 
   /** Humano expulso fica banido pelo navegador; bot é apenas removido. */
-  expulsar(solicitanteId: string, alvoId: string): Expulsao {
+  expulsar(solicitanteId: string, alvoId: string): Expulsao & Desfecho {
     this.exigirAnfitriao(solicitanteId);
     if (alvoId === solicitanteId) {
       throw new ErroDeRegra('ENTRADA_INVALIDA', 'Para sair da sala, use a opção de sair.');
     }
     const alvo = this.exigirParticipante(alvoId);
-    if (alvo.saindo) throw new ErroDeRegra('ENTRADA_INVALIDA', 'Esse jogador já está saindo.');
+    if (this.estaSaindo(alvo.id))
+      throw new ErroDeRegra('ENTRADA_INVALIDA', 'Esse jogador já está saindo.');
     if (alvo.dispositivoId) this.banidos.add(alvo.dispositivoId);
     this.desligar(alvo);
-    return { expulsoId: alvo.id, eraHumano: !alvo.ehBot };
+    return { expulsoId: alvo.id, eraHumano: !alvo.ehBot, ...this.restabelecer() };
   }
 
   configurar(solicitanteId: string, configuracao: ConfiguracaoPartida): void {
@@ -252,15 +274,18 @@ export class Sala {
   }
 
   /** Saída voluntária: no meio da rodada, um bot termina por ele e o assento some depois. */
-  sair(participanteId: string): void {
+  sair(participanteId: string): Desfecho {
     this.desligar(this.exigirParticipante(participanteId));
+    return this.restabelecer();
   }
 
-  marcarConexao(participanteId: string, conectado: boolean): void {
+  /** Quem volta pode ser o espectador que faltava para a mesa seguir sem eleitores. */
+  marcarConexao(participanteId: string, conectado: boolean): Desfecho {
     this.exigirParticipante(participanteId).conectado = conectado;
     if (conectado) this.votacoes.delete(participanteId);
     // Quem caiu não está lendo: a mesa não fica presa esperando um diálogo que ninguém fecha.
     else this.encerrarLeituraDasRegras(participanteId);
+    return this.restabelecer();
   }
 
   /**
@@ -274,43 +299,24 @@ export class Sala {
       .map((p) => p.id);
   }
 
-  /** Abre "Deseja esperar o retorno de X?" para quem caiu e ainda está jogando. */
-  abrirVotacao(ausenteId: string, agora: number): boolean {
-    if (!this.ausentesSemVotacao().includes(ausenteId)) return false;
+  /**
+   * Abre "Deseja esperar o retorno de X?" para quem caiu e ainda está jogando; `null` quando não
+   * há o que abrir. O ausente deixa de ser eleitor, então outra votação pode se resolver junto.
+   */
+  abrirVotacao(ausenteId: string, agora: number): Desfecho | null {
+    if (!this.ausentesSemVotacao().includes(ausenteId)) return null;
     this.votacoes.set(ausenteId, { desde: agora, votos: new Map() });
-    return true;
+    return this.restabelecer();
   }
 
-  votar(eleitorId: string, ausenteId: string, esperar: boolean): void {
+  votar(eleitorId: string, ausenteId: string, esperar: boolean): Desfecho {
     const votacao = this.votacoes.get(ausenteId);
     if (!votacao) throw new ErroDeRegra('ENTRADA_INVALIDA', 'Essa votação já foi encerrada.');
     if (!this.eleitoresDe(ausenteId).includes(eleitorId)) {
       throw new ErroDeRegra('SEM_PERMISSAO', 'Você não pode votar nesta espera.');
     }
     votacao.votos.set(eleitorId, esperar);
-  }
-
-  /**
-   * Encerra as votações em que todos os eleitores votaram NÃO: o ausente é eliminado e um bot
-   * termina a rodada dele. Sem nenhum eleitor, mas com alguém assistindo, a mesa também segue —
-   * ninguém pode decidir esperar. Reavaliada sempre que o eleitorado muda.
-   * Devolve quem foi eliminado.
-   */
-  resolverVotacoes(): string[] {
-    const eliminados: string[] = [];
-    const alguemAssistindo = this.ativos().some((p) => !p.ehBot && p.conectado);
-    for (const [ausenteId, votacao] of this.votacoes) {
-      const eleitores = this.eleitoresDe(ausenteId);
-      const todosNao =
-        eleitores.length > 0
-          ? eleitores.every((id) => votacao.votos.get(id) === false)
-          : alguemAssistindo;
-      if (!todosNao) continue;
-      this.votacoes.delete(ausenteId);
-      this.partidaAtual?.agendarSaida(ausenteId, 'eliminar');
-      eliminados.push(ausenteId);
-    }
-    return eliminados;
+    return this.restabelecer();
   }
 
   votacoesVisiveis(): VotacaoEspera[] {
@@ -345,28 +351,19 @@ export class Sala {
     );
   }
 
-  /** Tira da sala quem saiu no meio da rodada assim que a partida liberou o assento. */
-  descartarQuemSaiu(): void {
-    const partida = this.partidaAtual;
-    const permanecem = this.participantes.filter(
-      (p) => !p.saindo || (this.emPartida && !!partida?.participa(p.id)),
-    );
-    this.participantes.splice(0, this.participantes.length, ...permanecem);
-  }
-
   estado(): EstadoSala {
     return {
       codigo: this.codigo,
       configuracao: this.configuracao,
       emPartida: this.emPartida,
-      participantes: this.participantes.map((p): ParticipanteSala => ({
+      participantes: this.todos.map((p): ParticipanteSala => ({
         id: p.id,
         apelido: p.apelido,
         ehBot: p.ehBot,
         conectado: p.conectado,
         ehAnfitriao: p.id === this.anfitriaoId,
         aguardandoProximaRodada: this.emPartida && !!this.partidaAtual?.aguardandoEntrada(p.id),
-        saindo: p.saindo,
+        saindo: this.estaSaindo(p.id),
       })),
     };
   }
@@ -419,6 +416,47 @@ export class Sala {
     return partida;
   }
 
+  /**
+   * Invariantes que toda mutação do eleitorado ou da conexão restabelece antes de retornar:
+   * votações decididas são encerradas e quem já perdeu o assento sai da lista.
+   */
+  private restabelecer(): Desfecho {
+    const eliminados = this.resolverVotacoes();
+    this.descartarQuemSaiu();
+    return { eliminados };
+  }
+
+  /**
+   * Encerra as votações em que todos os eleitores votaram NÃO: o ausente é eliminado e um bot
+   * termina a rodada dele. Sem nenhum eleitor, mas com alguém assistindo, a mesa também segue —
+   * ninguém pode decidir esperar. Devolve quem foi eliminado.
+   */
+  private resolverVotacoes(): string[] {
+    const eliminados: string[] = [];
+    const alguemAssistindo = this.ativos().some((p) => !p.ehBot && p.conectado);
+    for (const [ausenteId, votacao] of this.votacoes) {
+      const eleitores = this.eleitoresDe(ausenteId);
+      const todosNao =
+        eleitores.length > 0
+          ? eleitores.every((id) => votacao.votos.get(id) === false)
+          : alguemAssistindo;
+      if (!todosNao) continue;
+      this.votacoes.delete(ausenteId);
+      this.partidaAtual?.agendarSaida(ausenteId, 'eliminar');
+      eliminados.push(ausenteId);
+    }
+    return eliminados;
+  }
+
+  /**
+   * Tira da lista quem saiu no meio da rodada e a partida já liberou o assento. `todos` já os
+   * esconde; o descarte só evita guardá-los até a próxima partida.
+   */
+  private descartarQuemSaiu(): void {
+    const permanecem = this.todos;
+    this.participantes.splice(0, this.participantes.length, ...permanecem);
+  }
+
   /** Saída (voluntária ou expulsão): fora de partida é imediata; em partida, ao fim da rodada. */
   private desligar(participante: Participante): void {
     this.encerrarLeituraDasRegras(participante.id);
@@ -428,7 +466,6 @@ export class Sala {
     const partida = this.partidaAtual;
     if (this.emPartida && partida) partida.agendarSaida(participante.id, 'remover');
     if (this.emPartida && partida?.participa(participante.id)) {
-      participante.saindo = true;
       participante.conectado = false;
     } else {
       this.participantes.splice(this.participantes.indexOf(participante), 1);
@@ -448,13 +485,14 @@ export class Sala {
       .map((p) => p.id);
   }
 
-  private ativos(): Participante[] {
-    return this.participantes.filter((p) => !p.saindo);
+  /** Quem saiu continua listado enquanto a partida ainda guarda o assento dele. */
+  private continuaNaSala(participante: Participante): boolean {
+    if (!this.estaSaindo(participante.id)) return true;
+    return this.emPartida && !!this.partidaAtual?.participa(participante.id);
   }
 
   private criadorPresente(): boolean {
-    const criador = this.participante(this.criadorId);
-    return !!criador && !criador.saindo;
+    return !!this.participanteAtivo(this.criadorId);
   }
 
   /** Premissa R4: o posto vai para o humano há mais tempo na sala — de preferência conectado. */
