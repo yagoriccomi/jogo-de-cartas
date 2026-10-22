@@ -9,6 +9,7 @@ import { partesDoSaldo } from './AndamentoDosPalpites';
 import { Carta } from './Carta';
 import { useDicaDoGesto } from './dicaDoGesto';
 import { SimbolosMaoEPe } from './SimbolosMaoEPe';
+import type { DadosDoPalpite } from './visaoDaMesa';
 
 /** Até esta quantidade de opções os botões são grandes e ocupam uma linha. */
 const OPCOES_GRANDES = 4;
@@ -20,23 +21,12 @@ const COLUNAS_DA_GRADE_LONGA_NO_COMPUTADOR = 10;
 
 interface Props {
   readonly cartasNaRodada: number;
-  readonly palpiteProibido: number | null;
-  readonly souOPe: boolean;
+  /** Já decidido pela visão da mesa: quem palpitou, quantos faltam, a soma e o número proibido. */
+  readonly palpite: DadosDoPalpite;
   readonly vira: DadosDaCarta | null;
   readonly manilha: Valor | null;
-  /** Quem já palpitou nesta rodada, na ordem de jogo (a mão primeiro). */
-  readonly palpitesAnteriores: readonly PalpiteAnterior[];
-  /** Quantos ainda palpitam depois de mim. */
-  readonly depoisDeVoce: number;
   readonly ocupado: boolean;
   readonly onConfirmar: (quantidade: number) => void;
-}
-
-export interface PalpiteAnterior {
-  readonly id: string;
-  readonly nome: string;
-  readonly palpite: number;
-  readonly ehMao: boolean;
 }
 
 function tamanhoDaGrade(opcoes: number): 'grande' | 'media' | 'pequena' {
@@ -48,15 +38,13 @@ function tamanhoDaGrade(opcoes: number): 'grande' | 'media' | 'pequena' {
 /** O primeiro palpite do aparelho ensina o gesto: o "2× no número" ganha destaque até ser usado. */
 export function PainelPalpite({
   cartasNaRodada,
-  palpiteProibido,
-  souOPe,
+  palpite,
   vira,
   manilha,
-  palpitesAnteriores,
-  depoisDeVoce,
   ocupado,
   onConfirmar,
 }: Props) {
+  const { anteriores: palpitesAnteriores, depoisDeVoce, soma, souOPe, proibido } = palpite;
   const [escolhido, definirEscolhido] = useState<number | null>(null);
   // Mesmo padrão das cartas: 1 toque escolhe, 2 rápidos confirmam (o botão Confirmar continua).
   const toqueNoPalpite = useDuploToque<number>(definirEscolhido, (quantidade) =>
@@ -67,7 +55,6 @@ export function PainelPalpite({
   const computador = useMediaQuery(CONSULTA_COMPUTADOR);
   const dicaDoGesto = useDicaDoGesto('palpite');
   const opcoes = Array.from({ length: cartasNaRodada + 1 }, (_, quantidade) => quantidade);
-  const soma = palpitesAnteriores.reduce((total, anterior) => total + anterior.palpite, 0);
   // Vazas ainda "sem dono" nos palpites: negativo quando a mesa já pediu mais do que há.
   const saldo = cartasNaRodada - soma;
   const [pedido, resto] = partesDoSaldo(soma, cartasNaRodada);
@@ -113,15 +100,15 @@ export function PainelPalpite({
         aria-label="Quantidade de vazas"
       >
         {opcoes.map((quantidade) => {
-          const proibido = quantidade === palpiteProibido;
+          const bloqueado = quantidade === proibido;
           return (
             <button
               key={quantidade}
               type="button"
-              className={classes('palpite__opcao', proibido && 'palpite__opcao--bloqueada')}
+              className={classes('palpite__opcao', bloqueado && 'palpite__opcao--bloqueada')}
               aria-pressed={escolhido === quantidade}
-              aria-label={proibido ? `${quantidade}, bloqueado` : String(quantidade)}
-              disabled={proibido || ocupado}
+              aria-label={bloqueado ? `${quantidade}, bloqueado` : String(quantidade)}
+              disabled={bloqueado || ocupado}
               onClick={(evento) => toqueNoPalpite.tocar(quantidade, evento)}
             >
               {quantidade}

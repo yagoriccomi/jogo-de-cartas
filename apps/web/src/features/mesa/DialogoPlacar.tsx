@@ -5,6 +5,7 @@ import { IconeFechar } from '../../componentes/Icones';
 import { classes } from '../../lib/classes';
 import { NumerosDaRodada } from './NumerosDaRodada';
 import { SimbolosMaoEPe } from './SimbolosMaoEPe';
+import { idDaVezAtiva, somaDosPalpites } from './visaoDaMesa';
 
 interface Props {
   readonly jogo: EstadoPartidaVisivel;
@@ -24,16 +25,14 @@ function situacaoDe(jogador: JogadorVisivel, jogo: EstadoPartidaVisivel): string
   if (jogador.eliminado) return 'Eliminado';
   if (jogador.saiAoFimDaRodada) return 'Saindo';
   if (!jogador.conectado && !jogador.ehBot) return 'Offline';
-  if (jogador.id === jogo.idDaVez) return jogo.fase === 'palpites' ? 'Palpitando' : 'Jogando';
+  if (jogador.id === idDaVezAtiva(jogo)) return jogo.fase === 'palpites' ? 'Palpitando' : 'Jogando';
   return null;
 }
 
 /** Placar consultável a qualquer momento: vidas, palpite e vazas feitas de todos na rodada. */
 export function DialogoPlacar({ jogo, meuId, onFechar }: Props) {
-  const somaDosPalpites = jogo.jogadores.reduce(
-    (soma, jogador) => soma + (jogador.eliminado ? 0 : (jogador.palpite ?? 0)),
-    0,
-  );
+  const soma = somaDosPalpites(jogo.jogadores);
+  const idDaVez = idDaVezAtiva(jogo);
   const cartasTexto = jogo.cartasPorJogador === 1 ? 'carta' : 'cartas';
 
   return (
@@ -54,8 +53,7 @@ export function DialogoPlacar({ jogo, meuId, onFechar }: Props) {
 
       <p className="placar__rodada">
         Rodada <strong>{jogo.numeroRodada}</strong> · {jogo.cartasPorJogador} {cartasTexto} ·
-        manilha <strong>{jogo.manilha ?? '–'}</strong> · palpites somam{' '}
-        <strong>{somaDosPalpites}</strong>
+        manilha <strong>{jogo.manilha ?? '–'}</strong> · palpites somam <strong>{soma}</strong>
       </p>
 
       <ol className="placar">
@@ -68,7 +66,7 @@ export function DialogoPlacar({ jogo, meuId, onFechar }: Props) {
               className={classes(
                 'placar__linha',
                 souEu && 'placar__linha--eu',
-                jogador.id === jogo.idDaVez && 'placar__linha--vez',
+                jogador.id === idDaVez && 'placar__linha--vez',
                 jogador.eliminado && 'placar__linha--eliminado',
               )}
             >
