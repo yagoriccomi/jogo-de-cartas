@@ -1,10 +1,4 @@
-import {
-  LIMITES,
-  type ConfiguracaoPartida,
-  type EstadoSala,
-  type ParticipanteSala,
-  type VotacaoEspera,
-} from '@fodinha/shared';
+import { LIMITES, type ConfiguracaoPartida } from '@fodinha/shared';
 import {
   proximoPasso,
   registrarMarco,
@@ -37,6 +31,13 @@ export interface Participante {
 export interface LeituraDasRegras {
   readonly jogadorId: string;
   readonly desde: number;
+}
+
+/** Votação de espera em curso; o que cada destinatário vê dela é decidido na projeção. */
+export interface VotacaoAberta {
+  readonly ausenteId: string;
+  readonly desde: number;
+  readonly votos: readonly { readonly eleitorId: string; readonly esperar: boolean | null }[];
 }
 
 interface Votacao {
@@ -99,6 +100,14 @@ export class Sala {
   get prazoDaVezMs(): number | null {
     const segundos = this.configuracao.prazoDaVezSegundos;
     return segundos === null ? null : segundos * MS_POR_SEGUNDO;
+  }
+
+  get configuracaoAtual(): ConfiguracaoPartida {
+    return this.configuracao;
+  }
+
+  ehAnfitriao(participanteId: string): boolean {
+    return participanteId === this.anfitriaoId;
   }
 
   get partida(): Partida | null {
@@ -319,11 +328,11 @@ export class Sala {
     return this.restabelecer();
   }
 
-  votacoesVisiveis(): VotacaoEspera[] {
+  /** Votações de espera em curso, com o voto (ou a falta dele) de cada eleitor. */
+  votacoesAbertas(): VotacaoAberta[] {
     return [...this.votacoes].map(([ausenteId, votacao]) => ({
       ausenteId,
-      apelido: this.participante(ausenteId)?.apelido ?? '—',
-      desconectadoDesde: votacao.desde,
+      desde: votacao.desde,
       votos: this.eleitoresDe(ausenteId).map((eleitorId) => ({
         eleitorId,
         esperar: votacao.votos.get(eleitorId) ?? null,
@@ -349,23 +358,6 @@ export class Sala {
       },
       tempos,
     );
-  }
-
-  estado(): EstadoSala {
-    return {
-      codigo: this.codigo,
-      configuracao: this.configuracao,
-      emPartida: this.emPartida,
-      participantes: this.todos.map((p): ParticipanteSala => ({
-        id: p.id,
-        apelido: p.apelido,
-        ehBot: p.ehBot,
-        conectado: p.conectado,
-        ehAnfitriao: p.id === this.anfitriaoId,
-        aguardandoProximaRodada: this.emPartida && !!this.partidaAtual?.aguardandoEntrada(p.id),
-        saindo: this.estaSaindo(p.id),
-      })),
-    };
   }
 
   private etapaAtual(): Etapa | null {
