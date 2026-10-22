@@ -4,7 +4,7 @@ import { Server } from 'socket.io';
 import type { ServidorDoJogo } from './infrastructure/socket/gateway';
 import { CondutorDePartidas } from './application/condutor-de-partidas';
 import { ServicoDeSalas } from './application/servico-de-salas';
-import { EstrategiaSimples } from './domain/estrategia-bot';
+import { EstrategiaDoBot } from './domain/estrategia-bot';
 import {
   aleatorioCriptografico,
   IdentificadoresCriptograficos,
@@ -45,7 +45,7 @@ async function iniciar(): Promise<void> {
   const condutor = new CondutorDePartidas({
     notificador: new NotificadorSocketIo(io),
     relogio,
-    estrategia: new EstrategiaSimples(),
+    estrategia: new EstrategiaDoBot(aleatorioCriptografico),
     registrador,
     gerarAleatorio: aleatorioCriptografico,
     tempos: {

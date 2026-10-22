@@ -9,9 +9,9 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { CondutorDePartidas } from '../../src/application/condutor-de-partidas';
 import type { Notificador, Relogio } from '../../src/application/portas';
 import { ServicoDeSalas } from '../../src/application/servico-de-salas';
-import { EstrategiaSimples } from '../../src/domain/estrategia-bot';
+import { EstrategiaDoBot } from '../../src/domain/estrategia-bot';
 import { RepositorioDeSalasEmMemoria } from '../../src/infrastructure/adaptadores';
-import { BOTS_CALADOS, geradorComSemente } from '../apoio';
+import { BOT_SEM_ERRO, BOTS_CALADOS, geradorComSemente } from '../apoio';
 
 const PRAZO_MS = 30_000;
 const CARENCIA_MS = 10_000;
@@ -83,7 +83,7 @@ beforeEach(() => {
   const condutor = new CondutorDePartidas({
     notificador,
     relogio,
-    estrategia: new EstrategiaSimples(),
+    estrategia: new EstrategiaDoBot(BOT_SEM_ERRO),
     registrador: silencioso,
     gerarAleatorio: BOTS_CALADOS,
     tempos: {

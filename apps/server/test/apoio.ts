@@ -13,7 +13,7 @@ import { CondutorDePartidas, type TemposDoCondutor } from '../src/application/co
 import type { Notificador, Relogio } from '../src/application/portas';
 import { ServicoDeSalas } from '../src/application/servico-de-salas';
 import type { GeradorAleatorio } from '../src/domain/aleatoriedade';
-import { EstrategiaSimples } from '../src/domain/estrategia-bot';
+import { EstrategiaDoBot } from '../src/domain/estrategia-bot';
 import { Partida } from '../src/domain/partida';
 import { RepositorioDeSalasEmMemoria } from '../src/infrastructure/adaptadores';
 
@@ -29,6 +29,9 @@ export function geradorComSemente(semente: number): GeradorAleatorio {
   };
 }
 
+/** Sorteio que nunca cai na margem de erro do bot: os testes veem sempre a melhor jogada dele. */
+export const BOT_SEM_ERRO = (): number => 0.99;
+
 let sequencial = 0;
 export function carta(valor: Valor, naipe: Naipe): Carta {
   sequencial += 1;
@@ -39,7 +42,7 @@ export function carta(valor: Valor, naipe: Naipe): Carta {
 // Partida (domínio)
 // ---------------------------------------------------------------------------------------------
 
-const estrategia = new EstrategiaSimples();
+const estrategia = new EstrategiaDoBot(BOT_SEM_ERRO);
 
 export function criarPartida(
   jogadores = 4,
@@ -159,7 +162,7 @@ export function montarCenario(
   const condutor = new CondutorDePartidas({
     notificador,
     relogio,
-    estrategia: new EstrategiaSimples(),
+    estrategia: new EstrategiaDoBot(BOT_SEM_ERRO),
     registrador: silencioso,
     gerarAleatorio: sorteioDosBots,
     tempos: {
