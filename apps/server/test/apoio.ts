@@ -11,7 +11,7 @@ import {
 } from '@fodinha/shared';
 import { CondutorDePartidas, type TemposDoCondutor } from '../src/application/condutor-de-partidas';
 import type { Notificador, Relogio } from '../src/application/portas';
-import { ServicoDeSalas } from '../src/application/servico-de-salas';
+import { ServicoDeSalas, type Ator } from '../src/application/servico-de-salas';
 import type { GeradorAleatorio } from '../src/domain/aleatoriedade';
 import {
   EstrategiaDoBot,
@@ -138,11 +138,6 @@ const silencioso = { info: () => {}, warn: () => {}, error: () => {} };
 
 /** Sorteio que nunca cai na chance de reação: deixa os bots calados nos testes que não tratam disso. */
 export const BOTS_CALADOS = (): number => 1;
-
-export interface Ator {
-  readonly codigoSala: string;
-  readonly jogadorId: string;
-}
 
 export const ator = (sessao: Ator): Ator => ({
   codigoSala: sessao.codigoSala,
