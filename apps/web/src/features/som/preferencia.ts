@@ -1,38 +1,11 @@
-import { useSyncExternalStore } from 'react';
-import { descreverErro, registrar } from '../../lib/log';
+import { declararPreferencia, type Preferencia } from '../../lib/preferencia';
 
-const CHAVE_SOM = 'fodinha:som';
 const VALOR_DESLIGADO = 'off';
-const CHAVE_VOLUME_MUSICA = 'fodinha:volume-musica';
-const CHAVE_VOLUME_EFEITOS = 'fodinha:volume-efeitos';
-const CHAVE_VOLUME_REACOES = 'fodinha:volume-reacoes';
 
 export const VOLUME_MINIMO = 0;
 export const VOLUME_MAXIMO = 100;
 /** Todo som começa no meio para não incomodar quem abre o jogo; cada um sobe no menu se quiser. */
 const VOLUME_INICIAL = 50;
-export const VOLUME_INICIAL_MUSICA = VOLUME_INICIAL;
-export const VOLUME_INICIAL_EFEITOS = VOLUME_INICIAL;
-export const VOLUME_INICIAL_REACOES = VOLUME_INICIAL;
-
-// O localStorage pode lançar (modo privado, dados bloqueados): o som precisa funcionar sem ele.
-function lerTexto(chave: string): string | null {
-  try {
-    return localStorage.getItem(chave);
-  } catch (erro) {
-    registrar('warn', 'storage.leitura_falhou', { chave, ...descreverErro(erro) });
-    return null;
-  }
-}
-
-function gravarTexto(chave: string, valor: string | null): void {
-  try {
-    if (valor === null) localStorage.removeItem(chave);
-    else localStorage.setItem(chave, valor);
-  } catch (erro) {
-    registrar('warn', 'storage.escrita_falhou', { chave, ...descreverErro(erro) });
-  }
-}
 
 /** Garante um volume inteiro dentro da faixa; lixo no storage vira o valor inicial. */
 export function normalizarVolume(valor: unknown, inicial: number): number {
@@ -50,75 +23,33 @@ export function volumeParaGanho(volume: number): number {
   return fracao * fracao;
 }
 
-// Vivem no módulo para o menu, a mesa e a música enxergarem os mesmos valores, mesmo sem o storage.
-let somLigado = lerTexto(CHAVE_SOM) !== VALOR_DESLIGADO;
-let volumeMusica = normalizarVolume(lerTexto(CHAVE_VOLUME_MUSICA), VOLUME_INICIAL_MUSICA);
-let volumeEfeitos = normalizarVolume(lerTexto(CHAVE_VOLUME_EFEITOS), VOLUME_INICIAL_EFEITOS);
-let volumeReacoes = normalizarVolume(lerTexto(CHAVE_VOLUME_REACOES), VOLUME_INICIAL_REACOES);
-const ouvintes = new Set<() => void>();
+// Ligado é o normal: só o mudo fica gravado.
+export const somLigado = declararPreferencia<boolean>({
+  chave: 'fodinha:som',
+  padrao: true,
+  decodificar: (bruto) => bruto !== VALOR_DESLIGADO,
+  codificar: (ligado) => (ligado ? null : VALOR_DESLIGADO),
+});
 
-function avisarOuvintes(): void {
-  ouvintes.forEach((ouvinte) => ouvinte());
+function declararVolume(chave: string): Preferencia<number> {
+  return declararPreferencia({
+    chave,
+    padrao: VOLUME_INICIAL,
+    decodificar: (bruto) => normalizarVolume(bruto, VOLUME_INICIAL),
+    codificar: (volume) => String(normalizarVolume(volume, VOLUME_INICIAL)),
+  });
 }
 
-export function somEstaLigado(): boolean {
-  return somLigado;
-}
+export const volumeDaMusica = declararVolume('fodinha:volume-musica');
+export const volumeDosEfeitos = declararVolume('fodinha:volume-efeitos');
+export const volumeDasReacoes = declararVolume('fodinha:volume-reacoes');
 
-export function definirSomLigado(ligado: boolean): void {
-  somLigado = ligado;
-  gravarTexto(CHAVE_SOM, ligado ? null : VALOR_DESLIGADO);
-  avisarOuvintes();
-}
+export const somEstaLigado = somLigado.obter;
 
-export function obterVolumeMusica(): number {
-  return volumeMusica;
-}
-
-export function definirVolumeMusica(volume: number): void {
-  volumeMusica = normalizarVolume(volume, VOLUME_INICIAL_MUSICA);
-  gravarTexto(CHAVE_VOLUME_MUSICA, String(volumeMusica));
-  avisarOuvintes();
-}
-
-export function obterVolumeEfeitos(): number {
-  return volumeEfeitos;
-}
-
-export function definirVolumeEfeitos(volume: number): void {
-  volumeEfeitos = normalizarVolume(volume, VOLUME_INICIAL_EFEITOS);
-  gravarTexto(CHAVE_VOLUME_EFEITOS, String(volumeEfeitos));
-  avisarOuvintes();
-}
-
-export function obterVolumeReacoes(): number {
-  return volumeReacoes;
-}
-
-export function definirVolumeReacoes(volume: number): void {
-  volumeReacoes = normalizarVolume(volume, VOLUME_INICIAL_REACOES);
-  gravarTexto(CHAVE_VOLUME_REACOES, String(volumeReacoes));
-  avisarOuvintes();
-}
+const PREFERENCIAS_DO_SOM = [somLigado, volumeDaMusica, volumeDosEfeitos, volumeDasReacoes];
 
 /** Assinatura fora do React: a música reage às preferências sem depender de componente montado. */
 export function assinarPreferencias(ouvinte: () => void): () => void {
-  ouvintes.add(ouvinte);
-  return () => ouvintes.delete(ouvinte);
-}
-
-export function useSomLigado(): boolean {
-  return useSyncExternalStore(assinarPreferencias, somEstaLigado);
-}
-
-export function useVolumeMusica(): number {
-  return useSyncExternalStore(assinarPreferencias, obterVolumeMusica);
-}
-
-export function useVolumeEfeitos(): number {
-  return useSyncExternalStore(assinarPreferencias, obterVolumeEfeitos);
-}
-
-export function useVolumeReacoes(): number {
-  return useSyncExternalStore(assinarPreferencias, obterVolumeReacoes);
+  const cancelamentos = PREFERENCIAS_DO_SOM.map((preferencia) => preferencia.assinar(ouvinte));
+  return () => cancelamentos.forEach((cancelar) => cancelar());
 }
