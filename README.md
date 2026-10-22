@@ -39,7 +39,7 @@ Sem cadastro · até 10 na mesa · celular e computador · servidor que não dei
 |                             |                                                                                                    |
 | --------------------------- | -------------------------------------------------------------------------------------------------- |
 | 🃏 **Mesa em segundos**     | Crie uma sala, mande o link no WhatsApp e pronto. Sem conta, sem download: só um apelido.          |
-| 🤖 **Nunca falta gente**    | Até 4 bots completam a mesa. Eles palpitam pela força da mão e jogam para acertar.                 |
+| 🤖 **Nunca falta gente**    | Até 4 bots completam a mesa. Jogam como gente boa: acertam o palpite, fogem de vaza e atrapalham.  |
 | 🔒 **Jogo limpo**           | O servidor é a única autoridade: cada jogador recebe só o que pode ver. Não há como espiar cartas. |
 | 🌆 **Visual Vice City**     | Feltro com neon rosa e ciano, cartas em pixel art e manilhas com brilho holográfico.               |
 | 😂 **Mesa animada**         | Oito reações com animação e som próprios. E, de vez em quando, um trevo 🍀 dourado.                |
@@ -106,7 +106,12 @@ Sem cadastro · até 10 na mesa · celular e computador · servidor que não dei
 - Salas por código, sem cadastro: só o apelido, "Criar sala" ou "Entrar com código".
 - Convite por link com mensagem pronta: compartilhamento nativo do aparelho, botão direto do WhatsApp ou cópia do link; o link já preenche o código da sala.
 - A sala nasce com a configuração padrão e o anfitrião ajusta no lobby (baralhos, vidas, 8-9-10, tempo da vez), adiciona bots e inicia; o botão diz o que falta ("Adicione 1 jogador para iniciar").
-- Bots que palpitam pela força da mão (e, na rodada cega, pelas cartas que veem na testa dos outros) e jogam para acertar o palpite.
+- Bots que jogam como um bom jogador, sem trapacear (veem só o que um humano veria):
+  - **Palpite:** pela força da mão, descontando o que a mesa já pediu; na rodada cega, pelas cartas na testa dos outros e pelo que os palpites deles revelam sobre a carta do bot. Sendo o pé, vão para o lado mais provável do número proibido.
+  - **Para fugir da vaza** (palpite cumprido ou estourado), seguem uma escada: igualar uma carta já anulada, anular a que está ganhando, jogar a maior carta que não tem como ganhar, e só então arriscar.
+  - **Para ganhar**, preferem uma carta difícil de superar quando ainda falta gente jogar, e esperam quem joga logo depois fazer a vaza dele para fechar a seguinte.
+  - **Lembram** só da última vaza e das manilhas que ficaram à vista, e **atrapalham** os outros quando isso não lhes custa vida, mirando em quem tem mais vidas.
+  - Não jogam sempre igual: uma decisão em cada dez vai para a segunda melhor. O mesmo bot joga por quem estoura o tempo da vez.
 - Placar a qualquer momento (vidas, palpite e vazas feitas de todos) e guia de regras ilustrado, passo a passo.
 - Tutorial interativo com versão rápida, que pula os passos só explicativos.
 

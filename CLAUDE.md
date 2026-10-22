@@ -28,6 +28,7 @@
 - Saída/expulsão no meio da rodada: efetiva-se entre rodadas (`Partida.agendarSaida`), para não desfazer palpites e vazas.
 - Seletores do jogador em jogo (cartas, palpite, reações): 1 toque seleciona, 2 rápidos confirmam (`useDuploToque`; Enter/Espaço confirmam direto).
 - A mão vai ao cliente ordenada da mais forte para a mais fraca (o cliente não reordena).
+- Bot único (`EstrategiaDoBot`, `domain/bot/`), também usado na jogada automática de quem estoura o prazo: decisões em `answers/2026_10_22 bot-situacoes 001.md` (escada para não ganhar a vaza, esperar a posição de último, sabotagem sem custo próprio, memória só da última vaza e manilhas à vista, 10% de erro com sorteio injetado). Mudou a estratégia: rode a simulação contra o bot anterior (`apps/server/test/simulacao`, `SIMULACAO_PARES=2000` para medir com folga).
 - Bots reagem: a cada carta jogada, 10% de chance de um emoji sorteado (`CHANCE_DE_REACAO_DO_BOT`, sorteio injetado no `CondutorDePartidas`).
 - Plano dessas regras: `docs/planos/PLANO-pausa-entrada-moderacao.md`.
 

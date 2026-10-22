@@ -1,9 +1,10 @@
 import { CONFIGURACAO_PADRAO, type Carta, type Naipe, type Valor } from '@fodinha/shared';
 import { describe, expect, it } from 'vitest';
-import { EstrategiaSimples } from '../../src/domain/estrategia-bot';
+import { EstrategiaDoBot } from '../../src/domain/estrategia-bot';
+import { BOT_SEM_ERRO } from '../apoio';
 import type { JogadorNaVisao, VisaoDaPartida } from '../../src/domain/projecao';
 
-const estrategia = new EstrategiaSimples();
+const estrategia = new EstrategiaDoBot(BOT_SEM_ERRO);
 
 // Vira 4 → manilha 5. Ordem comum: 4 5 6 7 Q J K A 2 3 (o 5 vira manilha).
 const VIRA: Carta = { id: 'vira', valor: '4', naipe: 'ouros' };
@@ -52,7 +53,7 @@ function visaoBase(extra: Partial<VisaoDaPartida>): VisaoDaPartida {
   };
 }
 
-describe('EstrategiaSimples — palpite', () => {
+describe('EstrategiaDoBot — palpite', () => {
   const permitidos = [0, 1, 2, 3];
 
   it('deve palpitar mais com mão forte do que com mão fraca', () => {
@@ -87,7 +88,7 @@ describe('EstrategiaSimples — palpite', () => {
     );
   });
 
-  it('deve escolher o valor permitido mais próximo quando o desejado é proibido (pé)', () => {
+  it('deve ir para o lado mais provável quando o desejado é proibido (pé)', () => {
     const visao = visaoBase({
       fase: 'palpites',
       minhaMao: [c('a', '5', 'paus'), c('b', '5', 'copas'), c('c', '3', 'ouros')],
@@ -96,8 +97,8 @@ describe('EstrategiaSimples — palpite', () => {
 
     const palpite = estrategia.escolherPalpite(visao, [0, 1, 3]);
 
-    expect(palpite).not.toBe(2);
-    expect(palpite).toBe(1);
+    // Espera ~2,25 vazas: o 3 fica mais perto que o 1.
+    expect(palpite).toBe(3);
   });
 
   it('deve palpitar 1 na rodada cega quando as cartas visíveis são fracas', () => {
@@ -142,31 +143,32 @@ describe('EstrategiaSimples — palpite', () => {
   });
 });
 
-describe('EstrategiaSimples — jogada', () => {
+describe('EstrategiaDoBot — jogada', () => {
   function visaoDaVez(opcoes: {
     minhaMao: Carta[];
     mesa?: { jogadorId: string; carta: Carta }[];
     palpite: number;
     vazasFeitas: number;
+    adversarios?: number;
   }): VisaoDaPartida {
+    const adversarios = ['j1', 'j2', 'j3'].slice(0, opcoes.adversarios ?? 3);
     return visaoBase({
       minhaMao: opcoes.minhaMao,
       mesa: (opcoes.mesa ?? []).map((jogada) => ({ ...jogada, anulada: false })),
       jogadores: [
         jogador('eu', { palpite: opcoes.palpite, vazasFeitas: opcoes.vazasFeitas }),
-        jogador('j1'),
-        jogador('j2'),
-        jogador('j3'),
+        ...adversarios.map((id) => jogador(id, { cartasNaMao: opcoes.minhaMao.length })),
       ],
     });
   }
 
-  it('deve vencer com a carta mais barata que ganha a vaza quando ainda precisa de vazas', () => {
+  it('deve vencer com a carta mais barata que ganha quando é o último da vaza', () => {
     const visao = visaoDaVez({
       minhaMao: [c('fraca', '4', 'paus'), c('rei', 'K', 'copas'), c('tres', '3', 'ouros')],
       mesa: [{ jogadorId: 'j1', carta: c('m', 'Q', 'paus') }],
       palpite: 1,
       vazasFeitas: 0,
+      adversarios: 1,
     });
 
     expect(estrategia.escolherCarta(visao, 'eu')).toBe('rei');

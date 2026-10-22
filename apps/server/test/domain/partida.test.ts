@@ -6,12 +6,12 @@ import {
   type Valor,
 } from '@fodinha/shared';
 import { describe, expect, it } from 'vitest';
-import { EstrategiaSimples } from '../../src/domain/estrategia-bot';
+import { EstrategiaDoBot } from '../../src/domain/estrategia-bot';
 import { forcaDaCarta } from '../../src/domain/forca';
 import { Partida } from '../../src/domain/partida';
-import { geradorComSemente } from '../apoio';
+import { BOT_SEM_ERRO, geradorComSemente } from '../apoio';
 
-const estrategia = new EstrategiaSimples();
+const estrategia = new EstrategiaDoBot(BOT_SEM_ERRO);
 
 function novaPartida(jogadores = 4, semente = 42, configuracao = CONFIGURACAO_PADRAO): Partida {
   const jogadorIds = Array.from({ length: jogadores }, (_, i) => `j${i}`);
