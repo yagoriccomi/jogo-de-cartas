@@ -5,6 +5,14 @@ import {
   type ParticipanteSala,
   type VotacaoEspera,
 } from '@fodinha/shared';
+import {
+  proximoPasso,
+  registrarMarco,
+  type Etapa,
+  type MarcoDaEtapa,
+  type ProximoPasso,
+  type TemposDaMesa,
+} from './agenda';
 import type { GeradorAleatorio } from './aleatoriedade';
 import { sortearPerfis, type PerfilDeBot } from './bot/perfis';
 import { validarConfiguracao } from './configuracao';
@@ -64,6 +72,8 @@ export class Sala {
   /** Quem já usou a pausa de leitura nesta partida: ela não vira pausa à vontade. */
   private readonly jaLeram = new Set<string>();
   private readonly maxBots: number;
+  /** Desde quando a etapa em curso (vez ou fim de rodada) corre: âncora dos prazos da mesa. */
+  private marco: MarcoDaEtapa | null = null;
 
   constructor(
     readonly codigo: string,
@@ -315,6 +325,26 @@ export class Sala {
     }));
   }
 
+  /**
+   * Registra o instante da mudança que acabou de acontecer e devolve o próximo passo automático.
+   * Chamado a cada mudança na sala: sem mudança de etapa, devolve sempre o mesmo instante.
+   */
+  reagendar(agora: number, tempos: TemposDaMesa): ProximoPasso | null {
+    const etapa = this.etapaAtual();
+    const pausada = this.pausada;
+    this.marco = registrarMarco(this.marco, { etapa, pausada, agora });
+    return proximoPasso(
+      {
+        etapa,
+        marco: this.marco,
+        leitura: this.leituraDasRegras,
+        pausada,
+        prazoDaVezMs: this.prazoDaVezMs,
+      },
+      tempos,
+    );
+  }
+
   /** Tira da sala quem saiu no meio da rodada assim que a partida liberou o assento. */
   descartarQuemSaiu(): void {
     const partida = this.partidaAtual;
@@ -339,6 +369,20 @@ export class Sala {
         saindo: p.saindo,
       })),
     };
+  }
+
+  private etapaAtual(): Etapa | null {
+    const partida = this.partidaAtual;
+    if (!partida) return null;
+    const { andamento } = partida;
+    if (partida.faseAtual === 'fim_de_rodada') {
+      return { tipo: 'fimDeRodada', andamento, rodadaCega: partida.rodadaCega };
+    }
+    const jogadorId = partida.idDaVez;
+    if (jogadorId === null) return null;
+    const conduzidoPorBot =
+      !!this.participante(jogadorId)?.ehBot || partida.saiAoFimDaRodada(jogadorId);
+    return { tipo: 'vez', andamento, jogadorId, conduzidoPorBot };
   }
 
   private comecarPartida(
@@ -369,6 +413,8 @@ export class Sala {
     this.pausaDoDono = false;
     this.leitura = null;
     this.jaLeram.clear();
+    // Partida nova conta o andamento do zero: o marco da anterior não pode ser confundido com ela.
+    this.marco = null;
     this.partidaAtual = partida;
     return partida;
   }

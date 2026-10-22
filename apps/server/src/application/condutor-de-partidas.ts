@@ -1,4 +1,5 @@
-import { LIMITES, REACOES, type EstadoPartidaVisivel, type ReacaoNaMesa } from '@fodinha/shared';
+import { REACOES, type EstadoPartidaVisivel, type ReacaoNaMesa } from '@fodinha/shared';
+import { mesmoPasso, type ProximoPasso, type TemposDaMesa } from '../domain/agenda';
 import type { GeradorAleatorio } from '../domain/aleatoriedade';
 import { PERFIL_DA_JOGADA_AUTOMATICA } from '../domain/bot/perfis';
 import type { EstrategiasDosPerfis } from '../domain/estrategia-bot';
@@ -8,19 +9,8 @@ import type { Cancelamento, Notificador, Registrador, Relogio } from './portas';
 
 /** Chance de o bot mandar uma reação a cada carta que joga: dá vida à mesa sem virar spam. */
 export const CHANCE_DE_REACAO_DO_BOT = 0.1;
-const MS_POR_SEGUNDO = 1000;
-const LIMITE_DA_LEITURA_DAS_REGRAS_MS = LIMITES.maxLeituraDasRegrasSegundos * MS_POR_SEGUNDO;
 
-export interface TemposDoCondutor {
-  /** Atraso artificial do bot, para que os humanos acompanhem as jogadas. */
-  readonly atrasoDoBotMs: number;
-  /** Tempo de exibição do resultado da rodada antes da próxima distribuição. */
-  readonly pausaFimDeRodadaMs: number;
-  /**
-   * Acréscimo à pausa quando a rodada que acabou era cega: as cartas vão sozinhas à mesa de uma
-   * vez e o jogador precisa de mais tempo para descobrir a própria carta e entender o resultado.
-   */
-  readonly pausaExtraRodadaCegaMs: number;
+export interface TemposDoCondutor extends TemposDaMesa {
   /** Tolerância a quedas curtas (recarregar a página) antes de pausar a partida (premissa P1). */
   readonly carenciaDeDesconexaoMs: number;
 }
@@ -36,20 +26,20 @@ export interface DependenciasDoCondutor {
   readonly gerarAleatorio: GeradorAleatorio;
 }
 
-type Momento = {
-  readonly tipo: 'vez' | 'proximaRodada' | 'leituraDasRegras';
-  readonly em: number;
-};
+interface PassoArmado {
+  readonly passo: ProximoPasso;
+  readonly cancelar: Cancelamento;
+}
 
 /**
  * Faz a partida andar sozinha quando ninguém age: joga pelos bots, joga por quem estourou o prazo,
  * distribui a próxima rodada após a pausa e abre a votação de espera de quem caiu.
  * Todo agendamento é reconciliado com o estado da sala a cada mudança, então nenhuma combinação
  * (início, reinício, entrada no meio, queda no lobby) deixa um ausente sem carência.
+ * O que fazer e quando é decisão da Sala (`reagendar`); aqui só se arma e desarma o timer.
  */
 export class CondutorDePartidas {
-  private readonly passos = new Map<string, Cancelamento>();
-  private readonly momentos = new Map<string, Momento>();
+  private readonly passos = new Map<string, PassoArmado>();
   /** Carências por sala → jogador. */
   private readonly carencias = new Map<string, Map<string, Cancelamento>>();
 
@@ -90,15 +80,15 @@ export class CondutorDePartidas {
 
   private estadoVisivel(sala: Sala, partida: Partida, jogadorId: string): EstadoPartidaVisivel {
     const visao = partida.visaoPara(partida.participa(jogadorId) ? jogadorId : null);
-    const momento = this.momentos.get(sala.codigo);
-    const restante = (tipo: Momento['tipo']) =>
-      momento?.tipo === tipo ? Math.max(0, momento.em - this.deps.relogio.agora()) : null;
+    const passo = this.passos.get(sala.codigo)?.passo;
+    const restante = (tipo: ProximoPasso['tipo']) =>
+      passo?.tipo === tipo ? Math.max(0, passo.em - this.deps.relogio.agora()) : null;
     const previsao = partida.previsaoDaProximaRodada();
     const leitura = sala.leituraDasRegras;
     return {
       ...visao,
-      prazoDaVezEm: momento?.tipo === 'vez' ? momento.em : null,
-      prazoDaVezRestanteMs: restante('vez'),
+      prazoDaVezEm: passo?.tipo === 'prazoDaVez' ? passo.em : null,
+      prazoDaVezRestanteMs: restante('prazoDaVez'),
       proximaRodada: previsao && { ...previsao, comecaEmMs: restante('proximaRodada') },
       pausa: sala.pausada
         ? {
@@ -106,7 +96,7 @@ export class CondutorDePartidas {
             pausadaPeloDono: sala.pausadaPeloDono,
             lendoRegras: leitura && {
               jogadorId: leitura.jogadorId,
-              restanteMs: restante('leituraDasRegras') ?? 0,
+              restanteMs: restante('fimDaLeitura') ?? 0,
             },
           }
         : null,
@@ -155,64 +145,18 @@ export class CondutorDePartidas {
     );
   }
 
+  /** Idempotente: sem mudança de etapa, o timer armado (e o prazo exibido) fica como estava. */
   private agendarProximoPasso(sala: Sala): void {
+    const { relogio, tempos } = this.deps;
+    const agora = relogio.agora();
+    const passo = sala.reagendar(agora, tempos);
+    if (mesmoPasso(this.passos.get(sala.codigo)?.passo ?? null, passo)) return;
     this.cancelarPasso(sala.codigo);
-    const partida = sala.partida;
-    if (!partida || partida.faseAtual === 'encerrada') return;
-    // A leitura das regras é a única pausa com fim marcado: o relógio dela anda mesmo pausado.
-    const leitura = sala.leituraDasRegras;
-    if (leitura) {
-      const atrasoMs = Math.max(
-        0,
-        leitura.desde + LIMITE_DA_LEITURA_DAS_REGRAS_MS - this.deps.relogio.agora(),
-      );
-      this.agendar(sala, { tipo: 'leituraDasRegras', atrasoMs }, () =>
-        sala.encerrarLeituraDasRegras(leitura.jogadorId),
-      );
-      return;
-    }
-    // Pausa congela a mesa inteira (premissa P4): nada é agendado até a votação se resolver.
-    if (sala.pausada) return;
-
-    const { tempos } = this.deps;
-    if (partida.faseAtual === 'fim_de_rodada') {
-      const atrasoMs =
-        tempos.pausaFimDeRodadaMs + (partida.rodadaCega ? tempos.pausaExtraRodadaCegaMs : 0);
-      this.agendar(sala, { tipo: 'proximaRodada', atrasoMs }, () => partida.iniciarProximaRodada());
-      return;
-    }
-
-    const idDaVez = partida.idDaVez as string;
-    const conduzidoPorBot =
-      !!sala.participante(idDaVez)?.ehBot || partida.saiAoFimDaRodada(idDaVez);
-    if (conduzidoPorBot) {
-      this.agendar(sala, { atrasoMs: tempos.atrasoDoBotMs }, () =>
-        this.jogarPor(sala, partida, idDaVez),
-      );
-      return;
-    }
-    const prazoMs = sala.prazoDaVezMs;
-    if (prazoMs === null) return;
-    this.agendar(sala, { tipo: 'vez', atrasoMs: prazoMs }, () => {
-      this.jogarPor(sala, partida, idDaVez);
-      this.botsZoamQuemPerdeuAVez(sala);
-    });
-  }
-
-  /** `tipo` informado = o prazo é exibido aos jogadores (contagem regressiva). */
-  private agendar(
-    sala: Sala,
-    quando: { readonly tipo?: Momento['tipo']; readonly atrasoMs: number },
-    passo: () => void,
-  ): void {
-    const { relogio } = this.deps;
-    if (quando.tipo) {
-      this.momentos.set(sala.codigo, { tipo: quando.tipo, em: relogio.agora() + quando.atrasoMs });
-    }
-    const cancelar = relogio.agendar(quando.atrasoMs, () => {
+    if (!passo) return;
+    const cancelar = relogio.agendar(Math.max(0, passo.em - agora), () => {
       this.passos.delete(sala.codigo);
       try {
-        passo();
+        this.executar(sala, passo);
       } catch (erro) {
         // Não deveria acontecer: a estratégia só escolhe jogadas válidas. Loga e segue com o estado atual.
         this.deps.registrador.error(
@@ -222,13 +166,27 @@ export class CondutorDePartidas {
       }
       this.aposMudanca(sala);
     });
-    this.passos.set(sala.codigo, cancelar);
+    this.passos.set(sala.codigo, { passo, cancelar });
+  }
+
+  private executar(sala: Sala, passo: ProximoPasso): void {
+    if (passo.tipo === 'fimDaLeitura') {
+      sala.encerrarLeituraDasRegras(passo.jogadorId);
+      return;
+    }
+    const partida = sala.partida;
+    if (!partida) return;
+    if (passo.tipo === 'proximaRodada') {
+      partida.iniciarProximaRodada();
+      return;
+    }
+    this.jogarPor(sala, partida, passo.jogadorId);
+    if (passo.tipo === 'prazoDaVez') this.botsZoamQuemPerdeuAVez(sala);
   }
 
   private cancelarPasso(codigoSala: string): void {
-    this.passos.get(codigoSala)?.();
+    this.passos.get(codigoSala)?.cancelar();
     this.passos.delete(codigoSala);
-    this.momentos.delete(codigoSala);
   }
 
   private jogarPor(sala: Sala, partida: Partida, jogadorId: string): void {
