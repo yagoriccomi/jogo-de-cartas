@@ -1,7 +1,7 @@
 import type { Reacao } from '@fodinha/shared';
 import { obterContexto } from './contextoDeAudio';
 import type { EventoDaMesa } from './eventos';
-import { obterVolumeEfeitos, obterVolumeReacoes, volumeParaGanho } from './preferencia';
+import { volumeDasReacoes, volumeDosEfeitos, volumeParaGanho } from './preferencia';
 
 /** Volume geral: chiptune em onda quadrada é estridente, então fica bem abaixo do máximo. */
 const VOLUME_MESTRE = 0.16;
@@ -55,14 +55,14 @@ function criarSaida(ctx: AudioContext): GainNode {
 /** Todos os efeitos passam por um ganho único, ajustado pelo volume de efeitos do menu. */
 function obterSaida(ctx: AudioContext): GainNode {
   saidaDosEfeitos ??= criarSaida(ctx);
-  saidaDosEfeitos.gain.setValueAtTime(volumeParaGanho(obterVolumeEfeitos()), ctx.currentTime);
+  saidaDosEfeitos.gain.setValueAtTime(volumeParaGanho(volumeDosEfeitos.obter()), ctx.currentTime);
   return saidaDosEfeitos;
 }
 
 /** Canal próprio das reações: o jogador abaixa a farra da mesa sem perder os avisos do jogo. */
 function obterSaidaDasReacoes(ctx: AudioContext): GainNode {
   saidaDasReacoes ??= criarSaida(ctx);
-  saidaDasReacoes.gain.setValueAtTime(volumeParaGanho(obterVolumeReacoes()), ctx.currentTime);
+  saidaDasReacoes.gain.setValueAtTime(volumeParaGanho(volumeDasReacoes.obter()), ctx.currentTime);
   return saidaDasReacoes;
 }
 
@@ -171,7 +171,7 @@ const EVENTOS_DE_RESULTADO: ReadonlySet<EventoDaMesa> = new Set([
 
 export function tocarEvento(evento: EventoDaMesa): void {
   const ctx = obterContexto();
-  if (ctx === null || ctx.state !== 'running' || obterVolumeEfeitos() === 0) return;
+  if (ctx === null || ctx.state !== 'running' || volumeDosEfeitos.obter() === 0) return;
   const atraso = EVENTOS_DE_RESULTADO.has(evento) ? ATRASO_DO_RESULTADO_S : 0;
   EFEITOS[evento](ctx, ctx.currentTime + atraso);
 }
@@ -217,7 +217,7 @@ const SONS_DAS_REACOES: Record<Reacao, readonly Tom[]> = {
 
 export function tocarReacao(reacao: Reacao): void {
   const ctx = obterContexto();
-  if (ctx === null || ctx.state !== 'running' || obterVolumeReacoes() === 0) return;
+  if (ctx === null || ctx.state !== 'running' || volumeDasReacoes.obter() === 0) return;
   const saida = obterSaidaDasReacoes(ctx);
   for (const tom of SONS_DAS_REACOES[reacao]) tocarTom(ctx, ctx.currentTime, tom, saida);
 }
@@ -225,7 +225,7 @@ export function tocarReacao(reacao: Reacao): void {
 /** Relógio de fliperama nos últimos segundos da vez: bip curto, agudo no "tic" e grave no "tac". */
 export function tocarTicTac(tic: boolean): void {
   const ctx = obterContexto();
-  if (ctx === null || ctx.state !== 'running' || obterVolumeEfeitos() === 0) return;
+  if (ctx === null || ctx.state !== 'running' || volumeDosEfeitos.obter() === 0) return;
   tocarTom(ctx, ctx.currentTime, {
     freq: tic ? NOTA.si5 : NOTA.mi5,
     duracao: 0.05,

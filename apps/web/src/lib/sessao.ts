@@ -1,27 +1,5 @@
 import { LIMITES, type SessaoJogador } from '@fodinha/shared';
-import { registrar, descreverErro } from './log';
-
-const CHAVE_SESSAO = 'fodinha:sessao';
-const CHAVE_APELIDO = 'fodinha:apelido';
-
-// O localStorage pode lançar (modo privado, dados bloqueados): o app precisa funcionar sem ele.
-function ler(chave: string): string | null {
-  try {
-    return localStorage.getItem(chave);
-  } catch (erro) {
-    registrar('warn', 'storage.leitura_falhou', { chave, ...descreverErro(erro) });
-    return null;
-  }
-}
-
-function gravar(chave: string, valor: string | null): void {
-  try {
-    if (valor === null) localStorage.removeItem(chave);
-    else localStorage.setItem(chave, valor);
-  } catch (erro) {
-    registrar('warn', 'storage.escrita_falhou', { chave, ...descreverErro(erro) });
-  }
-}
+import { declararPreferencia } from './preferencia';
 
 function ehSessao(valor: unknown): valor is SessaoJogador {
   if (typeof valor !== 'object' || valor === null) return false;
@@ -33,36 +11,44 @@ function ehSessao(valor: unknown): valor is SessaoJogador {
   );
 }
 
-export function lerSessao(): SessaoJogador | null {
-  const bruto = ler(CHAVE_SESSAO);
-  if (bruto === null) return null;
+function decodificarSessao(bruto: string): SessaoJogador | null {
   try {
     const dados: unknown = JSON.parse(bruto);
     return ehSessao(dados) ? dados : null;
   } catch {
-    // Conteúdo corrompido equivale a "sem sessão"; limpar evita repetir o erro a cada abertura.
-    gravar(CHAVE_SESSAO, null);
     return null;
   }
 }
 
-export function salvarSessao(sessao: SessaoJogador): void {
-  gravar(CHAVE_SESSAO, JSON.stringify(sessao));
+const sessao = declararPreferencia<SessaoJogador | null>({
+  chave: 'fodinha:sessao',
+  padrao: null,
+  decodificar: decodificarSessao,
+  codificar: (valor) => (valor === null ? null : JSON.stringify(valor)),
+  // Conteúdo corrompido equivale a "sem sessão".
+  apagarSeInvalido: true,
+});
+
+const apelido = declararPreferencia<string>({
+  chave: 'fodinha:apelido',
+  padrao: '',
+  decodificar: (bruto) => bruto,
+  codificar: (valor) => valor,
+});
+
+export const lerSessao = sessao.obter;
+
+export function salvarSessao(valor: SessaoJogador): void {
+  sessao.definir(valor);
 }
 
 export function limparSessao(): void {
-  gravar(CHAVE_SESSAO, null);
+  sessao.definir(null);
 }
 
-export function lerApelido(): string {
-  return ler(CHAVE_APELIDO) ?? '';
-}
+export const lerApelido = apelido.obter;
+export const salvarApelido = apelido.definir;
 
-export function salvarApelido(apelido: string): void {
-  gravar(CHAVE_APELIDO, apelido);
-}
-
-const CHAVE_DISPOSITIVO = 'fodinha:dispositivo';
 const BYTES_DO_IDENTIFICADOR = 16;
 const BASE_HEXADECIMAL = 16;
 
@@ -73,18 +59,22 @@ function gerarIdentificador(): string {
   return Array.from(bytes, (byte) => byte.toString(BASE_HEXADECIMAL).padStart(2, '0')).join('');
 }
 
-let dispositivoEmMemoria: string | null = null;
+const dispositivo = declararPreferencia<string | null>({
+  chave: 'fodinha:dispositivo',
+  padrao: null,
+  decodificar: (bruto) =>
+    bruto.length > 0 && bruto.length <= LIMITES.maxIdentificador ? bruto : null,
+  codificar: (valor) => valor,
+});
 
 /**
  * Identificador estável deste navegador: o servidor o usa para barrar quem foi expulso.
  * Se o armazenamento falhar, vale o da memória (estável até recarregar a página).
  */
 export function obterDispositivoId(): string {
-  if (dispositivoEmMemoria !== null) return dispositivoEmMemoria;
-  const salvo = ler(CHAVE_DISPOSITIVO);
-  const valido = salvo !== null && salvo.length > 0 && salvo.length <= LIMITES.maxIdentificador;
-  const identificador = valido ? salvo : gerarIdentificador();
-  if (!valido) gravar(CHAVE_DISPOSITIVO, identificador);
-  dispositivoEmMemoria = identificador;
-  return identificador;
+  const salvo = dispositivo.obter();
+  if (salvo !== null) return salvo;
+  const novo = gerarIdentificador();
+  dispositivo.definir(novo);
+  return novo;
 }

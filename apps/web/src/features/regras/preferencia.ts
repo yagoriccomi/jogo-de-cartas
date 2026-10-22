@@ -1,22 +1,10 @@
-import { descreverErro, registrar } from '../../lib/log';
+import { declararMarcaDoAparelho } from '../../lib/preferencia';
 
-const CHAVE_RESUMO = 'fodinha:resumo-das-regras';
-const VALOR_DISPENSADO = 'dispensado';
+// Sem armazenamento o resumo só volta a aparecer na próxima partida: nada se perde.
+const resumo = declararMarcaDoAparelho('fodinha:resumo-das-regras', 'dispensado');
 
-// O localStorage pode lançar (modo privado, dados bloqueados): sem ele o resumo só volta a aparecer.
-export function resumoDispensado(): boolean {
-  try {
-    return localStorage.getItem(CHAVE_RESUMO) === VALOR_DISPENSADO;
-  } catch (erro) {
-    registrar('warn', 'storage.leitura_falhou', { chave: CHAVE_RESUMO, ...descreverErro(erro) });
-    return false;
-  }
-}
+export const resumoDispensado = resumo.obter;
 
 export function dispensarResumo(): void {
-  try {
-    localStorage.setItem(CHAVE_RESUMO, VALOR_DISPENSADO);
-  } catch (erro) {
-    registrar('warn', 'storage.escrita_falhou', { chave: CHAVE_RESUMO, ...descreverErro(erro) });
-  }
+  resumo.definir(true);
 }

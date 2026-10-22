@@ -1,10 +1,5 @@
 import { obterContexto } from './contextoDeAudio';
-import {
-  assinarPreferencias,
-  obterVolumeMusica,
-  somEstaLigado,
-  volumeParaGanho,
-} from './preferencia';
+import { assinarPreferencias, somEstaLigado, volumeDaMusica, volumeParaGanho } from './preferencia';
 
 /*
  * Música de fundo "Jackpot Tranquilo", gerada na hora com Web Audio: city pop dos anos 80 com pé
@@ -502,14 +497,14 @@ let carencia: ReturnType<typeof setTimeout> | null = null;
 let ligadoAoNavegador = false;
 
 function ganhoDesejado(): number {
-  return volumeParaGanho(obterVolumeMusica()) * GANHO_MAXIMO_DA_MUSICA;
+  return volumeParaGanho(volumeDaMusica.obter()) * GANHO_MAXIMO_DA_MUSICA;
 }
 
 function deveTocar(ctx: AudioContext): boolean {
   return (
     pedidos > 0 &&
     somEstaLigado() &&
-    obterVolumeMusica() > 0 &&
+    volumeDaMusica.obter() > 0 &&
     document.visibilityState === 'visible' &&
     ctx.state === 'running'
   );

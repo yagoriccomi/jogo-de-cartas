@@ -1,15 +1,12 @@
 import { useId, type CSSProperties } from 'react';
+import { usePreferencia, type Preferencia } from '../../lib/preferencia';
 import {
   VOLUME_MAXIMO,
   VOLUME_MINIMO,
-  definirSomLigado,
-  definirVolumeEfeitos,
-  definirVolumeMusica,
-  definirVolumeReacoes,
-  useSomLigado,
-  useVolumeEfeitos,
-  useVolumeMusica,
-  useVolumeReacoes,
+  somLigado,
+  volumeDaMusica,
+  volumeDasReacoes,
+  volumeDosEfeitos,
 } from './preferencia';
 import './som.css';
 
@@ -18,13 +15,13 @@ const PASSO_DO_VOLUME = 5;
 
 interface PropsVolume {
   readonly rotulo: string;
-  readonly valor: number;
+  readonly volume: Preferencia<number>;
   readonly desativado: boolean;
-  readonly onMudar: (valor: number) => void;
 }
 
-function ControleDeVolume({ rotulo, valor, desativado, onMudar }: PropsVolume) {
+function ControleDeVolume({ rotulo, volume, desativado }: PropsVolume) {
   const id = useId();
+  const valor = usePreferencia(volume);
   return (
     <div className="volume">
       <label htmlFor={id} className="volume__rotulo">
@@ -42,7 +39,7 @@ function ControleDeVolume({ rotulo, valor, desativado, onMudar }: PropsVolume) {
         aria-valuetext={`${valor}%`}
         // A barra preenchida até o valor vem do CSS, que não lê o valor do range sozinho.
         style={{ '--volume': `${valor}%` } as CSSProperties}
-        onChange={(evento) => onMudar(Number(evento.target.value))}
+        onChange={(evento) => volume.definir(Number(evento.target.value))}
       />
       <span className="volume__valor" aria-hidden="true">
         {valor}%
@@ -53,10 +50,7 @@ function ControleDeVolume({ rotulo, valor, desativado, onMudar }: PropsVolume) {
 
 /** Bloco do menu lateral: o mudo geral (som, música e vibração) e os volumes de cada canal. */
 export function OpcaoSom() {
-  const ligado = useSomLigado();
-  const volumeMusica = useVolumeMusica();
-  const volumeEfeitos = useVolumeEfeitos();
-  const volumeReacoes = useVolumeReacoes();
+  const ligado = usePreferencia(somLigado);
   return (
     <div className="opcao-som">
       <button
@@ -64,7 +58,7 @@ export function OpcaoSom() {
         className="menu__item"
         role="switch"
         aria-checked={ligado}
-        onClick={() => definirSomLigado(!ligado)}
+        onClick={() => somLigado.definir(!ligado)}
       >
         <svg
           className="icone"
@@ -87,24 +81,9 @@ export function OpcaoSom() {
         <span className="menu__seta">{ligado ? 'Ligado' : 'Desligado'}</span>
       </button>
       {/* Com o mudo ligado os volumes ficam guardados, mas não dá para mexer até religar. */}
-      <ControleDeVolume
-        rotulo="Música"
-        valor={volumeMusica}
-        desativado={!ligado}
-        onMudar={definirVolumeMusica}
-      />
-      <ControleDeVolume
-        rotulo="Efeitos"
-        valor={volumeEfeitos}
-        desativado={!ligado}
-        onMudar={definirVolumeEfeitos}
-      />
-      <ControleDeVolume
-        rotulo="Reações"
-        valor={volumeReacoes}
-        desativado={!ligado}
-        onMudar={definirVolumeReacoes}
-      />
+      <ControleDeVolume rotulo="Música" volume={volumeDaMusica} desativado={!ligado} />
+      <ControleDeVolume rotulo="Efeitos" volume={volumeDosEfeitos} desativado={!ligado} />
+      <ControleDeVolume rotulo="Reações" volume={volumeDasReacoes} desativado={!ligado} />
     </div>
   );
 }
