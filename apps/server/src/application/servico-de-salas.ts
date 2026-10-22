@@ -19,8 +19,15 @@ import type {
 } from './portas';
 
 /** Um por sala, sorteado entre os que ainda não estão na mesa (o selo "Bot" vem de `ehBot`). */
-const APELIDOS_DE_BOT = ['Paula Tejano', 'Simas Turbo', 'Toko Kunavara', 'Jacinto Leite'];
-/** Só o cenário de teste passa de 4 bots: depois dos sorteados, estes, em ordem. */
+const APELIDOS_DE_BOT = [
+  'Paula Tejano',
+  'Simas Turbo',
+  'Toko Kunavara',
+  'Jacinto Leite',
+  'Oscar Alho',
+  'Tomás Turbando',
+];
+/** Só o cenário de teste passa de 6 bots: depois dos sorteados, estes, em ordem. */
 const APELIDOS_RESERVA_DE_BOT = ['Zé', 'Dona Cida', 'Tião', 'Lurdinha', 'Juca'];
 
 // Quatro baralhos sem 8-9-10 e vidas cheias: o maior palco possível para testar mesas lotadas.
@@ -343,6 +350,7 @@ export class ServicoDeSalas {
       id: this.deps.identificadores.novoId(),
       apelido,
       ehBot: false,
+      perfilDoBot: null,
       conectado: true,
       saindo: false,
       tokenSessao: this.deps.identificadores.novoToken(),
@@ -362,6 +370,7 @@ export class ServicoDeSalas {
       id: this.deps.identificadores.novoId(),
       apelido,
       ehBot: true,
+      perfilDoBot: null,
       conectado: true,
       saindo: false,
       tokenSessao: null,

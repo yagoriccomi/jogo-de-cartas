@@ -24,9 +24,15 @@ export interface ResultadoDaSimulacao {
 
 type Lado = 'novo' | 'antigo';
 
+export interface OpcoesDaSimulacao {
+  readonly pares: number;
+  readonly jogadores: number;
+  /** Permite repartir as sementes entre vários processos (`simular-em-paralelo.ts`). */
+  readonly primeiraSemente?: number;
+}
+
 // Partida que não acaba nesse número de ações indica laço no motor: melhor falhar do que travar.
 const MAXIMO_DE_ACOES_POR_PARTIDA = 20_000;
-const MESAS = [4, 5, 6] as const;
 
 function ladoDe(jogadorId: string): Lado {
   return jogadorId.startsWith('novo') ? 'novo' : 'antigo';
@@ -36,13 +42,15 @@ function ladoDe(jogadorId: string): Lado {
  * Cada semente roda duas vezes com os lados trocados: as mesmas cartas e os mesmos lugares caem
  * ora com um bot, ora com o outro, e a sorte do baralho se cancela na comparação.
  */
-export function simular(pares: number, competidores: Competidores): ResultadoDaSimulacao {
+export function simular(
+  { pares, jogadores, primeiraSemente = 1 }: OpcoesDaSimulacao,
+  competidores: Competidores,
+): ResultadoDaSimulacao {
   const placar = {
     novo: { rodadasJogadas: 0, vidasPerdidas: 0, vitorias: 0 },
     antigo: { rodadasJogadas: 0, vidasPerdidas: 0, vitorias: 0 },
   };
-  for (let semente = 1; semente <= pares; semente++) {
-    const jogadores = MESAS[semente % MESAS.length] as number;
+  for (let semente = primeiraSemente; semente < primeiraSemente + pares; semente++) {
     for (const espelhada of [false, true]) {
       const ids = Array.from({ length: jogadores }, (_, i) => {
         const novo = (i % 2 === 0) !== espelhada;

@@ -13,7 +13,11 @@ import { CondutorDePartidas, type TemposDoCondutor } from '../src/application/co
 import type { Notificador, Relogio } from '../src/application/portas';
 import { ServicoDeSalas } from '../src/application/servico-de-salas';
 import type { GeradorAleatorio } from '../src/domain/aleatoriedade';
-import { EstrategiaDoBot } from '../src/domain/estrategia-bot';
+import {
+  EstrategiaDoBot,
+  criarEstrategiasDosPerfis,
+  type EstrategiasDosPerfis,
+} from '../src/domain/estrategia-bot';
 import { Partida } from '../src/domain/partida';
 import { RepositorioDeSalasEmMemoria } from '../src/infrastructure/adaptadores';
 
@@ -154,6 +158,7 @@ export const ator = (sessao: Ator): Ator => ({
 export function montarCenario(
   temposExtras: Partial<TemposDoCondutor> = {},
   sorteioDosBots: () => number = BOTS_CALADOS,
+  estrategias: EstrategiasDosPerfis = criarEstrategiasDosPerfis(BOT_SEM_ERRO),
 ) {
   const relogio = new RelogioFalso();
   const notificador = new NotificadorFalso();
@@ -162,7 +167,7 @@ export function montarCenario(
   const condutor = new CondutorDePartidas({
     notificador,
     relogio,
-    estrategia: new EstrategiaDoBot(BOT_SEM_ERRO),
+    estrategias,
     registrador: silencioso,
     gerarAleatorio: sorteioDosBots,
     tempos: {

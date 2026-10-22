@@ -7,6 +7,9 @@ import {
 } from '@fodinha/shared';
 import { describe, expect, it } from 'vitest';
 import { valoresEmJogo } from '../../src/domain/baralho';
+import { contextoDe } from '../../src/domain/bot/leitura-da-mesa';
+import { vazasEsperadas } from '../../src/domain/bot/palpite';
+import { AJUSTES_DOS_PERFIS, type PerfilDeBot } from '../../src/domain/bot/perfis';
 import { EstrategiaDoBot } from '../../src/domain/estrategia-bot';
 import type { JogadorNaVisao, VisaoDaPartida } from '../../src/domain/projecao';
 import { organizarMesa } from '../../src/domain/vaza';
@@ -511,5 +514,230 @@ describe('Bot — margem de erro', () => {
     ).length;
 
     expect(erros).toBe(10);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+// Mesas de 3 (o mínimo usual) e de 10 (a cheia): a mesma situação tem de dar certo nas duas.
+// ---------------------------------------------------------------------------------------------
+
+/** `eu` na posição pedida e os demais (`j1`, `j2`…) completando a mesa de `total`. */
+function mesaDe(
+  total: number,
+  posicao: number,
+  extras: Record<string, Partial<JogadorNaVisao>> = {},
+): JogadorNaVisao[] {
+  const outros = Array.from({ length: total - 1 }, (_, i) => `j${i + 1}`);
+  const ids = [...outros.slice(0, posicao), 'eu', ...outros.slice(posicao)];
+  return ids.map((id) => jogador(id, extras[id]));
+}
+
+/** Mesa de palpites: ninguém palpitou ainda e eu sou o último. */
+function mesaDePalpites(total: number): JogadorNaVisao[] {
+  return mesaDe(total, total - 1).map((j) => ({ ...j, palpite: null }));
+}
+
+const NAIPES_DA_MESA: Naipe[] = ['ouros', 'espadas', 'copas', 'paus'];
+
+/** Cartas fracas para quem jogou antes: as repetidas se anulam e a maior que vale é a J. */
+function mesaFraca(jogadores: JogadorNaVisao[]): [string, Carta][] {
+  const fracas: Valor[] = ['4', '6', '7', 'Q', 'J'];
+  const antes = jogadores.slice(
+    0,
+    jogadores.findIndex((j) => j.id === 'eu'),
+  );
+  return antes.map((j, i) => [
+    j.id,
+    c(`m${i}`, fracas[i % fracas.length] as Valor, NAIPES_DA_MESA[Math.floor(i / fracas.length)]),
+  ]);
+}
+
+describe.each([3, 10])('Bot — mesa de %i jogadores', (total) => {
+  it('último da vaza e precisa dela: a menor carta que ganha', () => {
+    const jogadores = mesaDe(total, total - 1, { eu: precisaDe1 });
+    const visao = cena({
+      mao: [c('as', 'A'), c('rei', 'K'), c('dois', '2')],
+      jogadores,
+      mesa: mesaFraca(jogadores),
+    });
+
+    expect(bot.escolherCarta(visao, 'eu')).toBe('rei');
+  });
+
+  it('palpite estourado com gente por jogar: foge com a carta abaixo da líder', () => {
+    const visao = cena({
+      mao: [c('dois', '2'), c('seis', '6')],
+      jogadores: mesaDe(total, 1, { eu: { palpite: 0, vazasFeitas: 1 } }),
+      mesa: [['j1', c('m1', 'K', 'paus')]],
+    });
+
+    expect(bot.escolherCarta(visao, 'eu')).toBe('seis');
+  });
+
+  it('cumpriu e quem abriu precisa da vaza: anula a carta dele', () => {
+    const visao = cena({
+      mao: [c('tres', '3', 'copas'), c('sete', '7')],
+      jogadores: mesaDe(total, 1, { j1: precisaDe1, eu: cumpriu }),
+      mesa: [['j1', c('m', '3', 'paus')]],
+    });
+
+    expect(bot.escolherCarta(visao, 'eu')).toBe('tres');
+  });
+
+  it('espera a posição: deixa quem vem logo depois fazer a vaza dele', () => {
+    const visao = cena({
+      mao: [c('rei', 'K'), c('quatro', '4')],
+      jogadores: mesaDe(total, 1, { eu: precisaDe1, j2: precisaDe1 }),
+      mesa: [['j1', c('m1', '6', 'paus')]],
+    });
+
+    expect(bot.escolherCarta(visao, 'eu')).toBe('quatro');
+  });
+
+  it('palpite impossível de alcançar: abre com a mais forte', () => {
+    const visao = cena({
+      mao: [c('as', 'A'), c('sete', '7'), c('quatro', '4')],
+      jogadores: mesaDe(total, 0, { eu: { palpite: 3, vazasFeitas: 0 } }),
+    });
+
+    expect(bot.escolherCarta(visao, 'eu')).toBe('as');
+  });
+
+  it('rodada cega com a carta claramente forte: não erra o palpite nem se o sorteio mandar', () => {
+    const sempreErra = new EstrategiaDoBot(() => 0);
+    const outros = mesaDePalpites(total).filter((j) => j.id !== 'eu');
+    const visao = cena({
+      mao: [],
+      jogadores: [
+        ...outros.map((j) => ({ ...j, palpite: 0, cartaNaTesta: c(`t-${j.id}`, '4') })),
+        jogador('eu', { palpite: null }),
+      ],
+      extra: {
+        fase: 'palpites',
+        rodadaCega: true,
+        cartasPorJogador: 1,
+        minhaMao: [{ id: 'oculta', oculta: true }],
+      },
+    });
+
+    expect(sempreErra.escolherPalpite(visao, [0, 1])).toBe(1);
+  });
+});
+
+describe('Bot — palpite conforme o tamanho da mesa', () => {
+  it('com a mesma mão, pede mais na mesa de 3 do que na de 10', () => {
+    const mao = [c('m', '5', 'paus'), c('tres', '3'), c('dois', '2')];
+    const palpiteNaMesaDe = (total: number) =>
+      bot.escolherPalpite(
+        cena({ mao, jogadores: mesaDePalpites(total), extra: { fase: 'palpites' } }),
+        [0, 1, 2, 3],
+      );
+
+    expect(palpiteNaMesaDe(3)).toBeGreaterThan(palpiteNaMesaDe(10));
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+// Perfis: o mesmo cérebro com outro estilo
+// ---------------------------------------------------------------------------------------------
+
+const comPerfil = (perfil: PerfilDeBot) => new EstrategiaDoBot(BOT_SEM_ERRO, perfil);
+
+describe.each([3, 10])('Perfis — mesa de %i jogadores', (total) => {
+  it('o ousado abre a vaza com a mais forte; o equilibrado abre com a do meio', () => {
+    const visao = cena({
+      mao: [c('rei', 'K'), c('sete', '7'), c('quatro', '4')],
+      jogadores: mesaDe(total, 0, { eu: precisaDe1 }),
+    });
+
+    expect(comPerfil('ousado').escolherCarta(visao, 'eu')).toBe('rei');
+    expect(comPerfil('equilibrado').escolherCarta(visao, 'eu')).toBe('sete');
+  });
+
+  it('o ousado e o caótico não esperam a posição: tentam a vaza já', () => {
+    const visao = cena({
+      mao: [c('rei', 'K'), c('quatro', '4')],
+      jogadores: mesaDe(total, 1, { eu: precisaDe1, j2: precisaDe1 }),
+      mesa: [['j1', c('m1', '6', 'paus')]],
+    });
+
+    expect(comPerfil('ousado').escolherCarta(visao, 'eu')).toBe('rei');
+    expect(comPerfil('caotico').escolherCarta(visao, 'eu')).toBe('rei');
+    expect(comPerfil('estrategista').escolherCarta(visao, 'eu')).toBe('quatro');
+  });
+
+  it('com a mesma mão, o ousado espera mais vazas que o equilibrado, e este mais que o cauteloso', () => {
+    const visao = cena({
+      mao: [c('m', '5', 'espadas'), c('tres', '3'), c('as', 'A')],
+      jogadores: mesaDePalpites(total),
+      extra: { fase: 'palpites' },
+    });
+    const esperadas = (perfil: PerfilDeBot) =>
+      vazasEsperadas(visao, 'eu', contextoDe(visao), AJUSTES_DOS_PERFIS[perfil]);
+
+    expect(esperadas('ousado')).toBeGreaterThan(esperadas('equilibrado'));
+    expect(esperadas('equilibrado')).toBeGreaterThan(esperadas('cauteloso'));
+  });
+});
+
+describe('Perfis — sabotagem', () => {
+  it('o cauteloso não pensa em quem leva: anula a líder mesmo dando a vaza a quem precisa', () => {
+    const visao = cena({
+      mao: [c('tres', '3', 'copas'), c('sete', '7')],
+      jogadores: [
+        jogador('j1', cumpriu),
+        jogador('j2', precisaDe1),
+        jogador('j3', precisaDe1),
+        jogador('eu', cumpriu),
+      ],
+      mesa: [
+        ['j1', c('m1', '3', 'paus')],
+        ['j2', c('m2', 'K', 'paus')],
+        ['j3', c('m3', 'Q', 'paus')],
+      ],
+    });
+
+    expect(comPerfil('equilibrado').escolherCarta(visao, 'eu')).toBe('sete');
+    expect(comPerfil('cauteloso').escolherCarta(visao, 'eu')).toBe('tres');
+  });
+
+  it('o sabotador arrisca uma carta que pode ser coberta para dar a vaza a quem já cumpriu', () => {
+    // O 6 deixa a vaza com o A de j1 (já cumpriu), mas quem vem depois pode cobri-lo; anular o A
+    // é garantido, porém entrega a vaza ao K de j2, que precisa dela. Só cabe em mesa grande.
+    const visao = cena({
+      mao: [c('as', 'A', 'copas'), c('seis', '6')],
+      jogadores: mesaDe(10, 2, { j1: cumpriu, j2: precisaDe1, eu: cumpriu }),
+      mesa: [
+        ['j1', c('m1', 'A', 'paus')],
+        ['j2', c('m2', 'K', 'paus')],
+      ],
+    });
+
+    expect(comPerfil('equilibrado').escolherCarta(visao, 'eu')).toBe('as');
+    expect(comPerfil('sabotador').escolherCarta(visao, 'eu')).toBe('seis');
+  });
+});
+
+describe('Perfis — margem de erro', () => {
+  const visao = cena({
+    mao: [c('as', 'A'), c('seis', '6')],
+    jogadores: [jogador('j1'), jogador('eu', { palpite: 1, vazasFeitas: 2 })],
+    mesa: [['j1', c('m1', 'K', 'paus')]],
+  });
+
+  it.each([
+    ['estrategista', 4],
+    ['cauteloso', 8],
+    ['equilibrado', 10],
+    ['caotico', 20],
+  ] as const)('o %s erra %i jogadas em cada cem', (perfil, esperado) => {
+    let semente = 0;
+    const comErro = new EstrategiaDoBot(() => (semente++ % 100) / 100, perfil);
+
+    const erros = Array.from({ length: 100 }, () => comErro.escolherCarta(visao, 'eu')).filter(
+      (id) => id === 'as',
+    ).length;
+
+    expect(erros).toBe(esperado);
   });
 });

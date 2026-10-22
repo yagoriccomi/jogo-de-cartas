@@ -9,7 +9,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { CondutorDePartidas } from '../../src/application/condutor-de-partidas';
 import type { Notificador, Relogio } from '../../src/application/portas';
 import { ServicoDeSalas } from '../../src/application/servico-de-salas';
-import { EstrategiaDoBot } from '../../src/domain/estrategia-bot';
+import { criarEstrategiasDosPerfis } from '../../src/domain/estrategia-bot';
 import { RepositorioDeSalasEmMemoria } from '../../src/infrastructure/adaptadores';
 import { BOT_SEM_ERRO, BOTS_CALADOS, geradorComSemente } from '../apoio';
 
@@ -83,7 +83,7 @@ beforeEach(() => {
   const condutor = new CondutorDePartidas({
     notificador,
     relogio,
-    estrategia: new EstrategiaDoBot(BOT_SEM_ERRO),
+    estrategias: criarEstrategiasDosPerfis(BOT_SEM_ERRO),
     registrador: silencioso,
     gerarAleatorio: BOTS_CALADOS,
     tempos: {
@@ -180,22 +180,27 @@ describe('ServicoDeSalas — lobby', () => {
 
   it('deveSortearUmApelidoDeBotDiferenteACadaBotAteAcabarem', () => {
     const dono = criarSala();
-    for (let i = 0; i < 4; i++) servico.adicionarBot(ator(dono));
-    const apelidos = (salaDe(dono)?.participantes ?? [])
-      .filter((p) => p.ehBot)
-      .map((p) => p.apelido);
-    expect([...apelidos].sort()).toEqual(
-      ['Jacinto Leite', 'Paula Tejano', 'Simas Turbo', 'Toko Kunavara'].sort(),
+    for (let i = 0; i < LIMITES.maxBots; i++) servico.adicionarBot(ator(dono));
+    const bots = (salaDe(dono)?.participantes ?? []).filter((p) => p.ehBot);
+    expect(bots.map((p) => p.apelido).sort()).toEqual(
+      [
+        'Jacinto Leite',
+        'Oscar Alho',
+        'Paula Tejano',
+        'Simas Turbo',
+        'Toko Kunavara',
+        'Tomás Turbando',
+      ].sort(),
     );
   });
 
-  it('deveLimitarA4BotsE10Participantes', () => {
+  it('deveLimitarA6BotsE10Participantes', () => {
     const dono = criarSala();
-    for (let i = 0; i < 4; i++) servico.adicionarBot(ator(dono));
+    for (let i = 0; i < 6; i++) servico.adicionarBot(ator(dono));
     expect(() => servico.adicionarBot(ator(dono))).toThrow(
       expect.objectContaining({ codigo: 'SALA_CHEIA' }),
     );
-    for (let i = 0; i < 5; i++) entrar(dono, `J${i}`);
+    for (let i = 0; i < 3; i++) entrar(dono, `J${i}`);
     expect(() => entrar(dono, 'Sobra')).toThrow(expect.objectContaining({ codigo: 'SALA_CHEIA' }));
   });
 

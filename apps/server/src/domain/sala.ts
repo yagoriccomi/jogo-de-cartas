@@ -6,6 +6,7 @@ import {
   type VotacaoEspera,
 } from '@fodinha/shared';
 import type { GeradorAleatorio } from './aleatoriedade';
+import { sortearPerfis, type PerfilDeBot } from './bot/perfis';
 import { validarConfiguracao } from './configuracao';
 import { ErroDeRegra } from './erros';
 import { Partida } from './partida';
@@ -15,6 +16,8 @@ export interface Participante {
   readonly id: string;
   readonly apelido: string;
   readonly ehBot: boolean;
+  /** Estilo de jogo do bot, sorteado a cada partida; `null` nos humanos e no lobby. */
+  perfilDoBot: PerfilDeBot | null;
   conectado: boolean;
   /** Saiu ou foi expulso no meio da rodada: some da sala quando a rodada terminar. */
   saindo: boolean;
@@ -357,6 +360,11 @@ export class Sala {
       cartasNaPrimeiraRodada,
     });
     this.participantes.splice(0, this.participantes.length, ...ativos);
+    // Os perfis dependem de quantos bots vão jogar, então só saem quando a partida começa.
+    const bots = ativos.filter((p) => p.ehBot);
+    sortearPerfis(bots.length, gerarAleatorio).forEach((perfil, i) => {
+      (bots[i] as Participante).perfilDoBot = perfil;
+    });
     this.votacoes.clear();
     this.pausaDoDono = false;
     this.leitura = null;

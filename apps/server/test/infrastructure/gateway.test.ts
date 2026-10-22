@@ -15,7 +15,7 @@ import { io as conectarCliente, type Socket } from 'socket.io-client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CondutorDePartidas } from '../../src/application/condutor-de-partidas';
 import { ServicoDeSalas } from '../../src/application/servico-de-salas';
-import { EstrategiaDoBot } from '../../src/domain/estrategia-bot';
+import { criarEstrategiasDosPerfis } from '../../src/domain/estrategia-bot';
 import {
   aleatorioCriptografico,
   IdentificadoresCriptograficos,
@@ -115,7 +115,7 @@ beforeEach(async () => {
   const condutor = new CondutorDePartidas({
     notificador: new NotificadorSocketIo(io),
     relogio,
-    estrategia: new EstrategiaDoBot(BOT_SEM_ERRO),
+    estrategias: criarEstrategiasDosPerfis(BOT_SEM_ERRO),
     registrador: silencioso,
     gerarAleatorio: BOTS_CALADOS,
     tempos: {

@@ -11,9 +11,8 @@ import {
   type Contexto,
   type LeituraDaVaza,
 } from './leitura-da-mesa';
+import type { AjustesDoPerfil } from './perfis';
 
-// Abaixo disso, ganhar agora com a carta não compensa: alguém depois provavelmente a supera ou anula.
-const CHANCE_MINIMA_DE_SEGURAR = 0.6;
 // Com uma carta assim o bot leva a vaza já, sem esperar posição melhor.
 const CHANCE_DE_VAZA_CERTA = 0.9;
 // Na sabotagem, desempata os alvos de mesma vida a favor de quem está para acertar.
@@ -25,14 +24,21 @@ interface Situacao {
   readonly contexto: Contexto;
   readonly cartas: readonly Carta[];
   readonly vaza: LeituraDaVaza;
+  readonly perfil: AjustesDoPerfil;
+}
+
+/** O que o bot sabe na hora de jogar. */
+export interface Vez {
+  readonly visao: VisaoDaPartida;
+  readonly jogadorId: string;
+  readonly mao: readonly Carta[];
+  readonly contexto: Contexto;
 }
 
 /** Escolhe a carta para jogar fora da rodada cega (`answers/2026_10_22 bot-situacoes 001.md`). */
 export function escolherJogada(
-  visao: VisaoDaPartida,
-  jogadorId: string,
-  mao: readonly Carta[],
-  contexto: Contexto,
+  { visao, jogadorId, mao, contexto }: Vez,
+  perfil: AjustesDoPerfil,
 ): Carta {
   const cartas = ordenarPorForca(mao, contexto);
   const situacao: Situacao = {
@@ -41,19 +47,21 @@ export function escolherJogada(
     contexto,
     cartas,
     vaza: lerVaza(visao, jogadorId, contexto),
+    perfil,
   };
   const eu = visao.jogadores.find((jogador) => jogador.id === jogadorId);
   const faltam = eu ? faltamPara(eu) : 0;
 
   // Cumpriu ou estourou o palpite: cada vaza a mais custa uma vida.
   if (faltam <= 0) return cartaParaNaoGanhar(situacao, { guardarFortes: false });
-  if (visao.mesa.length === 0) return abrirVaza(cartas, faltam);
+  if (visao.mesa.length === 0) return abrirVaza(cartas, faltam, perfil);
   return cartaParaGanhar(situacao, faltam);
 }
 
-function abrirVaza(cartas: readonly Carta[], faltam: number): Carta {
+function abrirVaza(cartas: readonly Carta[], faltam: number, perfil: AjustesDoPerfil): Carta {
   // Precisa de todas as vazas que restam (ou mais): usa a melhor antes que algo a anule.
-  if (faltam >= cartas.length) return cartas[cartas.length - 1] as Carta;
+  if (faltam >= cartas.length || perfil.abreComAMaisForte)
+    return cartas[cartas.length - 1] as Carta;
   // Sobra carta: abre com a do meio, guardando a mais forte para vaza em que ela decida.
   return cartas[Math.floor(cartas.length / 2)] as Carta;
 }
@@ -72,7 +80,7 @@ function vencedorCom(carta: Carta, situacao: Situacao): string | null {
 // ---------------------------------------------------------------------------------------------
 
 function cartaParaGanhar(situacao: Situacao, faltam: number): Carta {
-  const { cartas, vaza, visao, contexto } = situacao;
+  const { cartas, vaza, visao, contexto, perfil } = situacao;
   const vencedoras = cartas.filter((carta) => venceriaAgora(carta, situacao));
   // Esta não dá: perde barato, guardando as fortes para as próximas.
   if (vencedoras.length === 0) return cartaParaNaoGanhar(situacao, { guardarFortes: true });
@@ -87,7 +95,7 @@ function cartaParaGanhar(situacao: Situacao, faltam: number): Carta {
     return cartaParaNaoGanhar(situacao, { guardarFortes: true });
   }
   return (
-    vencedoras.find((carta) => chance(carta) >= CHANCE_MINIMA_DE_SEGURAR) ??
+    vencedoras.find((carta) => chance(carta) >= perfil.chanceMinimaDeSegurar) ??
     (vencedoras[vencedoras.length - 1] as Carta)
   );
 }
@@ -97,6 +105,7 @@ function cartaParaGanhar(situacao: Situacao, faltam: number): Carta {
  * bot tem folga, ele deixa essa pessoa fazer a dela: ela abre a próxima e o bot fecha.
  */
 function deveEsperarAPosicao(situacao: Situacao, faltam: number): boolean {
+  if (!situacao.perfil.esperaAPosicao) return false;
   const proximo = situacao.vaza.porJogar[0];
   const temFolga = faltam < situacao.cartas.length;
   return temFolga && proximo !== undefined && faltamPara(proximo) > 0;
@@ -155,15 +164,22 @@ interface Preferencia {
 function cartaParaNaoGanhar(situacao: Situacao, { guardarFortes }: Preferencia): Carta {
   const opcoes = situacao.cartas.map((carta) => avaliar(carta, situacao));
   const souOUltimo = situacao.vaza.porJogar.length === 0;
+  const { sabotagem } = situacao.perfil;
   const estrago = new Map(opcoes.map((opcao) => [opcao, estragoCom(opcao, situacao)]));
+  const maisEstrago = (a: Opcao, b: Opcao) => (estrago.get(b) ?? 0) - (estrago.get(a) ?? 0);
 
   const melhor = [...opcoes].sort((a, b) => {
+    // O sabotador troca a garantia de não levar a vaza pelo estrago, mas nunca a entrega a si já.
+    if (sabotagem === 'arriscando' && a.degrau !== Degrau.Ganha && b.degrau !== Degrau.Ganha) {
+      const diferenca = maisEstrago(a, b);
+      if (diferenca !== 0) return diferenca;
+    }
     const garantidaA = a.degrau >= Degrau.Segura;
     const garantidaB = b.degrau >= Degrau.Segura;
     if (garantidaA !== garantidaB) return garantidaA ? -1 : 1;
     // Sem risco para si, o bot escolhe a que mais atrapalha os outros.
-    if (garantidaA) {
-      const diferenca = (estrago.get(b) ?? 0) - (estrago.get(a) ?? 0);
+    if (garantidaA && sabotagem !== 'nunca') {
+      const diferenca = maisEstrago(a, b);
       if (diferenca !== 0) return diferenca;
     }
     if (a.degrau !== b.degrau) return b.degrau - a.degrau;

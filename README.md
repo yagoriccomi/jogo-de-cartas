@@ -39,7 +39,7 @@ Sem cadastro · até 10 na mesa · celular e computador · servidor que não dei
 |                             |                                                                                                    |
 | --------------------------- | -------------------------------------------------------------------------------------------------- |
 | 🃏 **Mesa em segundos**     | Crie uma sala, mande o link no WhatsApp e pronto. Sem conta, sem download: só um apelido.          |
-| 🤖 **Nunca falta gente**    | Até 4 bots completam a mesa. Jogam como gente boa: acertam o palpite, fogem de vaza e atrapalham.  |
+| 🤖 **Nunca falta gente**    | Até 6 bots completam a mesa, cada um com seu estilo: do cauteloso ao caótico, todos jogam bem.     |
 | 🔒 **Jogo limpo**           | O servidor é a única autoridade: cada jogador recebe só o que pode ver. Não há como espiar cartas. |
 | 🌆 **Visual Vice City**     | Feltro com neon rosa e ciano, cartas em pixel art e manilhas com brilho holográfico.               |
 | 😂 **Mesa animada**         | Oito reações com animação e som próprios. E, de vez em quando, um trevo 🍀 dourado.                |
@@ -73,7 +73,7 @@ Sem cadastro · até 10 na mesa · celular e computador · servidor que não dei
 <details>
 <summary><strong>Sala, tempo e conexão</strong></summary>
 
-- **Mesa:** até 10 participantes, com até 4 bots.
+- **Mesa:** até 10 participantes, com até 6 bots.
 - **Tempo da vez:** o dono escolhe no lobby quanto tempo cada um tem para palpitar ou jogar: 15, 30, 45, 60 ou 90 segundos (padrão 30 s), ou sem limite. Estourado o prazo, o servidor joga pelo jogador e todos os bots da mesa reagem com um emoji sorteado.
 - **Queda de conexão:** se alguém fica mais de 10 segundos desconectado, a partida pausa e os jogadores votam "Deseja esperar o retorno de [apelido]?". Basta um SIM para continuar esperando; se todos votarem NÃO, um bot termina a rodada dele e ele é eliminado. Quem cai e volta (até recarregando a página) retorna ao mesmo lugar.
 - **Entrar no meio:** dá para entrar com a partida em andamento. Quem chega assiste até a próxima rodada e senta com a mesma quantidade de vidas do jogador vivo com mais vidas.
@@ -111,7 +111,9 @@ Sem cadastro · até 10 na mesa · celular e computador · servidor que não dei
   - **Para fugir da vaza** (palpite cumprido ou estourado), seguem uma escada: igualar uma carta já anulada, anular a que está ganhando, jogar a maior carta que não tem como ganhar, e só então arriscar.
   - **Para ganhar**, preferem uma carta difícil de superar quando ainda falta gente jogar, e esperam quem joga logo depois fazer a vaza dele para fechar a seguinte.
   - **Lembram** só da última vaza e das manilhas que ficaram à vista, e **atrapalham** os outros quando isso não lhes custa vida, mirando em quem tem mais vidas.
-  - Não jogam sempre igual: uma decisão em cada dez vai para a segunda melhor. O mesmo bot joga por quem estoura o tempo da vez.
+  - Não jogam sempre igual: de vez em quando uma decisão vai para a segunda melhor (no palpite, só quando as duas opções estão quase empatadas).
+  - **Seis estilos em três grupos**, sorteados no começo de cada partida: cautelosos (Cauteloso, Estrategista), equilibrados (Equilibrado, Sabotador) e agressivos (Ousado, Caótico). Até 2 bots, qualquer estilo; com 3, um de cada grupo (às vezes o grupo do primeiro se repete); com 4 a 6, um de cada grupo e os demais sorteados, nunca mais de 3 do mesmo grupo. O Ousado pede mais e gasta as fortes cedo, o Cauteloso pede menos e só arrisca com carta segura, o Sabotador atrapalha até correndo risco, o Estrategista quase não erra e o Caótico erra bastante.
+  - Quem estoura o tempo da vez tem a jogada feita pelo estilo Equilibrado.
 - Placar a qualquer momento (vidas, palpite e vazas feitas de todos) e guia de regras ilustrado, passo a passo.
 - Tutorial interativo com versão rápida, que pula os passos só explicativos.
 
@@ -217,6 +219,7 @@ npm run lint        # ESLint
 npm run build       # build de todos os pacotes
 npm run format      # formata com Prettier
 npm run test:e2e    # testes de tela (Playwright)
+npm run simular -w apps/server -- --pares 2000 --mesas 3,10   # simulação acelerada dos bots, em paralelo
 ```
 
 Os **testes de tela** abrem o jogo de verdade num Chromium em 5 tamanhos (de 360×640 a 1920×1080) e conferem o que já quebrou antes: a mesa cheia (10 jogadores, 13 cartas) sem rolar a página, o palpite cabendo no feltro, o resumo das regras e a dica das reações, as cartas dentro da mesa, placar e regras, e o tutorial inteiro, com todo balão apontando para algo visível. Eles sobem sozinhos um servidor e um web de teste nas portas 3101 e 5199, então funcionam com o Docker de desenvolvimento ligado. Na primeira vez, instale o navegador: `npx playwright install chromium` (dentro de `apps/e2e`).
