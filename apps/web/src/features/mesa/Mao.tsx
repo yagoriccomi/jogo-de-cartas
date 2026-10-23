@@ -6,7 +6,12 @@ import {
   useState,
   type MouseEvent as EventoDeMouse,
 } from 'react';
-import { ehCartaOculta, type CartaNaMao, type Valor } from '@fodinha/shared';
+import {
+  ehCartaOculta,
+  type CartaNaMao,
+  type EstadoPartidaVisivel,
+  type Valor,
+} from '@fodinha/shared';
 import { classes } from '../../lib/classes';
 import type { EstiloComVariaveis } from '../../lib/estiloComVariaveis';
 import { CONSULTA_COMPUTADOR, CONSULTA_TOQUE, useMediaQuery } from '../../lib/useMediaQuery';
@@ -22,6 +27,7 @@ import { Carta } from './Carta';
 import { useDicaDoGesto } from './dicaDoGesto';
 import { calcularLeque } from './leque';
 import { animarDistribuicao } from './mao-animacoes';
+import { estaNaAberturaDaPartida } from './planoDoBaralho';
 import {
   comecaDistribuindo,
   idsDasOcultas,
@@ -49,8 +55,16 @@ interface Props {
   readonly numeroRodada?: number;
   /** Define o intervalo entre cartas na distribuição (uma carta por jogador, em volta da mesa). */
   readonly jogadoresNaMesa?: number;
-  /** Anima a distribuição também na primeira montagem (ao reconectar, deixe `false`). */
-  readonly animarAoMontar?: boolean;
+  /**
+   * Partida e instante em que ela chegou: se a mão montar na abertura da partida, a primeira
+   * distribuição também anima. Sem ela (ou ao reconectar no meio), a mão aparece pronta.
+   */
+  readonly abertura?: AberturaDaMao;
+}
+
+export interface AberturaDaMao {
+  readonly jogo: EstadoPartidaVisivel;
+  readonly recebidoEm: number;
 }
 
 export function Mao({
@@ -61,7 +75,7 @@ export function Mao({
   onJogar,
   numeroRodada,
   jogadoresNaMesa = JOGADORES_PADRAO_NA_MESA,
-  animarAoMontar = false,
+  abertura,
 }: Props) {
   const computador = useMediaQuery(CONSULTA_COMPUTADOR);
   const toque = useMediaQuery(CONSULTA_TOQUE);
@@ -76,18 +90,28 @@ export function Mao({
     jogar(id, evento.currentTarget),
   );
 
-  const [comecaAnimando] = useState(() =>
-    comecaDistribuindo({
-      animarAoMontar,
-      quantidade: cartas.length,
-      menosMovimento: prefereMenosMovimento(),
-    }),
-  );
   const [registro, definirRegistro] = useState<RegistroDaMao>(() =>
     registrarMao(cartas, numeroRodada),
   );
-  const [chegando, definirChegando] = useState(comecaAnimando);
-  const [lote, definirLote] = useState(comecaAnimando ? 1 : 0);
+  const [chegando, definirChegando] = useState(false);
+  const [lote, definirLote] = useState(0);
+
+  // Abertura da partida: depende do relógio, então é decidida no efeito de montagem, que roda
+  // antes da pintura (o verso já aparece na primeira tela). Só a montagem importa.
+  const aberturaAoMontar = useRef(abertura);
+  const quantidadeAoMontar = useRef(cartas.length);
+  useLayoutEffect(() => {
+    const inicio = aberturaAoMontar.current;
+    const distribuir = comecaDistribuindo({
+      animarAoMontar:
+        inicio !== undefined && estaNaAberturaDaPartida(inicio.jogo, inicio.recebidoEm, Date.now()),
+      quantidade: quantidadeAoMontar.current,
+      menosMovimento: prefereMenosMovimento(),
+    });
+    if (!distribuir) return;
+    definirChegando(true);
+    definirLote((atual) => Math.max(atual, 1));
+  }, []);
 
   // Mão nova refaz a distribuição. Decidido na renderização para o verso já existir no DOM antes
   // da pintura.
@@ -227,7 +251,7 @@ export function Mao({
   }
 
   return (
-    <div className="mao" ref={referencia} onContextMenu={aoCancelar}>
+    <div className="mao" ref={referencia} onContextMenu={aoCancelar} {...marcarAlvo(ALVOS.mao)}>
       <p className={classes('mao__dica', ensinandoGesto && 'dica-do-gesto')} aria-live="polite">
         {ensinandoGesto && <strong className="dica-do-gesto__rotulo">Dica</strong>}
         {dica}

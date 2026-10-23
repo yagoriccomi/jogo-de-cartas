@@ -10,7 +10,6 @@ import { centroDe, criarVersoSolto } from './mesa-voos';
 import {
   atrasoNaEntregaMs,
   esperaAteAViraMs,
-  estaNaAberturaDaPartida,
   planejarBaralho,
   type Entrega,
 } from './planoDoBaralho';
@@ -41,15 +40,6 @@ interface Pedido {
 interface Estado {
   readonly rodada: number | null;
   readonly pedido: Pedido | null;
-}
-
-/**
- * Partida recém-aberta: a mão e o baralho animam juntos a 1ª distribuição. Lê o relógio de quem
- * chama: existe só para a `TelaMesa` decidir o `animarAoMontar` da mão; o resto usa a regra pura
- * `estaNaAberturaDaPartida`, que recebe o instante.
- */
-export function aberturaDaPartida(jogo: EstadoPartidaVisivel, recebidoEm: number): boolean {
-  return estaNaAberturaDaPartida(jogo, recebidoEm, Date.now());
 }
 
 function embaralhar(baralho: HTMLElement): Animation[] {
