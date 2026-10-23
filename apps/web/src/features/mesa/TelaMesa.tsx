@@ -34,7 +34,7 @@ import { MonteDeEmpates } from './MonteDeEmpates';
 import { contagemVisivel } from './cenaDaVaza';
 import { useAnimacaoDeVaza } from './useAnimacaoDeVaza';
 import { useRolarAtePlacaDaVez, useTituloDaVez } from './useSinaisDaVez';
-import { aberturaDaPartida, useBaralho } from './useBaralho';
+import { useBaralho } from './useBaralho';
 import { useMesaJogadas } from './useMesaJogadas';
 import { idDaVezAtiva, visaoDaMesa } from './visaoDaMesa';
 import './mesa.css';
@@ -335,7 +335,7 @@ export function TelaMesa() {
             manilha={jogo.manilha}
             numeroRodada={jogo.numeroRodada}
             jogadoresNaMesa={visao.vivosNaMesa}
-            animarAoMontar={aberturaDaPartida(jogo, jogoRecebidoEm)}
+            abertura={{ jogo, recebidoEm: jogoRecebidoEm }}
             podeJogar={podeJogar && !ocupado}
             apagar={visao.apagarMao}
             onJogar={(cartaId) => void executar(() => jogarCarta(cartaId))}

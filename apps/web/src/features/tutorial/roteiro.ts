@@ -52,7 +52,7 @@ const ALVO_DO_MEU_FEZ = seletorDeAlvo(ALVOS.minhaArea, ALVOS.numeros);
 const ALVO_DO_PALPITE = seletorDeAlvo(ALVOS.palpite);
 const ALVO_DO_RESULTADO = seletorDeAlvo(ALVOS.resultado);
 /** A mão (Mao.tsx) ainda não tem marcador próprio: segue pela classe. */
-const ALVO_DA_MAO = '.mao';
+const ALVO_DA_MAO = seletorDeAlvo(ALVOS.mao);
 const alvoDaCartaNaMao = (carta: Carta) => seletorDaCartaNaMao(carta.id);
 
 const naMesa = (jogadorId: string, carta: Carta, anulada = false): JogadaNaMesa => ({

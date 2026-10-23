@@ -1,5 +1,5 @@
 import { useLayoutEffect, useState, type RefObject } from 'react';
-import type { EstadoPartidaVisivel, JogadorVisivel } from '@fodinha/shared';
+import type { EstadoPartidaVisivel } from '@fodinha/shared';
 import {
   MARCADORES,
   prefereMenosMovimento,
@@ -7,11 +7,13 @@ import {
   TEMPOS_DA_ANIMACAO,
 } from './animacao-compartilhada';
 import { centroDe, criarVersoSolto } from './mesa-voos';
+import {
+  atrasoNaEntregaMs,
+  esperaAteAViraMs,
+  planejarBaralho,
+  type Entrega,
+} from './planoDoBaralho';
 
-/** Limite visual: além disto a distribuição ficaria longa e pesada sem acrescentar nada. */
-const MAXIMO_DE_VOOS_POR_JOGADOR = 10;
-/** Ao montar a tela no começo da partida (sem rodada anterior) ainda vale distribuir. */
-const JANELA_DE_ABERTURA_MS = 2500;
 /** O baralho só ganha destaque (maior e com brilho) enquanto embaralha e distribui. */
 const CLASSE_BARALHO_EM_CENA = 'baralho--em-cena';
 const ESCALA_AO_CHEGAR = 0.55;
@@ -20,9 +22,6 @@ const FRACAO_ANTES_DE_SUMIR = 0.85;
 const AFASTAMENTO_DO_CORTE = 0.7;
 const INCLINACAO_DO_CORTE_GRAUS = 8;
 
-/** Destino de cada carta distribuída, na ordem: id do adversário, ou `null` se for minha. */
-type Entrega = readonly (string | null)[];
-
 interface Entrada {
   readonly jogo: EstadoPartidaVisivel | null;
   readonly meuId: string | null;
@@ -30,41 +29,17 @@ interface Entrada {
   readonly vira: RefObject<HTMLElement | null>;
 }
 
+/** Rodada que acabou de chegar, com o retrato do que o planejador precisa para decidir. */
+interface Pedido {
+  readonly jogo: EstadoPartidaVisivel;
+  readonly meuId: string | null;
+  readonly recebidoEm: number;
+  readonly primeiraVez: boolean;
+}
+
 interface Estado {
   readonly rodada: number | null;
-  readonly entrega: Entrega | null;
-}
-
-function planejarEntrega(jogo: EstadoPartidaVisivel, meuId: string | null): Entrega {
-  const { jogadores } = jogo;
-  const inicio = Math.max(
-    jogadores.findIndex((jogador) => jogador.id === jogo.idDoPrimeiro),
-    0,
-  );
-  const ordem: JogadorVisivel[] = [
-    ...jogadores.slice(inicio),
-    ...jogadores.slice(0, inicio),
-  ].filter((jogador) => !jogador.eliminado && jogador.cartasNaMao > 0);
-  const voltas = Math.min(
-    Math.max(0, ...ordem.map((jogador) => jogador.cartasNaMao)),
-    MAXIMO_DE_VOOS_POR_JOGADOR,
-  );
-  const entrega: (string | null)[] = [];
-  for (let volta = 0; volta < voltas; volta += 1) {
-    for (const jogador of ordem) {
-      if (jogador.cartasNaMao > volta) entrega.push(jogador.id === meuId ? null : jogador.id);
-    }
-  }
-  return entrega;
-}
-
-/** Partida recém-aberta (ninguém palpitou ainda): a mão e o baralho animam juntos a 1ª distribuição. */
-export function aberturaDaPartida(jogo: EstadoPartidaVisivel, recebidoEm: number): boolean {
-  return (
-    jogo.fase === 'palpites' &&
-    jogo.jogadores.every((jogador) => jogador.palpite === null) &&
-    Date.now() - recebidoEm < JANELA_DE_ABERTURA_MS
-  );
+  readonly pedido: Pedido | null;
 }
 
 function embaralhar(baralho: HTMLElement): Animation[] {
@@ -118,7 +93,7 @@ function distribuir(baralho: DOMRect, entrega: Entrega, clones: HTMLElement[]): 
       ],
       {
         duration: TEMPOS_DA_ANIMACAO.vooDaCartaMs,
-        delay: posicao * TEMPOS_DA_ANIMACAO.intervaloDaDistribuicaoMs,
+        delay: atrasoNaEntregaMs(posicao),
         easing: 'ease-in-out',
         fill: 'forwards',
       },
@@ -160,11 +135,8 @@ function iniciarEntrega(baralhoEl: HTMLElement, vira: HTMLElement, entrega: Entr
       const retangulo = baralhoEl.getBoundingClientRect();
       const voos = distribuir(retangulo, entrega, clones);
       animacoes.push(...voos);
-      const intervalo = TEMPOS_DA_ANIMACAO.intervaloDaDistribuicaoMs;
-      const faltaParaVira =
-        Math.max(0, entrega.length - 1) * intervalo + TEMPOS_DA_ANIMACAO.vooDaCartaMs;
       return new Promise<DOMRect>((resolver) => {
-        const temporizador = setTimeout(() => resolver(retangulo), faltaParaVira);
+        const temporizador = setTimeout(() => resolver(retangulo), esperaAteAViraMs(entrega));
         cancelamentos.push(() => clearTimeout(temporizador));
       });
     })
@@ -194,25 +166,29 @@ function iniciarEntrega(baralhoEl: HTMLElement, vira: HTMLElement, entrega: Entr
  */
 export function useBaralho({ jogo, meuId, recebidoEm, vira }: Entrada): void {
   const numeroRodada = jogo?.numeroRodada ?? null;
-  const [estado, definirEstado] = useState<Estado>({ rodada: null, entrega: null });
+  const [estado, definirEstado] = useState<Estado>({ rodada: null, pedido: null });
 
-  // Ajuste durante a renderização: o plano nasce no mesmo render em que o estado novo chega.
+  // Ajuste durante a renderização (sem relógio): só registra que a rodada mudou. A decisão, que
+  // depende do instante, fica no efeito, que roda no mesmo commit e antes da pintura.
   if (jogo !== null && estado.rodada !== numeroRodada) {
-    const primeiraVez = estado.rodada === null;
-    const deveAnimar =
-      !prefereMenosMovimento() && (primeiraVez ? aberturaDaPartida(jogo, recebidoEm) : true);
     definirEstado({
       rodada: numeroRodada,
-      entrega: deveAnimar ? planejarEntrega(jogo, meuId) : null,
+      pedido: { jogo, meuId, recebidoEm, primeiraVez: estado.rodada === null },
     });
   }
 
-  const entrega = estado.entrega;
+  const pedido = estado.pedido;
   useLayoutEffect(() => {
+    if (pedido === null) return;
+    const entrega = planejarBaralho({
+      ...pedido,
+      agora: Date.now(),
+      menosMovimento: prefereMenosMovimento(),
+    });
     if (entrega === null) return;
     const baralho = document.querySelector<HTMLElement>(seletor(MARCADORES.baralho));
     const viraEl = vira.current;
     if (!baralho || !viraEl) return;
     return iniciarEntrega(baralho, viraEl, entrega);
-  }, [entrega, vira]);
+  }, [pedido, vira]);
 }
