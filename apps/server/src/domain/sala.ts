@@ -8,9 +8,11 @@ import {
   type TemposDaMesa,
 } from './agenda';
 import type { GeradorAleatorio } from './aleatoriedade';
-import { sortearPerfis, type PerfilDeBot } from './bot/perfis';
+import { PERFIL_DA_JOGADA_AUTOMATICA, sortearPerfis, type PerfilDeBot } from './bot/perfis';
 import { validarConfiguracao } from './configuracao';
 import { ErroDeRegra } from './erros';
+import type { EstrategiasDosPerfis } from './estrategia-bot';
+import { jogarAVez, type JogadaDaVez } from './jogar-a-vez';
 import { Partida } from './partida';
 
 const MS_POR_SEGUNDO = 1000;
@@ -282,6 +284,29 @@ export class Sala {
     if (this.leitura?.jogadorId === jogadorId) this.leitura = null;
   }
 
+  palpitar(jogadorId: string, quantidade: number): void {
+    this.partidaEmJogo().palpitar(jogadorId, quantidade);
+  }
+
+  jogarCarta(jogadorId: string, cartaId: string): void {
+    this.partidaEmJogo().jogarCarta(jogadorId, cartaId);
+  }
+
+  /**
+   * Joga por quem tem a vez: o bot com o próprio perfil; o humano que estourou o prazo ou está
+   * saindo, com o perfil neutro. Devolve a jogada para quem chama decidir a reação do bot.
+   */
+  jogarAVez(jogadorId: string, estrategias: EstrategiasDosPerfis): JogadaDaVez {
+    const partida = this.partidaEmJogo();
+    const perfil = this.participante(jogadorId)?.perfilDoBot ?? PERFIL_DA_JOGADA_AUTOMATICA;
+    return jogarAVez(partida, jogadorId, estrategias[perfil]);
+  }
+
+  /** Fim da exibição do resultado: distribui a rodada seguinte. */
+  iniciarProximaRodada(): void {
+    this.partidaEmJogo().iniciarProximaRodada();
+  }
+
   /** Saída voluntária: no meio da rodada, um bot termina por ele e o assento some depois. */
   sair(participanteId: string): Desfecho {
     this.desligar(this.exigirParticipante(participanteId));
@@ -492,6 +517,21 @@ export class Sala {
     const humanos = this.ativos().filter((p) => !p.ehBot);
     const proximo = humanos.find((p) => p.conectado) ?? humanos[0];
     if (proximo) this.anfitriaoId = proximo.id;
+  }
+
+  /**
+   * Única porta das jogadas, humanas ou automáticas: qualquer pausa (do dono, votação de espera,
+   * leitura das regras) congela a mesa inteira, então nenhuma jogada passa enquanto ela dura.
+   */
+  private partidaEmJogo(): Partida {
+    const partida = this.partidaAtual;
+    if (!this.emPartida || !partida) {
+      throw new ErroDeRegra('JOGADA_INVALIDA', 'Não há partida em andamento.');
+    }
+    if (this.pausada) {
+      throw new ErroDeRegra('JOGO_PAUSADO', 'A partida está pausada.');
+    }
+    return partida;
   }
 
   private exigirParticipante(participanteId: string): Participante {
