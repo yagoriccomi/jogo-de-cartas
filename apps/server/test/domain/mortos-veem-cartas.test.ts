@@ -2,6 +2,7 @@ import { CONFIGURACAO_PADRAO } from '@fodinha/shared';
 import { describe, expect, it } from 'vitest';
 import { validarConfiguracao } from '../../src/domain/configuracao';
 import type { Partida } from '../../src/domain/partida';
+import { projetarSala } from '../../src/domain/projecao';
 import { Sala, type Participante } from '../../src/domain/sala';
 import { criarPartida, geradorComSemente, jogarRodadaAteOFim } from '../apoio';
 
@@ -83,10 +84,10 @@ describe('mortos veem cartas — sala', () => {
     sala.iniciarPartida('dono', geradorComSemente(1));
 
     expect(() => sala.definirMortosVeemCartas('bia', true)).toThrow('Só o dono');
-    expect(sala.estado().configuracao.mortosVeemCartas).toBe(false);
+    expect(projetarSala(sala).configuracao.mortosVeemCartas).toBe(false);
 
     sala.definirMortosVeemCartas('dono', true);
-    expect(sala.estado().configuracao.mortosVeemCartas).toBe(true);
+    expect(projetarSala(sala).configuracao.mortosVeemCartas).toBe(true);
     expect(sala.partida?.visaoPara('dono').configuracao.mortosVeemCartas).toBe(true);
   });
 });

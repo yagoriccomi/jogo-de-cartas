@@ -128,7 +128,7 @@ Regra de dependência: `domain` não depende de nada; `application` depende de `
 
 ## Diretrizes de Segurança Mínimas
 
-- Servidor autoritativo: projeção `visaoPara(jogador)` é a única forma de gerar estado para o cliente; ids de carta opacos; coberta por testes. [#51]
+- Servidor autoritativo: `projetarMesa(sala, instantes)` (`domain/projecao.ts`) é a única forma de gerar estado para o cliente: decide os destinatários (quem está saindo não recebe) e o que cada um vê (as cartas via `projetarPara`); a aplicação só entrega; ids de carta opacos; coberta por testes. [#51]
 - Sanitização e validação de todo payload do cliente (tipos, tamanhos, apelido limitado por `LIMITES.maxApelido`). [#51]
 - Verificar a identidade do remetente em cada ação (só joga na sua vez, só a carta que é sua, só o anfitrião configura/inicia). [#51]
 - CORS restrito via `CORS_ORIGINS`; sem `*` em produção. [#57]

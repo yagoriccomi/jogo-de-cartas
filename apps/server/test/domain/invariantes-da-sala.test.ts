@@ -1,6 +1,7 @@
 import { CONFIGURACAO_PADRAO } from '@fodinha/shared';
 import { describe, expect, it } from 'vitest';
 import type { Partida } from '../../src/domain/partida';
+import { projetarSala } from '../../src/domain/projecao';
 import { Sala, type Participante } from '../../src/domain/sala';
 import { geradorComSemente, jogarRodadaAteOFim } from '../apoio';
 
@@ -40,7 +41,7 @@ describe('Sala — invariantes da votação de espera', () => {
 
     expect(sala.votar('ana', 'carlos', false)).toEqual({ eliminados: [] });
     expect(sala.votar('bia', 'carlos', false)).toEqual({ eliminados: ['carlos'] });
-    expect(sala.votacoesVisiveis()).toEqual([]);
+    expect(sala.votacoesAbertas()).toEqual([]);
     expect(sala.pausada).toBe(false);
     expect(partida.estaJogando('carlos')).toBe(false);
   });
@@ -50,7 +51,7 @@ describe('Sala — invariantes da votação de espera', () => {
     sala.votar('ana', 'carlos', false);
 
     expect(sala.sair('bia')).toEqual({ eliminados: ['carlos'] });
-    expect(sala.votacoesVisiveis()).toEqual([]);
+    expect(sala.votacoesAbertas()).toEqual([]);
   });
 
   it('deveResolverAVotacaoQuandoOEleitorQueFaltavaEExpulso', () => {
@@ -78,12 +79,12 @@ describe('Sala — invariantes da votação de espera', () => {
       sala.marcarConexao(id, false);
       expect(sala.abrirVotacao(id, 0)).toEqual({ eliminados: [] });
     }
-    expect(sala.votacoesVisiveis()).toHaveLength(3);
+    expect(sala.votacoesAbertas()).toHaveLength(3);
 
     // Ninguém pode votar, mas agora alguém assiste: a mesa não fica presa esperando.
     const { eliminados } = sala.marcarConexao('dani', true);
     expect([...eliminados].sort()).toEqual(['ana', 'bia', 'carlos']);
-    expect(sala.votacoesVisiveis()).toEqual([]);
+    expect(sala.votacoesAbertas()).toEqual([]);
   });
 });
 
@@ -96,7 +97,7 @@ describe('Sala — saída no meio da rodada', () => {
     expect(sala.todos.map((p) => p.id)).toContain('bia');
     expect(sala.ativos().map((p) => p.id)).not.toContain('bia');
     expect(sala.participanteAtivo('bia')).toBeUndefined();
-    expect(sala.estado().participantes.find((p) => p.id === 'bia')?.saindo).toBe(true);
+    expect(projetarSala(sala).participantes.find((p) => p.id === 'bia')?.saindo).toBe(true);
 
     jogarRodadaAteOFim(partida);
     expect(sala.todos.map((p) => p.id)).toContain('bia');
@@ -104,7 +105,7 @@ describe('Sala — saída no meio da rodada', () => {
 
     expect(partida.participa('bia')).toBe(false);
     expect(sala.todos.map((p) => p.id)).not.toContain('bia');
-    expect(sala.estado().participantes.map((p) => p.id)).toEqual(['ana', 'carlos', 'bot']);
+    expect(projetarSala(sala).participantes.map((p) => p.id)).toEqual(['ana', 'carlos', 'bot']);
   });
 
   it('deveTirarQuemSaiAssimQueAPartidaTermina', () => {

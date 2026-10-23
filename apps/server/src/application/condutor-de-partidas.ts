@@ -1,10 +1,11 @@
-import { REACOES, type EstadoPartidaVisivel, type ReacaoNaMesa } from '@fodinha/shared';
+import { REACOES, type ReacaoNaMesa } from '@fodinha/shared';
 import { mesmoPasso, type ProximoPasso, type TemposDaMesa } from '../domain/agenda';
 import type { GeradorAleatorio } from '../domain/aleatoriedade';
 import { PERFIL_DA_JOGADA_AUTOMATICA } from '../domain/bot/perfis';
 import type { EstrategiasDosPerfis } from '../domain/estrategia-bot';
 import { jogarAVez } from '../domain/jogar-a-vez';
 import type { Partida } from '../domain/partida';
+import { destinatariosDa, projetarMesa } from '../domain/projecao';
 import type { Desfecho, Sala } from '../domain/sala';
 import type { Cancelamento, Notificador, Registrador, Relogio } from './portas';
 
@@ -64,62 +65,22 @@ export class CondutorDePartidas {
     this.carencias.delete(codigoSala);
   }
 
+  /** O que cada um recebe é decidido no domínio (`projetarMesa`); aqui só se entrega. */
   publicar(sala: Sala): void {
-    // Quem saiu não recebe mais nada, mesmo enquanto um bot termina a rodada por ele.
-    const humanos = sala
-      .ativos()
-      .filter((p) => !p.ehBot)
-      .map((p) => p.id);
-    this.deps.notificador.enviarEstadoSala(humanos, sala.estado());
-
-    const partida = sala.partida;
-    if (!partida) return;
-    for (const id of humanos) {
-      this.deps.notificador.enviarEstadoPartida(id, this.estadoVisivel(sala, partida, id));
+    const projecao = projetarMesa(sala, {
+      agora: this.deps.relogio.agora(),
+      passo: this.passos.get(sala.codigo)?.passo ?? null,
+    });
+    const { notificador } = this.deps;
+    notificador.enviarEstadoSala(projecao.destinatarios, projecao.sala);
+    for (const { destinatarioId, estado } of projecao.partidas) {
+      notificador.enviarEstadoPartida(destinatarioId, estado);
     }
   }
 
   /** Reação é efêmera: vai a quem está na sala agora e não altera nem agenda nada. */
   publicarReacao(sala: Sala, reacao: ReacaoNaMesa): void {
-    const humanos = sala
-      .ativos()
-      .filter((p) => !p.ehBot)
-      .map((p) => p.id);
-    this.deps.notificador.enviarReacao(humanos, reacao);
-  }
-
-  private estadoVisivel(sala: Sala, partida: Partida, jogadorId: string): EstadoPartidaVisivel {
-    const visao = partida.visaoPara(partida.participa(jogadorId) ? jogadorId : null);
-    const passo = this.passos.get(sala.codigo)?.passo;
-    const restante = (tipo: ProximoPasso['tipo']) =>
-      passo?.tipo === tipo ? Math.max(0, passo.em - this.deps.relogio.agora()) : null;
-    const previsao = partida.previsaoDaProximaRodada();
-    const leitura = sala.leituraDasRegras;
-    return {
-      ...visao,
-      prazoDaVezEm: passo?.tipo === 'prazoDaVez' ? passo.em : null,
-      prazoDaVezRestanteMs: restante('prazoDaVez'),
-      proximaRodada: previsao && { ...previsao, comecaEmMs: restante('proximaRodada') },
-      pausa: sala.pausada
-        ? {
-            votacoes: sala.votacoesVisiveis(),
-            pausadaPeloDono: sala.pausadaPeloDono,
-            lendoRegras: leitura && {
-              jogadorId: leitura.jogadorId,
-              restanteMs: restante('fimDaLeitura') ?? 0,
-            },
-          }
-        : null,
-      jogadores: visao.jogadores.map((jogador) => {
-        const participante = sala.participante(jogador.id);
-        return {
-          ...jogador,
-          apelido: participante?.apelido ?? '—',
-          ehBot: participante?.ehBot ?? false,
-          conectado: participante?.conectado ?? false,
-        };
-      }),
-    };
+    this.deps.notificador.enviarReacao(destinatariosDa(sala), reacao);
   }
 
   /** Arma a carência de quem precisa e desarma a de quem voltou, saiu ou já tem votação. */
