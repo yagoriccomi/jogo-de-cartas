@@ -15,6 +15,10 @@ export const ALVOS = {
   resultado: 'resultado',
   /** A minha barra e a minha mão; dentro dela, `numeros` e `simbolos` são os meus. */
   minhaArea: 'minha-area',
+  /** A minha mão inteira: a dica e as cartas. */
+  mao: 'mao',
+  /** Só as cartas da minha mão, que o balão evita cobrir. */
+  lequeDaMao: 'leque-da-mao',
   /** "Pediu / Fez" de um jogador (na placa ou na minha barra). */
   numeros: 'numeros',
   /** Símbolos de mão e pé de um jogador. */

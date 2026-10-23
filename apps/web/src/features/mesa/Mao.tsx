@@ -23,6 +23,7 @@ import {
   prefereMenosMovimento,
   registrarOrigemDaJogada,
 } from './animacao-compartilhada';
+import { ALVOS, marcarAlvo } from './alvos';
 import { Carta } from './Carta';
 import { useDicaDoGesto } from './dicaDoGesto';
 import { calcularLeque } from './leque';
@@ -258,6 +259,7 @@ export function Mao({
       </p>
       <ul
         className="mao__leque"
+        {...marcarAlvo(ALVOS.lequeDaMao)}
         ref={lequeRef}
         aria-label="Sua mão"
         style={{ width: layout.larguraTotal, height: layout.alturaTotal }}

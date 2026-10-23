@@ -9,6 +9,7 @@ import {
   passoAtual,
   totalDePassos,
 } from './motor';
+import { ALVOS, seletorDeAlvo } from '../mesa/alvos';
 import { verboDeToque } from './ponteiro';
 import type { Espera } from './roteiro';
 import './tutorial.css';
@@ -21,7 +22,7 @@ const MARGEM_DA_TELA_PX = 12;
 /** A seta não chega nos cantos arredondados do balão. */
 const MARGEM_DA_SETA_PX = 22;
 /** As cartas da mão: o jogador precisa vê-las para decidir o palpite. */
-const SELETOR_DA_MAO = '.mao__leque';
+const SELETOR_DA_MAO = seletorDeAlvo(ALVOS.lequeDaMao);
 /** Cobrir mais que isso da mão faz o balão trocar de lado, se couber no outro. */
 const COBERTURA_TOLERADA_DA_MAO = 0.25;
 
