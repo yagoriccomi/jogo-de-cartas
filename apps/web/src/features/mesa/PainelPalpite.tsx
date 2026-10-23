@@ -5,6 +5,7 @@ import { useDuploToque } from '../../lib/useDuploToque';
 import { CONSULTA_COMPUTADOR, useMediaQuery } from '../../lib/useMediaQuery';
 import type { EstiloComVariaveis } from '../../lib/estiloComVariaveis';
 import { verboDeToque } from '../tutorial/ponteiro';
+import { ALVOS, marcarAlvo } from './alvos';
 import { partesDoSaldo } from './AndamentoDosPalpites';
 import { Carta } from './Carta';
 import { useDicaDoGesto } from './dicaDoGesto';
@@ -70,7 +71,12 @@ export function PainelPalpite({
   }
 
   return (
-    <div className="palpite" role="dialog" aria-labelledby="titulo-palpite">
+    <div
+      className="palpite"
+      role="dialog"
+      aria-labelledby="titulo-palpite"
+      {...marcarAlvo(ALVOS.palpite)}
+    >
       <div className="palpite__topo">
         {/* No celular o painel cobre a coluna da vira: ela vem junto, em miniatura. */}
         <div className="palpite__vira so-celular">

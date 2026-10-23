@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { IconeAbaixo, IconeMenu } from '../../componentes/Icones';
 import { classes } from '../../lib/classes';
+import { ALVOS, marcarAlvo } from '../mesa/alvos';
 import { useMusicaDeFundo } from '../som/useMusicaDeFundo';
 import { MenuLateral } from './MenuLateral';
 import './menu.css';
@@ -74,7 +75,11 @@ export function CabecalhoApp({ children, acoes, recolhivel = false }: Props) {
         <div className="cabecalho__info">{children}</div>
         {acoes && (
           // Usar uma ação (placar, regras) já fecha o topo: o diálogo aberto toma a frente.
-          <div className="cabecalho__acoes" onClickCapture={() => definirTopoAberto(false)}>
+          <div
+            className="cabecalho__acoes"
+            onClickCapture={() => definirTopoAberto(false)}
+            {...marcarAlvo(ALVOS.acoesDoTopo)}
+          >
             {acoes}
           </div>
         )}
@@ -93,6 +98,7 @@ export function CabecalhoApp({ children, acoes, recolhivel = false }: Props) {
         <button
           type="button"
           className="alca-topo"
+          {...marcarAlvo(ALVOS.alcaDoTopo)}
           aria-expanded={false}
           aria-label="Mostrar o topo: placar, regras e menu"
           onClick={() => definirTopoAberto(true)}

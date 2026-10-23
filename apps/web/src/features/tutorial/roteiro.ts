@@ -10,6 +10,7 @@ import {
   RODADA_CEGA,
   RODADA_DE_TRES,
 } from './mesaDoTutorial';
+import { ALVOS, seletorDaCartaNaMao, seletorDaPlaca, seletorDeAlvo } from '../mesa/alvos';
 import { usaToque } from './ponteiro';
 
 /** O que faz o roteiro andar: o botão do balão, o tempo (vez dos bots) ou a sua jogada certa. */
@@ -25,7 +26,10 @@ export type Espera =
   | { readonly tipo: 'jogar'; readonly carta: Carta };
 
 export interface Balao {
-  /** Seletor CSS do que o balão aponta (vários separados por vírgula: vale o primeiro visível). */
+  /**
+   * Seletor do que o balão aponta, montado com os marcadores de `mesa/alvos` (vários separados por
+   * vírgula: vale o primeiro visível).
+   */
   readonly alvo: string | null;
   readonly titulo?: string;
   readonly texto: string;
@@ -43,10 +47,13 @@ export interface Passo {
 const LEITURA_DA_JOGADA_MS = 2600;
 const VIDAS_INICIAIS = 5;
 
-const ALVO_DA_MESA = '.mesa-linhas';
-const ALVO_DO_MEU_FEZ = '.numeros--minha';
-const alvoDaCartaNaMao = (carta: Carta) => `[data-carta-mao="${carta.id}"]`;
-const alvoDaPlaca = (id: string, dentro: string) => `[data-placa-jogador="${id}"] ${dentro}`;
+const ALVO_DA_MESA = seletorDeAlvo(ALVOS.cartasNaMesa);
+const ALVO_DO_MEU_FEZ = seletorDeAlvo(ALVOS.minhaArea, ALVOS.numeros);
+const ALVO_DO_PALPITE = seletorDeAlvo(ALVOS.palpite);
+const ALVO_DO_RESULTADO = seletorDeAlvo(ALVOS.resultado);
+/** A mão (Mao.tsx) ainda não tem marcador próprio: segue pela classe. */
+const ALVO_DA_MAO = '.mao';
+const alvoDaCartaNaMao = (carta: Carta) => seletorDaCartaNaMao(carta.id);
 
 const naMesa = (jogadorId: string, carta: Carta, anulada = false): JogadaNaMesa => ({
   jogadorId,
@@ -155,13 +162,13 @@ function montarRoteiro(apelido: string): Passo[] {
     { tipo: 'botao', rotulo: 'Bora!', atalho: 'Versão rápida' },
   );
   passo({
-    alvo: '.mao',
+    alvo: ALVO_DA_MAO,
     titulo: 'Suas cartas',
     texto:
       'Ficam sempre em ordem: a mais forte à esquerda. Das comuns, a força é 3, 2, A, K, J, Q, 7, 6, 5 e 4.',
   });
   passo({
-    alvo: '.feltro__esquerda',
+    alvo: seletorDeAlvo(ALVOS.viraEManilha),
     titulo: 'Vira e manilha',
     texto:
       'Esta é a vira (6♦). O valor logo acima dela vira a manilha, que vence qualquer carta comum. Aqui, a manilha é o 7.',
@@ -173,18 +180,18 @@ function montarRoteiro(apelido: string): Passo[] {
       'Repare no brilho holográfico. Entre manilhas o naipe decide: ♣ > ♥ > ♠ > ♦. Seu 7♣ é a carta mais forte da rodada.',
   });
   passoOpcional({
-    alvo: '.adversarios',
+    alvo: seletorDeAlvo(ALVOS.adversarios),
     titulo: 'Seus adversários',
     texto:
       'Cada placa mostra as vidas (corações), o palpite e quantas vazas a pessoa já fez. O robozinho indica que é bot.',
   });
   passoOpcional({
-    alvo: alvoDaPlaca(ID_PAULA, '.simbolo--mao'),
+    alvo: seletorDaPlaca(ID_PAULA, ALVOS.simboloDaMao),
     titulo: 'A mão',
     texto: 'A mãozinha marca quem abre a rodada: a Paula palpita e joga primeiro.',
   });
   passoOpcional({
-    alvo: '.simbolos--minha',
+    alvo: seletorDeAlvo(ALVOS.minhaArea, ALVOS.simbolos),
     titulo: 'O pé',
     texto: 'E você é o pé: palpita por último. Isso tem uma regra especial, já já você vê.',
   });
@@ -193,7 +200,7 @@ function montarRoteiro(apelido: string): Passo[] {
   m = { ...palpitou(m, ID_PAULA, 1), idDaVez: ID_SIMAS };
   passo(
     {
-      alvo: alvoDaPlaca(ID_PAULA, '.numeros'),
+      alvo: seletorDaPlaca(ID_PAULA, ALVOS.numeros),
       texto: 'A Paula acha que vai fazer 1 vaza.',
     },
     { tipo: 'tempo', ms: LEITURA_DA_JOGADA_MS },
@@ -201,7 +208,7 @@ function montarRoteiro(apelido: string): Passo[] {
   m = { ...palpitou(m, ID_SIMAS, 1), idDaVez: ID_VOCE, palpiteProibido: 1 };
   passo(
     {
-      alvo: '.palpite',
+      alvo: ALVO_DO_PALPITE,
       titulo: 'Seu palpite',
       texto: `O Simas também disse 1. O 1 está riscado para você: o pé não pode fechar a soma em 3, alguém tem que errar. Com manilha e Ás, escolha 2 e confirme: ${usaToque() ? 'um toque escolhe, o segundo no mesmo número confirma' : 'um clique escolhe, dois cliques rápidos confirmam'}.`,
     },
@@ -384,7 +391,7 @@ function montarRoteiro(apelido: string): Passo[] {
     ],
   };
   passo({
-    alvo: '.resultado',
+    alvo: ALVO_DO_RESULTADO,
     titulo: 'Fim da rodada',
     texto:
       'Quem erra o palpite perde 1 vida por vaza de diferença. A Paula pediu 1 e fez 0: perdeu 1 coração. Você e o Simas acertaram.',
@@ -407,13 +414,13 @@ function montarRoteiro(apelido: string): Passo[] {
     resultadoRodada: null,
   };
   passo({
-    alvo: '.mao',
+    alvo: ALVO_DA_MAO,
     titulo: 'A rodada cega',
     texto:
       'Agora a rodada mais maluca: a de 1 carta, que abre cada ciclo. Sua carta veio virada: nela você não vê a própria carta!',
   });
   passo({
-    alvo: alvoDaPlaca(ID_PAULA, '.placa__testa'),
+    alvo: seletorDaPlaca(ID_PAULA, ALVOS.testa),
     titulo: 'Carta na testa',
     texto:
       'Mas você vê a dos outros, "na testa": a Paula tem um 3♦, fortíssimo, e o Simas um 5♠. A vira é Q♥, então a manilha é o J.',
@@ -421,7 +428,7 @@ function montarRoteiro(apelido: string): Passo[] {
   m = { ...palpitou(m, ID_SIMAS, 0), idDaVez: ID_VOCE };
   passo(
     {
-      alvo: '.palpite',
+      alvo: ALVO_DO_PALPITE,
       titulo: 'Palpite no escuro',
       texto:
         'O Simas, que é a mão, disse 0. Sua vez: o 3 da Paula ganha de quase tudo, então sua carta dificilmente leva. Escolha 0.',
@@ -430,12 +437,12 @@ function montarRoteiro(apelido: string): Passo[] {
   );
   m = { ...palpitou(m, ID_VOCE, 0), idDaVez: ID_PAULA };
   passo(
-    { alvo: alvoDaPlaca(ID_PAULA, '.numeros'), texto: 'Agora palpita a Paula, que é o pé.' },
+    { alvo: seletorDaPlaca(ID_PAULA, ALVOS.numeros), texto: 'Agora palpita a Paula, que é o pé.' },
     { tipo: 'tempo', ms: LEITURA_DA_JOGADA_MS },
   );
   m = { ...palpitou(m, ID_PAULA, 0), idDaVez: null };
   passoOpcional({
-    alvo: alvoDaPlaca(ID_PAULA, '.numeros'),
+    alvo: seletorDaPlaca(ID_PAULA, ALVOS.numeros),
     titulo: 'Coitada da Paula',
     texto:
       'Com a soma em 0, o pé não podia dizer 1: ela foi obrigada a dizer 0, sem saber que tem um 3 na testa!',
@@ -472,14 +479,14 @@ function montarRoteiro(apelido: string): Passo[] {
     ],
   };
   passoOpcional({
-    alvo: '.resultado',
+    alvo: ALVO_DO_RESULTADO,
     titulo: 'Mais uma vida',
     texto:
       'A Paula pediu 0 e fez 1: perdeu outro coração. Na rodada cega, o palpite é pelas cartas dos outros!',
   });
 
   passoOpcional({
-    alvo: '.alca-topo, .cabecalho__acoes',
+    alvo: `${seletorDeAlvo(ALVOS.alcaDoTopo)}, ${seletorDeAlvo(ALVOS.acoesDoTopo)}`,
     titulo: 'Placar e regras',
     texto: usaToque()
       ? 'Aqui no topo ficam o placar de todos e o guia de regras, a qualquer momento. Toque na alça para abrir.'

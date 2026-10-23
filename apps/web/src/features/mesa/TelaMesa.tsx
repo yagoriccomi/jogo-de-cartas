@@ -11,6 +11,7 @@ import { useSonsDaMesa } from '../som/useSonsDaMesa';
 import { CabecalhoApp } from '../menu/CabecalhoApp';
 import { DialogoRegras } from '../menu/DialogoRegras';
 import { ResumoDasRegras } from '../regras/ResumoDasRegras';
+import { ALVOS, marcarAlvo } from './alvos';
 import { DESTINO_DOS_EMPATES } from './animacao-compartilhada';
 import { Baralho } from './Baralho';
 import { Carta } from './Carta';
@@ -43,7 +44,8 @@ const SEM_CARTAS: readonly JogadaNaMesa[] = [];
 type Consulta = 'placar' | 'regras' | null;
 
 export function TelaMesa() {
-  const { jogo, sala, sessao, jogoRecebidoEm, tutorial } = useApp();
+  const { jogo, sala, sessao, jogoRecebidoEm, fonte } = useApp();
+  const comServidor = fonte.origem === 'servidor';
   const [ocupado, executar] = useAcao();
   const [consulta, definirConsulta] = useState<Consulta>(null);
   const [maoAbertaDe, definirMaoAbertaDe] = useState<string | null>(null);
@@ -136,7 +138,12 @@ export function TelaMesa() {
       </CabecalhoApp>
 
       <div className="adversarios-area">
-        <ul ref={adversariosRef} className="adversarios" aria-label="Adversários">
+        <ul
+          ref={adversariosRef}
+          className="adversarios"
+          aria-label="Adversários"
+          {...marcarAlvo(ALVOS.adversarios)}
+        >
           {visao.adversarios.map((jogador) => {
             const ehDaVez = jogador.id === visao.idDaVez;
             return (
@@ -161,7 +168,7 @@ export function TelaMesa() {
 
       <div className="palco">
         <section className="feltro" aria-label="Mesa">
-          <div className="feltro__esquerda">
+          <div className="feltro__esquerda" {...marcarAlvo(ALVOS.viraEManilha)}>
             <div className="feltro__monte">
               <div className="feltro__vira-bloco">
                 <span
@@ -249,9 +256,10 @@ export function TelaMesa() {
       <section
         className={classes('minha', podeJogar && !ocupado && 'minha--jogar')}
         aria-label="Minha área"
+        {...marcarAlvo(ALVOS.minhaArea)}
       >
         {/* O tutorial roda sem sala no servidor: não há para quem reagir. */}
-        {tutorial === null && <ReacoesDaMesa meuId={meuId} jogadores={jogo.jogadores} />}
+        {comServidor && <ReacoesDaMesa meuId={meuId} jogadores={jogo.jogadores} />}
         <div className="minha__barra">
           <div className="minha__dados">
             <SimbolosMaoEPe
@@ -343,7 +351,7 @@ export function TelaMesa() {
         jogo={jogo}
         meuId={meuId}
         recebidoEm={jogoRecebidoEm}
-        ativo={tutorial === null && eu !== undefined && !estouEliminado}
+        ativo={comServidor && eu !== undefined && !estouEliminado}
       />
       {consulta === 'placar' && (
         <DialogoPlacar jogo={jogo} meuId={meuId} onFechar={() => definirConsulta(null)} />
