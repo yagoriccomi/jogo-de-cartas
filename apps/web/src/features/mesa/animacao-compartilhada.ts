@@ -12,6 +12,8 @@ export const TEMPOS_DA_ANIMACAO = {
   vooDaCartaMs: 380,
   /** Depois de todas chegarem fora de ordem, a mão se organiza (mais forte → mais fraca). */
   organizarMaoMs: 280,
+  /** Cartas reveladas juntas (rodada cega) saem levemente escalonadas, não em fila. */
+  escalonamentoDaRevelacaoMs: 70,
 } as const;
 
 /** Atributos `data-*` que marcam os pontos de origem e destino dos voos. */
@@ -24,11 +26,16 @@ export const MARCADORES = {
   placaDoJogador: 'data-placa-jogador',
   /** Cada carta já na mesa: `data-carta-mesa="<id da carta>"`. */
   cartaNaMesa: 'data-carta-mesa',
+  /**
+   * Onde pousa o voo da vaza: `data-monte-destino="<id do jogador>"` no montinho mais novo (ou no
+   * "Fez", no celular), ou `DESTINO_DOS_EMPATES` no monte das vazas anuladas.
+   */
+  monteDestino: 'data-monte-destino',
 } as const;
 
 /**
  * Destino do voo de uma vaza toda anulada: o canto da mesa onde ficam os montinhos de empate.
- * Usa o mesmo `data-monte-destino` dos montinhos dos jogadores, com este id no lugar do jogador.
+ * Usa o mesmo `MARCADORES.monteDestino` dos montinhos, com este id no lugar do jogador.
  */
 export const DESTINO_DOS_EMPATES = 'empates';
 

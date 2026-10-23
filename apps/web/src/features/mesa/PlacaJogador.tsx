@@ -25,8 +25,10 @@ interface Props {
   /** Instante local em que o prazo da vez acaba (só preenchido para o jogador da vez). */
   readonly prazoFinal: number | null;
   readonly manilha: Valor | null;
-  /** O montinho mais novo ainda está a caminho (animação da vaza): não mostrá-lo antes. */
-  readonly ocultarUltimoMonte: boolean;
+  /** "Fez" à vista: a vaza que ainda voa até aqui só conta ao pousar (`contagemVisivel`). */
+  readonly feitasVisiveis: number;
+  /** Montinhos à vista; os demais ficam reservados (invisíveis) como destino do voo. */
+  readonly montesVisiveis: number;
   /** Só para quem foi eliminado, com a opção do dono ligada: abre a mão deste jogador. */
   readonly onVerMao?: () => void;
 }
@@ -54,14 +56,12 @@ export function PlacaJogador({
   ehDaVez,
   prazoFinal,
   manilha,
-  ocultarUltimoMonte,
+  feitasVisiveis,
+  montesVisiveis,
   onVerMao,
 }: Props) {
   const offline = !jogador.conectado && !jogador.ehBot;
   const computador = useMediaQuery(CONSULTA_COMPUTADOR);
-  // Enquanto o montinho mais novo voa até aqui, a contagem espera a animação chegar.
-  const feitasVisiveis =
-    jogador.vazasFeitas - (ocultarUltimoMonte && jogador.vazasFeitas > 0 ? 1 : 0);
 
   return (
     <li
@@ -129,7 +129,7 @@ export function PlacaJogador({
           jogadorId={jogador.id}
           vazas={jogador.vazasGanhas}
           manilha={manilha}
-          ocultarUltimo={ocultarUltimoMonte}
+          visiveis={montesVisiveis}
           className="montes--placa"
         />
       )}

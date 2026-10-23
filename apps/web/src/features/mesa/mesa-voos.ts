@@ -6,8 +6,6 @@ export const Z_INDEX_DO_VOO = 60;
 const ESCALA_NA_PLACA = 0.6;
 /** Reacomodar uma carta que mudou de linha ou de posição (ex.: passou a empatar). */
 export const DURACAO_REORGANIZAR_MS = 260;
-/** Cartas reveladas juntas (rodada cega) saem levemente escalonadas, não em fila. */
-export const ESCALONAMENTO_DA_REVELACAO_MS = 70;
 
 export interface Deslocamento {
   readonly x: number;
@@ -143,5 +141,93 @@ export function reacomodar(elemento: HTMLElement, anterior: DOMRect, atual: DOMR
   elemento.animate([{ transform: `translate(${x}px, ${y}px)` }, { transform: 'none' }], {
     duration: DURACAO_REORGANIZAR_MS,
     easing: 'ease-out',
+  });
+}
+
+/** Fração do voo gasta juntando as cartas num montinho antes de ele sair andando. */
+const FRACAO_JUNTANDO = 0.38;
+/** Pequeno desalinhamento entre as cartas do montinho, para parecer uma pilha e não uma só carta. */
+const DESVIO_DA_PILHA_PX = 2;
+const ESCALA_AO_JUNTAR = 0.94;
+/** Sem destino na tela (não deveria acontecer): o montinho encolhe e some. */
+const ESCALA_AO_SUMIR = 0.4;
+const Z_CARTA_NA_CENA = 45;
+
+/** As cartas exibidas nas linhas da mesa, na ordem do DOM ("linha de cima, linha de baixo"). */
+export function cartasDaMesa(raiz: HTMLElement | null): HTMLElement[] {
+  return Array.from(raiz?.querySelectorAll<HTMLElement>(seletor(MARCADORES.cartaNaMesa)) ?? []);
+}
+
+/** O montinho (ou "Fez", ou monte dos empates) onde a vaza pousa; ver `destinoDaVaza`. */
+export function buscarDestinoDoMonte(destino: string): HTMLElement | null {
+  return document.querySelector<HTMLElement>(seletor(MARCADORES.monteDestino, destino));
+}
+
+interface VooDaVaza {
+  /** Cartas da vaza na mesa (`cartasDaMesa`). */
+  readonly cartas: readonly HTMLElement[];
+  /** Id da carta que ganhou, para ela ficar por cima do montinho. */
+  readonly cartaVencedoraId: string | null;
+  readonly destino: HTMLElement | null;
+  readonly duracaoMs: number;
+}
+
+/**
+ * FLIP da vaza fechada: as cartas juntam-se num montinho (a vencedora por cima) e o montinho voa
+ * até `destino`. Devolve as animações, ou `null` quando não há cartas medíveis na tela.
+ */
+export function voarVazaAoMonte({
+  cartas,
+  cartaVencedoraId,
+  destino,
+  duracaoMs,
+}: VooDaVaza): Animation[] | null {
+  const origens = cartas.map((elemento) => elemento.getBoundingClientRect());
+  const primeira = origens[0];
+  if (!primeira || primeira.width === 0) return null;
+
+  const alvo = destino?.getBoundingClientRect() ?? null;
+  const esquerda = Math.min(...origens.map((r) => r.left));
+  const direita = Math.max(...origens.map((r) => r.right));
+  const topo = Math.min(...origens.map((r) => r.top));
+  const base = Math.max(...origens.map((r) => r.bottom));
+  const centroDoGrupo = centroDe(new DOMRect(esquerda, topo, direita - esquerda, base - topo));
+
+  return cartas.flatMap((elemento, indice) => {
+    const origem = origens[indice];
+    if (!origem) return [];
+    const centro = centroDe(origem);
+    const ehVencedora =
+      cartaVencedoraId !== null &&
+      elemento.getAttribute(MARCADORES.cartaNaMesa) === cartaVencedoraId;
+    const desvio = (indice % 3) * DESVIO_DA_PILHA_PX;
+    const juntarX = centroDoGrupo.x - centro.x + desvio;
+    const juntarY = centroDoGrupo.y - centro.y - desvio;
+
+    elemento.style.zIndex = String(Z_CARTA_NA_CENA + (ehVencedora ? 1 : 0));
+
+    const centroDoAlvo = alvo ? centroDe(alvo) : null;
+    const escala = alvo ? alvo.width / origem.width : ESCALA_AO_SUMIR;
+    const fimX = centroDoAlvo ? centroDoAlvo.x - centro.x : juntarX;
+    const fimY = centroDoAlvo ? centroDoAlvo.y - centro.y : juntarY;
+
+    return [
+      elemento.animate(
+        [
+          { transform: 'translate(0, 0) scale(1)', opacity: 1, offset: 0 },
+          {
+            transform: `translate(${juntarX}px, ${juntarY}px) scale(${ESCALA_AO_JUNTAR})`,
+            opacity: 1,
+            offset: FRACAO_JUNTANDO,
+          },
+          {
+            transform: `translate(${fimX}px, ${fimY}px) scale(${escala})`,
+            opacity: alvo ? 1 : 0,
+            offset: 1,
+          },
+        ],
+        { duration: duracaoMs, easing: 'ease-in-out', fill: 'forwards' },
+      ),
+    ];
   });
 }

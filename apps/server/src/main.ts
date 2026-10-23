@@ -1,6 +1,7 @@
 import cors from '@fastify/cors';
 import Fastify from 'fastify';
 import { Server } from 'socket.io';
+import { PAUSAS_DO_FIM_DE_RODADA } from '@fodinha/shared';
 import type { ServidorDoJogo } from './infrastructure/socket/gateway';
 import { CondutorDePartidas } from './application/condutor-de-partidas';
 import { ServicoDeSalas } from './application/servico-de-salas';
@@ -14,11 +15,6 @@ import {
 import { lerAmbiente } from './infrastructure/ambiente';
 import { GatewayDoJogo, NotificadorSocketIo } from './infrastructure/socket/gateway';
 
-// Inclui ~4 s da última vaza (3 s parada na mesa + o voo ao montinho) e deixa o resultado
-// da rodada ~6 s na tela, o tempo que os jogadores aprovaram.
-const PAUSA_FIM_DE_RODADA_MS = 10_000;
-// A rodada cega se resolve sozinha: a revelação no cliente leva ~3 s a mais para ser lida.
-const PAUSA_EXTRA_RODADA_CEGA_MS = 4_000;
 const TEMPO_DE_ABANDONO_MS = 10 * 60_000;
 // Recarregar a página ou piscar a rede não deve pausar a mesa.
 const CARENCIA_DE_DESCONEXAO_MS = 10_000;
@@ -50,8 +46,9 @@ async function iniciar(): Promise<void> {
     gerarAleatorio: aleatorioCriptografico,
     tempos: {
       atrasoDoBotMs: ambiente.atrasoDoBotMs,
-      pausaFimDeRodadaMs: PAUSA_FIM_DE_RODADA_MS,
-      pausaExtraRodadaCegaMs: PAUSA_EXTRA_RODADA_CEGA_MS,
+      // Compartilhadas: o cliente mede a cena da última vaza contra estas mesmas pausas.
+      pausaFimDeRodadaMs: PAUSAS_DO_FIM_DE_RODADA.normalMs,
+      pausaExtraRodadaCegaMs: PAUSAS_DO_FIM_DE_RODADA.extraDaRodadaCegaMs,
       carenciaDeDesconexaoMs: CARENCIA_DE_DESCONEXAO_MS,
     },
   });

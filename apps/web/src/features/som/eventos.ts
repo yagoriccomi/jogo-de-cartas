@@ -1,4 +1,5 @@
-import type { EstadoPartidaVisivel, VazaResolvida } from '@fodinha/shared';
+import type { EstadoPartidaVisivel } from '@fodinha/shared';
+import { chaveDaVaza } from '../mesa/cenaDaVaza';
 import { idDaVezAtiva } from '../mesa/visaoDaMesa';
 
 /** O que mudou na mesa entre dois estados e merece um som (ou vibração). */
@@ -16,12 +17,6 @@ export type EventoDaMesa =
 
 function ehMinhaVez(estado: EstadoPartidaVisivel, meuId: string): boolean {
   return idDaVezAtiva(estado) === meuId;
-}
-
-/** Identifica a vaza pelas cartas: o mesmo objeto reenviado pelo servidor não conta como nova. */
-function chaveDaVaza(vaza: VazaResolvida | null): string | null {
-  if (vaza === null) return null;
-  return `${vaza.vencedorId ?? '-'}:${vaza.jogadas.map((jogada) => jogada.carta.id).join(',')}`;
 }
 
 /**

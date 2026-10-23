@@ -1,4 +1,5 @@
 import { classes } from '../../lib/classes';
+import { MARCADORES } from './animacao-compartilhada';
 
 interface Props {
   readonly palpite: number | null;
@@ -34,7 +35,7 @@ export function NumerosDaRodada({ palpite, feitas, destinoDoMonte, className }: 
       </span>
       <span
         className={classes('numeros__item', `numeros__item--${situacao}`)}
-        data-monte-destino={destinoDoMonte}
+        {...(destinoDoMonte !== undefined && { [MARCADORES.monteDestino]: destinoDoMonte })}
       >
         <span className="numeros__rotulo">Fez</span>
         <span className="numeros__valor">{feitas}</span>
