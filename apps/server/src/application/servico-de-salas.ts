@@ -246,11 +246,11 @@ export class ServicoDeSalas {
   }
 
   palpitar(ator: Ator, quantidade: number): void {
-    this.alterar(ator, (sala) => this.partidaEmJogo(sala).palpitar(ator.jogadorId, quantidade));
+    this.alterar(ator, (sala) => sala.palpitar(ator.jogadorId, quantidade));
   }
 
   jogarCarta(ator: Ator, cartaId: string): void {
-    this.alterar(ator, (sala) => this.partidaEmJogo(sala).jogarCarta(ator.jogadorId, cartaId));
+    this.alterar(ator, (sala) => sala.jogarCarta(ator.jogadorId, cartaId));
   }
 
   /** Não passa por `alterar`: reação não muda a sala, então não há estado a republicar. */
@@ -284,16 +284,6 @@ export class ServicoDeSalas {
     const resultado = mudanca(sala);
     this.deps.condutor.aposMudanca(sala, resultado || undefined);
     return resultado;
-  }
-
-  private partidaEmJogo(sala: Sala) {
-    if (!sala.emPartida || !sala.partida) {
-      throw new ErroDeRegra('JOGADA_INVALIDA', 'Não há partida em andamento.');
-    }
-    if (sala.pausada) {
-      throw new ErroDeRegra('JOGO_PAUSADO', 'A partida está pausada.');
-    }
-    return sala.partida;
   }
 
   private salaExistente(codigo: string): Sala {

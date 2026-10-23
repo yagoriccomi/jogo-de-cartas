@@ -1,10 +1,7 @@
 import { REACOES, type ReacaoNaMesa } from '@fodinha/shared';
 import { mesmoPasso, type ProximoPasso, type TemposDaMesa } from '../domain/agenda';
 import type { GeradorAleatorio } from '../domain/aleatoriedade';
-import { PERFIL_DA_JOGADA_AUTOMATICA } from '../domain/bot/perfis';
 import type { EstrategiasDosPerfis } from '../domain/estrategia-bot';
-import { jogarAVez } from '../domain/jogar-a-vez';
-import type { Partida } from '../domain/partida';
 import { destinatariosDa, projetarMesa } from '../domain/projecao';
 import type { Desfecho, Sala } from '../domain/sala';
 import type { Cancelamento, Notificador, Registrador, Relogio } from './portas';
@@ -145,13 +142,11 @@ export class CondutorDePartidas {
       sala.encerrarLeituraDasRegras(passo.jogadorId);
       return;
     }
-    const partida = sala.partida;
-    if (!partida) return;
     if (passo.tipo === 'proximaRodada') {
-      partida.iniciarProximaRodada();
+      sala.iniciarProximaRodada();
       return;
     }
-    this.jogarPor(sala, partida, passo.jogadorId);
+    this.jogarPor(sala, passo.jogadorId);
     if (passo.tipo === 'prazoDaVez') this.botsZoamQuemPerdeuAVez(sala);
   }
 
@@ -160,9 +155,8 @@ export class CondutorDePartidas {
     this.passos.delete(codigoSala);
   }
 
-  private jogarPor(sala: Sala, partida: Partida, jogadorId: string): void {
-    const perfil = sala.participante(jogadorId)?.perfilDoBot ?? PERFIL_DA_JOGADA_AUTOMATICA;
-    const jogada = jogarAVez(partida, jogadorId, this.deps.estrategias[perfil]);
+  private jogarPor(sala: Sala, jogadorId: string): void {
+    const jogada = sala.jogarAVez(jogadorId, this.deps.estrategias);
     // Só bot de verdade: quem estourou o prazo ou está saindo é humano e fala por si.
     if (jogada.tipo === 'carta' && sala.participante(jogadorId)?.ehBot) {
       this.talvezReagirComoBot(sala, jogadorId);
