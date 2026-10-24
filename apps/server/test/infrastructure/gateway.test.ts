@@ -14,8 +14,10 @@ import { Server } from 'socket.io';
 import { io as conectarCliente, type Socket } from 'socket.io-client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CondutorDePartidas } from '../../src/application/condutor-de-partidas';
+import { HistoricoDePartidas } from '../../src/application/historico-de-partidas';
 import { ServicoDeSalas } from '../../src/application/servico-de-salas';
 import { criarEstrategiasDosPerfis } from '../../src/domain/estrategia-bot';
+import { RegistroDePartidasNulo } from '../../src/infrastructure/historico/registro-nulo';
 import {
   aleatorioCriptografico,
   IdentificadoresCriptograficos,
@@ -118,6 +120,12 @@ beforeEach(async () => {
     estrategias: criarEstrategiasDosPerfis(BOT_SEM_ERRO),
     registrador: silencioso,
     gerarAleatorio: BOTS_CALADOS,
+    historico: new HistoricoDePartidas({
+      registro: new RegistroDePartidasNulo(),
+      identificadores: new IdentificadoresCriptograficos(),
+      relogio,
+      registrador: silencioso,
+    }),
     tempos: {
       atrasoDoBotMs: 20,
       pausaFimDeRodadaMs: 20,

@@ -107,6 +107,7 @@ export class ServicoDeSalas {
     );
     const sala = new Sala(this.codigoLivre(), criador, CONFIGURACAO_DE_CENARIO, {
       maxBots: LIMITES.maxJogadores - 1,
+      cenarioDeTeste: true,
     });
     for (let i = 1; i < jogadores; i++) sala.adicionarBot(criador.id, this.novoBot(sala));
     sala.iniciarPartida(criador.id, this.deps.gerarAleatorio, cartas);
