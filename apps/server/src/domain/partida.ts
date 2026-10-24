@@ -64,11 +64,25 @@ export interface VazaJogada {
   readonly vencedorId: string | null;
 }
 
+/** Um assento no começo da rodada; o eliminado continua à mesa, sem cartas. */
 export interface JogadorDaRodada {
   readonly jogadorId: string;
   readonly vidasAntes: number;
+  readonly eliminado: boolean;
   readonly mao: readonly Carta[];
 }
+
+/**
+ * O que muda a visão no meio da rodada sem ser jogada: alguém passa a sair ao fim dela, ou o dono
+ * troca `mortosVeemCartas`. `depoisDe` conta as ações da rodada (palpites e cartas) já feitas.
+ */
+export type OcorrenciaDaRodada =
+  | { readonly depoisDe: number; readonly tipo: 'saida'; readonly jogadorId: string }
+  | { readonly depoisDe: number; readonly tipo: 'mortosVeemCartas'; readonly valor: boolean };
+
+type OcorrenciaSemPosicao =
+  | { readonly tipo: 'saida'; readonly jogadorId: string }
+  | { readonly tipo: 'mortosVeemCartas'; readonly valor: boolean };
 
 export interface ResultadoDaRodada extends ResultadoJogadorNaRodada {
   readonly vidasDepois: number;
@@ -85,17 +99,46 @@ export interface FatosDaRodada {
   readonly vira: Carta;
   readonly manilha: Valor;
   readonly idDoPe: string;
+  /** A opção no começo da rodada; trocas no meio dela vão para `ocorrencias`. */
+  readonly mortosVeemCartas: boolean;
+  /** Todos os assentos, na ordem da mesa. */
   readonly jogadores: readonly JogadorDaRodada[];
   readonly palpites: readonly PalpiteDado[];
   readonly vazas: readonly VazaJogada[];
+  readonly ocorrencias: readonly OcorrenciaDaRodada[];
   readonly resultado: readonly ResultadoDaRodada[];
 }
 
 interface RodadaEmMontagem {
-  readonly fatos: Omit<FatosDaRodada, 'palpites' | 'vazas' | 'resultado'>;
+  readonly fatos: Omit<FatosDaRodada, 'palpites' | 'vazas' | 'ocorrencias' | 'resultado'>;
   readonly palpites: PalpiteDado[];
   readonly vazas: VazaJogada[];
+  readonly ocorrencias: OcorrenciaDaRodada[];
   cartasDaVaza: CartaJogada[];
+}
+
+/**
+ * Uma rodada reposta a partir do diário, no instante em que as cartas acabaram de ser dadas. O que
+ * a visão mostra e vem de antes da rodada (a última vaza e o resultado anterior) chega pronto.
+ */
+export interface RodadaParaReencenar {
+  readonly configuracao: ConfiguracaoPartida;
+  readonly numero: number;
+  readonly cartasPorJogador: number;
+  readonly vira: Carta;
+  readonly idDoPe: string;
+  readonly jogadores: readonly JogadorDaRodada[];
+  readonly ultimaVaza: VazaResolvida | null;
+  readonly resultadoAnterior: readonly ResultadoJogadorNaRodada[] | null;
+}
+
+// A reencenação recebe as mãos prontas: sortear algo nela seria um defeito.
+const SEM_SORTEIO: GeradorAleatorio = () => {
+  throw new Error('A reencenação de uma rodada não sorteia nada.');
+};
+
+function novoJogador(id: string, vidas: number): JogadorNaPartida {
+  return { id, vidas, eliminado: false, mao: [], palpite: null, vazasGanhas: [] };
 }
 
 export interface NovaPartida {
@@ -137,17 +180,14 @@ export class Partida {
 
   private constructor(
     private configuracao: ConfiguracaoPartida,
-    jogadorIds: readonly string[],
+    jogadores: JogadorNaPartida[],
+    indiceDoPe: number,
     private readonly gerarAleatorio: GeradorAleatorio,
     private readonly cartasNaPrimeiraRodada: number | null,
   ) {
     this.valores = valoresEmJogo(configuracao.incluirOitoNoveDez);
-    // Lugares sorteados a cada partida (e a cada reinício): a ordem de chegada na sala não decide
-    // quem senta ao lado de quem. O primeiro pé também é sorteado; a mão é sempre o seguinte.
-    this.jogadores = embaralhar(jogadorIds, gerarAleatorio).map((id) =>
-      this.novoJogador(id, configuracao.vidasIniciais),
-    );
-    this.indiceDoPe = Math.floor(gerarAleatorio() * jogadorIds.length);
+    this.jogadores = jogadores;
+    this.indiceDoPe = indiceDoPe;
   }
 
   static iniciar({
@@ -166,13 +206,43 @@ export class Partida {
     if (new Set(jogadorIds).size !== jogadorIds.length) {
       throw new ErroDeRegra('ENTRADA_INVALIDA', 'Jogadores repetidos na partida.');
     }
+    // Lugares sorteados a cada partida (e a cada reinício): a ordem de chegada na sala não decide
+    // quem senta ao lado de quem. O primeiro pé também é sorteado; a mão é sempre o seguinte.
+    const jogadores = embaralhar(jogadorIds, gerarAleatorio).map((id) =>
+      novoJogador(id, configuracaoValida.vidasIniciais),
+    );
+    const indiceDoPe = Math.floor(gerarAleatorio() * jogadorIds.length);
     const partida = new Partida(
       configuracaoValida,
-      jogadorIds,
+      jogadores,
+      indiceDoPe,
       gerarAleatorio,
       cartasNaPrimeiraRodada ?? null,
     );
     partida.distribuirRodada();
+    return partida;
+  }
+
+  /**
+   * Repõe uma rodada já jogada para refazer as mesmas ações e perguntar a `visaoPara` o que cada
+   * jogador via: o export de treino reconstrói a visão com as regras da própria partida.
+   */
+  static reencenar(rodada: RodadaParaReencenar): Partida {
+    const jogadores = rodada.jogadores.map((jogador) => ({
+      ...novoJogador(jogador.jogadorId, jogador.vidasAntes),
+      eliminado: jogador.eliminado,
+      mao: [...jogador.mao],
+    }));
+    const indiceDoPe = jogadores.findIndex((jogador) => jogador.id === rodada.idDoPe);
+    if (indiceDoPe === -1 || jogadores[indiceDoPe]?.eliminado) {
+      throw new ErroDeRegra('ENTRADA_INVALIDA', 'O pé da rodada não está sentado à mesa.');
+    }
+    const partida = new Partida(rodada.configuracao, jogadores, indiceDoPe, SEM_SORTEIO, null);
+    partida.numeroRodada = rodada.numero;
+    partida.cartasPorJogador = rodada.cartasPorJogador;
+    partida.ultimaVaza = rodada.ultimaVaza;
+    partida.resultadoRodada = rodada.resultadoAnterior && [...rodada.resultadoAnterior];
+    partida.abrirRodada(rodada.vira);
     return partida;
   }
 
@@ -255,6 +325,7 @@ export class Partida {
     // "Remover" vence "eliminar": quem foi votado para fora e depois saiu deve sumir da mesa.
     if (atual === 'remover') return;
     this.saidasPendentes.set(jogadorId, destino);
+    this.anotarOcorrencia({ tipo: 'saida', jogadorId });
     if (this.fase === 'fim_de_rodada') this.efetivarSaidas();
   }
 
@@ -391,6 +462,7 @@ export class Partida {
   /** Única opção que muda com a partida em andamento: não altera regra, só a visão dos eliminados. */
   definirMortosVeemCartas(mortosVeemCartas: boolean): void {
     this.configuracao = { ...this.configuracao, mortosVeemCartas };
+    this.anotarOcorrencia({ tipo: 'mortosVeemCartas', valor: mortosVeemCartas });
   }
 
   /** Quem observa só recebe o que pode ver: as regras de visibilidade ficam em `projetarPara`. */
@@ -427,10 +499,6 @@ export class Partida {
     };
   }
 
-  private novoJogador(id: string, vidas: number): JogadorNaPartida {
-    return { id, vidas, eliminado: false, mao: [], palpite: null, vazasGanhas: [] };
-  }
-
   private distribuirRodada(): void {
     const vivos = this.vivos();
     const maximo = maxCartasPorJogador(totalDeCartas(this.configuracao), vivos.length);
@@ -458,32 +526,51 @@ export class Partida {
       this.jogador(indice).mao.push(monte.pop() as Carta);
     }
     const vira = monte.pop() as Carta;
-    const manilha = valorDaManilha(vira.valor, this.valores);
-    this.vira = vira;
-    this.manilha = manilha;
-
-    this.mesa = [];
-    this.vazasEmpatadas = [];
-    this.fase = 'palpites';
-    this.indiceDaVez = this.proximoVivo(this.indiceDoPe);
+    this.abrirRodada(vira);
     this.rodadaEmMontagem = {
       fatos: {
         numero: this.numeroRodada,
         cartasPorJogador: this.cartasPorJogador,
         cega: this.rodadaCega,
         vira,
-        manilha,
+        manilha: this.manilha as Valor,
         idDoPe: this.jogador(this.indiceDoPe).id,
-        jogadores: vivos.map((jogador) => ({
+        mortosVeemCartas: this.configuracao.mortosVeemCartas,
+        jogadores: this.jogadores.map((jogador) => ({
           jogadorId: jogador.id,
           vidasAntes: jogador.vidas,
+          eliminado: jogador.eliminado,
           mao: [...jogador.mao],
         })),
       },
       palpites: [],
       vazas: [],
+      ocorrencias: [],
       cartasDaVaza: [],
     };
+  }
+
+  /** Cartas já na mão de todos: vira à mesa e a vez com quem está à esquerda do pé. */
+  private abrirRodada(vira: Carta): void {
+    this.vira = vira;
+    this.manilha = valorDaManilha(vira.valor, this.valores);
+    this.mesa = [];
+    this.vazasEmpatadas = [];
+    this.fase = 'palpites';
+    this.indiceDaVez = this.proximoVivo(this.indiceDoPe);
+  }
+
+  /** Só a rodada em jogo anota: entre rodadas, a próxima já começa com o estado novo. */
+  private anotarOcorrencia(ocorrencia: OcorrenciaSemPosicao): void {
+    const montagem = this.rodadaEmMontagem;
+    if (!montagem) return;
+    const cartasJogadas =
+      montagem.vazas.reduce((total, vaza) => total + vaza.cartas.length, 0) +
+      montagem.cartasDaVaza.length;
+    montagem.ocorrencias.push({
+      ...ocorrencia,
+      depoisDe: montagem.palpites.length + cartasJogadas,
+    });
   }
 
   private fecharVaza(): void {
@@ -552,6 +639,7 @@ export class Partida {
       ...montagem.fatos,
       palpites: montagem.palpites,
       vazas: montagem.vazas,
+      ocorrencias: montagem.ocorrencias,
       resultado: this.resultadoRodada.map((resultado) => ({
         ...resultado,
         vidasDepois: vidasDepois.get(resultado.jogadorId) as number,
@@ -605,7 +693,7 @@ export class Partida {
     const vidasDosVivos = this.vivos().map((jogador) => jogador.vidas);
     const maisVidas =
       vidasDosVivos.length > 0 ? Math.max(...vidasDosVivos) : this.configuracao.vidasIniciais;
-    for (const id of this.entrantes) this.jogadores.push(this.novoJogador(id, maisVidas));
+    for (const id of this.entrantes) this.jogadores.push(novoJogador(id, maisVidas));
     this.entrantes = [];
   }
 

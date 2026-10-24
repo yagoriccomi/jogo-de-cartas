@@ -1,16 +1,26 @@
 import type { Carta, ConfiguracaoPartida, Valor } from '@fodinha/shared';
 import type { PerfilDeBot } from './bot/perfis';
-import type { FatosDaRodada, Partida, ResultadoDaRodada } from './partida';
-import type { VisaoDaPartida } from './projecao';
+import type {
+  FatosDaRodada,
+  JogadorDaRodada,
+  OcorrenciaDaRodada,
+  Partida,
+  ResultadoDaRodada,
+} from './partida';
 
 /**
  * Diário da partida: o registro do que aconteceu, rodada a rodada, para o histórico e para treinar
- * bots. Cada decisão guarda o que o jogador via naquele momento e quem decidiu, senão os dados de
- * treino se misturam com as jogadas dos próprios bots. Jogadores só por id opaco: o apelido não entra.
+ * bots. Guarda só fatos (mãos, ordem das jogadas, quem decidiu); a visão de cada decisão é refeita
+ * por `reconstruirRodada` com as regras da partida, em vez de gravar a mesa inteira a cada lance.
+ * Quem decidiu fica gravado, senão os dados de treino se misturam com as jogadas dos próprios bots.
+ * Jogadores só por id opaco: o apelido não entra.
  */
 
-/** Sobe quando o formato do JSON da rodada muda: o export e o replay leem as versões antigas. */
-export const VERSAO_DO_DIARIO = 1;
+/**
+ * Sobe quando o formato do JSON da rodada muda. A v1 gravava a visão inteira em cada decisão e
+ * nunca chegou a produção: o export a ignora.
+ */
+export const VERSAO_DO_DIARIO = 2;
 
 /**
  * Quem decidiu. `prazo`: o humano estourou o tempo e o servidor jogou por ele. `saida`: o humano
@@ -24,12 +34,6 @@ export type AutorDaDecisao =
 
 export const DECISAO_HUMANA: AutorDaDecisao = { tipo: 'humano' };
 
-export interface Decisao {
-  readonly autor: AutorDaDecisao;
-  /** O mesmo recorte que `projetarPara` dá ao jogador: sem a mão alheia. */
-  readonly visao: VisaoDaPartida;
-}
-
 export interface ParticipanteDoDiario {
   readonly jogadorId: string;
   readonly tipo: 'humano' | 'bot';
@@ -40,14 +44,14 @@ export interface PalpiteDoDiario {
   readonly jogadorId: string;
   readonly quantidade: number;
   /** `null` só se a ação não passou pela Sala (não acontece em sala real). */
-  readonly decisao: Decisao | null;
+  readonly autor: AutorDaDecisao | null;
 }
 
 export interface JogadaDoDiario {
   readonly jogadorId: string;
   readonly carta: Carta;
   /** `null` na rodada cega: as cartas vão sozinhas à mesa, ninguém decide nada. */
-  readonly decisao: Decisao | null;
+  readonly autor: AutorDaDecisao | null;
 }
 
 export interface VazaDoDiario {
@@ -66,14 +70,13 @@ export interface RodadaDoDiario {
   readonly vira: Carta;
   readonly manilha: Valor;
   readonly idDoPe: string;
-  /** Na ordem dos assentos, com a mão recebida na distribuição. */
-  readonly jogadores: readonly {
-    readonly jogadorId: string;
-    readonly vidasAntes: number;
-    readonly mao: readonly Carta[];
-  }[];
+  /** A opção no começo da rodada (o dono pode trocá-la no meio: vai para `ocorrencias`). */
+  readonly mortosVeemCartas: boolean;
+  /** Todos os assentos na ordem da mesa, eliminados inclusive, com a mão recebida na distribuição. */
+  readonly jogadores: readonly JogadorDaRodada[];
   readonly palpites: readonly PalpiteDoDiario[];
   readonly vazas: readonly VazaDoDiario[];
+  readonly ocorrencias: readonly OcorrenciaDaRodada[];
   readonly resultado: readonly ResultadoDaRodada[];
 }
 
@@ -118,7 +121,7 @@ export class DiarioDaPartida {
   readonly configuracao: ConfiguracaoPartida;
   readonly participantesIniciais: readonly ParticipanteDoDiario[];
   private readonly conhecidos = new Set<string>();
-  private readonly decisoes = new Map<number, Decisao>();
+  private readonly autores = new Map<number, AutorDaDecisao>();
   private readonly concluidas: RodadaConcluida[] = [];
   private readonly percursos = new Map<string, Percurso>();
   private ultimaRodadaVista = 0;
@@ -133,8 +136,8 @@ export class DiarioDaPartida {
   }
 
   /** `lance` é o `andamento` da partida que a ação produziu. */
-  anotar(lance: number, decisao: Decisao): void {
-    this.decisoes.set(lance, decisao);
+  anotar(lance: number, autor: AutorDaDecisao): void {
+    this.autores.set(lance, autor);
   }
 
   /** Chamado depois de cada ação: guarda a rodada que acabou de terminar, uma vez só. */
@@ -152,7 +155,7 @@ export class DiarioDaPartida {
       });
     }
     this.concluidas.push({ rodada: this.montarRodada(fatos), participantesNovos });
-    this.decisoes.clear();
+    this.autores.clear();
   }
 
   /** Entrega as rodadas concluídas desde a última retirada (cada uma sai uma vez só). */
@@ -200,30 +203,32 @@ export class DiarioDaPartida {
       vira: fatos.vira,
       manilha: fatos.manilha,
       idDoPe: fatos.idDoPe,
+      mortosVeemCartas: fatos.mortosVeemCartas,
       jogadores: fatos.jogadores,
       palpites: fatos.palpites.map(({ lance, jogadorId, quantidade }) => ({
         jogadorId,
         quantidade,
-        decisao: this.decisaoDo(lance),
+        autor: this.autorDo(lance),
       })),
       vazas: fatos.vazas.map((vaza) => ({
         vencedorId: vaza.vencedorId,
         jogadas: vaza.cartas.map(({ lance, jogadorId, carta }) => ({
           jogadorId,
           carta,
-          decisao: fatos.cega ? null : this.decisaoDo(lance),
+          autor: fatos.cega ? null : this.autorDo(lance),
         })),
       })),
+      ocorrencias: fatos.ocorrencias,
       resultado: fatos.resultado,
     };
   }
 
   /**
-   * Toda ação de sala real passa pela Sala, que anota a decisão. Sem anotação grava-se `null` em
-   * vez de falhar: o diário nunca pode derrubar a jogada que já aconteceu.
+   * Toda ação de sala real passa pela Sala, que anota quem decidiu. Sem anotação grava-se `null`
+   * em vez de falhar: o diário nunca pode derrubar a jogada que já aconteceu.
    */
-  private decisaoDo(lance: number): Decisao | null {
-    return this.decisoes.get(lance) ?? null;
+  private autorDo(lance: number): AutorDaDecisao | null {
+    return this.autores.get(lance) ?? null;
   }
 
   /** Vencedores primeiro; depois quem ficou mais rodadas na mesa e, no empate, com mais vidas. */

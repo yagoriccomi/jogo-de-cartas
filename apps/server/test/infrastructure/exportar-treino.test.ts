@@ -1,3 +1,4 @@
+import { CONFIGURACAO_PADRAO } from '@fodinha/shared';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   exportarParaTreino,
@@ -77,5 +78,38 @@ describe('Export para treino', () => {
     });
     const resumo = await exportarParaTreino(cliente, () => {});
     expect(resumo).toEqual({ linhas: 0, rodadasIgnoradas: 2 });
+  });
+
+  it('a v1 (visão gravada em cada decisão) fica de fora, contada', async () => {
+    const cliente = await bancoEmMemoria();
+    abertos.push(cliente);
+    await cliente.execute({
+      sql: `INSERT INTO partidas (id, iniciada_em, configuracao, versao_do_diario)
+            VALUES ('p', 0, ?, 1)`,
+      args: [JSON.stringify(CONFIGURACAO_PADRAO)],
+    });
+    const v1 = { versao: 1, numero: 1, cega: true, palpites: [], vazas: [], resultado: [] };
+    await cliente.execute({
+      sql: "INSERT INTO rodadas (partida_id, numero, gravada_em, dados) VALUES ('p', 1, 0, ?)",
+      args: [JSON.stringify(v1)],
+    });
+    expect(await exportarParaTreino(cliente, () => {})).toEqual({
+      linhas: 0,
+      rodadasIgnoradas: 1,
+    });
+  });
+
+  it('sem uma rodada, as seguintes da mesma partida ficam de fora: a visão depende dela', async () => {
+    const cliente = await bancoEmMemoria();
+    abertos.push(cliente);
+    await gravarPartidaCompleta(cliente);
+    const total = Number((await cliente.execute('SELECT COUNT(*) AS n FROM rodadas')).rows[0]?.n);
+    await cliente.execute('DELETE FROM rodadas WHERE numero = 2');
+    const linhas: LinhaDeTreino[] = [];
+    const resumo = await exportarParaTreino(cliente, (linha) => {
+      linhas.push(JSON.parse(linha) as LinhaDeTreino);
+    });
+    expect(resumo.rodadasIgnoradas).toBe(total - 2);
+    expect(new Set(linhas.map((l) => l.rodada))).toEqual(new Set([1]));
   });
 });
