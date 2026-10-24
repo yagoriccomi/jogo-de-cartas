@@ -157,7 +157,7 @@ flowchart LR
 - **Servidor autoritativo** em Clean Architecture: o domínio (baralho, força, vaza, rodadas, partida, estratégia de bot) não conhece rede, relógio nem aleatoriedade, o que deixa as regras testáveis de forma determinística.
 - **Contrato único:** todo evento e estado vem de `@fodinha/shared`, reaproveitável pelo futuro app Android.
 - **Salas em memória**, atrás de uma interface de repositório pronta para trocar por Redis.
-- **Histórico das partidas** (opcional) no Turso, um SQLite na nuvem: cada rodada vira uma linha com as mãos, os palpites, as cartas na ordem e, em cada decisão, o que o jogador via e quem decidiu (pessoa, bot ou jogada automática). Jogadores só por id; o apelido não é gravado.
+- **Histórico das partidas** (opcional) no Turso, um SQLite na nuvem: cada rodada vira uma linha só com os fatos: as mãos, os palpites e as cartas na ordem, e quem decidiu cada lance (pessoa, bot ou jogada automática). O que o jogador via em cada decisão não é gravado; o export refaz essa visão com as próprias regras do jogo. Jogadores só por id; o apelido não é gravado.
 
 | Camada    | Tecnologias                                               |
 | --------- | --------------------------------------------------------- |
@@ -228,7 +228,7 @@ Para exportar as decisões gravadas como dados de treino (um JSON por linha, sem
 npm run exportar-treino -w apps/server -- --url file:./dados/fodinha.db --saida treino.jsonl
 ```
 
-Sem `--url`, o comando usa `TURSO_DATABASE_URL` (e `TURSO_AUTH_TOKEN`); sem `--saida`, escreve na tela. Cada linha traz a visão do jogador no momento da decisão, a decisão (palpite ou carta), quem decidiu e como a rodada terminou para ele.
+Sem `--url`, o comando usa `TURSO_DATABASE_URL` (e `TURSO_AUTH_TOKEN`); sem `--saida`, escreve na tela. Cada linha traz a visão do jogador no momento da decisão (refeita a partir dos fatos gravados), a decisão (palpite ou carta), quem decidiu e como a rodada terminou para ele. Rodadas de formato antigo, ou de uma partida em que falta uma rodada anterior, ficam de fora e entram na contagem do resumo.
 
 ## Testes e qualidade
 

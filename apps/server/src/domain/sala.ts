@@ -301,11 +301,11 @@ export class Sala {
   }
 
   palpitar(jogadorId: string, quantidade: number): void {
-    this.jogar(jogadorId, DECISAO_HUMANA, (partida) => partida.palpitar(jogadorId, quantidade));
+    this.jogar(DECISAO_HUMANA, (partida) => partida.palpitar(jogadorId, quantidade));
   }
 
   jogarCarta(jogadorId: string, cartaId: string): void {
-    this.jogar(jogadorId, DECISAO_HUMANA, (partida) => partida.jogarCarta(jogadorId, cartaId));
+    this.jogar(DECISAO_HUMANA, (partida) => partida.jogarCarta(jogadorId, cartaId));
   }
 
   /**
@@ -314,26 +314,19 @@ export class Sala {
    */
   jogarAVez(jogadorId: string, estrategias: EstrategiasDosPerfis): JogadaDaVez {
     const perfil = this.participante(jogadorId)?.perfilDoBot ?? PERFIL_DA_JOGADA_AUTOMATICA;
-    return this.jogar(jogadorId, this.autorAutomatico(jogadorId, perfil), (partida) =>
+    return this.jogar(this.autorAutomatico(jogadorId, perfil), (partida) =>
       jogarAVez(partida, jogadorId, estrategias[perfil]),
     );
   }
 
-  /**
-   * Toda jogada passa aqui: o diário guarda o que o jogador via antes de agir e quem decidiu.
-   * A visão só é montada quando há diário (os cenários de teste não gravam).
-   */
-  private jogar<T>(jogadorId: string, autor: AutorDaDecisao, acao: (partida: Partida) => T): T {
+  /** Toda jogada passa aqui: o diário guarda quem decidiu (os cenários de teste não gravam). */
+  private jogar<T>(autor: AutorDaDecisao, acao: (partida: Partida) => T): T {
     const partida = this.partidaEmJogo();
-    const diario = this.diarioAtual;
     // O lance desta ação é o próximo andamento: a rodada cega revela as cartas na mesma chamada.
     const lance = partida.andamento + 1;
-    const visao = diario ? partida.visaoPara(jogadorId) : null;
     const resultado = acao(partida);
-    if (diario && visao) {
-      diario.anotar(lance, { autor, visao });
-      diario.acompanhar();
-    }
+    this.diarioAtual?.anotar(lance, autor);
+    this.diarioAtual?.acompanhar();
     return resultado;
   }
 
