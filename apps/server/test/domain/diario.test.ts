@@ -217,9 +217,11 @@ describe('Diário da partida', () => {
     expect(conferidas).toBeGreaterThan(100);
   });
 
-  it('nenhum apelido entra no diário', () => {
-    for (const { rodadas } of partidas) {
-      expect(JSON.stringify(rodadas)).not.toContain('Apelido de');
+  it('nenhum apelido nem dispositivoId entra no diário', () => {
+    for (const { sala, rodadas } of partidas) {
+      const gravado = JSON.stringify([rodadas, sala.diario?.participantesIniciais]);
+      expect(gravado).not.toContain('Apelido de');
+      expect(gravado).not.toContain('disp-');
     }
   });
 

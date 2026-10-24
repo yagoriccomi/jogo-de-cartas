@@ -157,11 +157,13 @@ flowchart LR
 - **Servidor autoritativo** em Clean Architecture: o domínio (baralho, força, vaza, rodadas, partida, estratégia de bot) não conhece rede, relógio nem aleatoriedade, o que deixa as regras testáveis de forma determinística.
 - **Contrato único:** todo evento e estado vem de `@fodinha/shared`, reaproveitável pelo futuro app Android.
 - **Salas em memória**, atrás de uma interface de repositório pronta para trocar por Redis.
+- **Histórico das partidas** (opcional) no Turso, um SQLite na nuvem: cada rodada vira uma linha com as mãos, os palpites, as cartas na ordem e, em cada decisão, o que o jogador via e quem decidiu (pessoa, bot ou jogada automática). Jogadores só por id; o apelido não é gravado.
 
 | Camada    | Tecnologias                                               |
 | --------- | --------------------------------------------------------- |
 | Web       | React, Vite, TypeScript, Web Audio, PWA                   |
 | Servidor  | Node 24, Fastify, Socket.IO, TypeScript, tsup             |
+| Banco     | Turso / libSQL (opcional, só o histórico das partidas)    |
 | Qualidade | ESLint, Prettier, Vitest, Playwright, GitHub Actions      |
 | Infra     | Docker e Docker Compose (dev), Vercel (web), Render (API) |
 
@@ -186,7 +188,7 @@ Se o `.env` não existir, ele é criado a partir do `.env.example`. Na primeira 
 
 - Sobem os serviços `server` e `web` com recarga automática ao salvar arquivos. O serviço `deps` roda uma vez para instalar as dependências e termina.
 - O `node_modules` fica em volumes do Docker (não na sua pasta), porque binários instalados no Windows não funcionam dentro do container Linux. Para forçar uma reinstalação completa: `docker compose down -v`.
-- Não há banco de dados, cache nem fila neste projeto: as salas ficam na memória do servidor.
+- Não há serviço de banco, cache nem fila no Compose: as salas ficam na memória do servidor. O histórico das partidas, se ligado, usa um arquivo local (veja abaixo).
 - Porta já em uso (erro `port is already allocated`)? Troque `PORT` no `.env` e ajuste `VITE_SERVER_URL` para a mesma porta (ex.: `PORT=3011` e `VITE_SERVER_URL=http://localhost:3011`). Depois rode `restart`.
 - O `package-lock.json` precisa conter os binários de todas as plataformas (Windows e Linux). Se for regenerá-lo, apague antes o `node_modules` e rode `npm install` do zero; caso contrário, o container pode falhar com erro de binário nativo (ex.: `rolldown`).
 
@@ -210,6 +212,24 @@ Com o servidor de desenvolvimento (`CENARIOS_DE_TESTE=true`, já ligado no Docke
 - Se o servidor reiniciar, o cliente recria o cenário sozinho; se só o web recarregar, você volta à mesma partida.
 - O parâmetro é ignorado no build de produção.
 
+### Histórico das partidas (opcional)
+
+Sem `TURSO_DATABASE_URL`, nada é gravado e o jogo funciona igual. Para gravar localmente, sem conta em lugar nenhum, use um arquivo libSQL no `.env`:
+
+```bash
+TURSO_DATABASE_URL=file:./dados/fodinha.db
+```
+
+O arquivo fica em `apps/server/dados/fodinha.db` (a pasta `dados/` está no `.gitignore`). As migrations de `apps/server/migrations/` são aplicadas sozinhas na subida do servidor. Tutorial e cenários de teste (`?cenario=`) não são gravados.
+
+Para exportar as decisões gravadas como dados de treino (um JSON por linha, sem apelido):
+
+```bash
+npm run exportar-treino -w apps/server -- --url file:./dados/fodinha.db --saida treino.jsonl
+```
+
+Sem `--url`, o comando usa `TURSO_DATABASE_URL` (e `TURSO_AUTH_TOKEN`); sem `--saida`, escreve na tela. Cada linha traz a visão do jogador no momento da decisão, a decisão (palpite ou carta), quem decidiu e como a rodada terminou para ele.
+
 ## Testes e qualidade
 
 ```bash
@@ -228,17 +248,19 @@ A cada push e pull request, o GitHub Actions executa lint, typecheck, testes, bu
 
 ## Variáveis de ambiente
 
-Copie o `.env.example` para `.env`. Nada neste projeto exige segredos.
+Copie o `.env.example` para `.env`. Só o `TURSO_AUTH_TOKEN` é segredo, e ele é opcional: sem banco configurado, nada é gravado.
 
-| Variável            | Onde     | Para que serve                                                                                                                      |
-| ------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `PORT`              | servidor | Porta HTTP/WebSocket do servidor de jogo (padrão `3001`).                                                                           |
-| `CORS_ORIGINS`      | servidor | Origens autorizadas a conectar, separadas por vírgula (padrão `http://localhost:5173`).                                             |
-| `LOG_LEVEL`         | servidor | Nível de log: `debug`, `info`, `warn` ou `error`.                                                                                   |
-| `BOT_DELAY_MS`      | servidor | Milissegundos que o bot espera antes de jogar (padrão `2000`). Os testes de tela usam um valor baixo.                               |
-| `CENARIOS_DE_TESTE` | servidor | Só desenvolvimento (padrão `false`; o Docker de dev liga). Libera a criação de salas de teste com bots. Nunca habilite em produção. |
-| `VITE_SERVER_URL`   | web      | URL pública do servidor de jogo. Fica exposta no navegador: nunca coloque nada sensível.                                            |
-| `WEB_PORT`          | Docker   | Opcional. Porta do frontend no host (padrão `5173`). Se mudar, inclua a nova origem em `CORS_ORIGINS`.                              |
+| Variável             | Onde     | Para que serve                                                                                                                           |
+| -------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`               | servidor | Porta HTTP/WebSocket do servidor de jogo (padrão `3001`).                                                                                |
+| `CORS_ORIGINS`       | servidor | Origens autorizadas a conectar, separadas por vírgula (padrão `http://localhost:5173`).                                                  |
+| `LOG_LEVEL`          | servidor | Nível de log: `debug`, `info`, `warn` ou `error`.                                                                                        |
+| `BOT_DELAY_MS`       | servidor | Milissegundos que o bot espera antes de jogar (padrão `2000`). Os testes de tela usam um valor baixo.                                    |
+| `CENARIOS_DE_TESTE`  | servidor | Só desenvolvimento (padrão `false`; o Docker de dev liga). Libera a criação de salas de teste com bots. Nunca habilite em produção.      |
+| `TURSO_DATABASE_URL` | servidor | Opcional. Banco do histórico das partidas: `libsql://...` (Turso) ou `file:./dados/fodinha.db` (arquivo local). Sem ela, nada é gravado. |
+| `TURSO_AUTH_TOKEN`   | servidor | Opcional. Token do Turso (segredo; nunca no Git). O arquivo local não precisa.                                                           |
+| `VITE_SERVER_URL`    | web      | URL pública do servidor de jogo. Fica exposta no navegador: nunca coloque nada sensível.                                                 |
+| `WEB_PORT`           | Docker   | Opcional. Porta do frontend no host (padrão `5173`). Se mudar, inclua a nova origem em `CORS_ORIGINS`.                                   |
 
 ## Deploy
 
@@ -249,6 +271,7 @@ O frontend vai para a **Vercel** e o servidor de jogo para a **Render**.
 1. No painel da Render, crie um **Blueprint** apontando para este repositório; o `render.yaml` na raiz descreve o serviço (web service Node, plano grátis, verificação de saúde em `/health`).
 2. Defina `CORS_ORIGINS` com a URL do frontend (por exemplo `https://game.yagoriccomi.com.br`). Várias origens são separadas por vírgula.
 3. `LOG_LEVEL` já tem valor padrão no Blueprint.
+4. Opcional, para gravar o histórico: crie um banco no Turso e defina `TURSO_DATABASE_URL` e `TURSO_AUTH_TOKEN` no painel. Sem elas o servidor roda igual, sem gravar; se o banco não responder na subida, o jogo sobe mesmo assim e o erro aparece no log.
 
 Também há um `Dockerfile` de produção em `apps/server/Dockerfile` (build multi-stage, usuário não-root). Para gerar a imagem, a partir da raiz: `docker build -f apps/server/Dockerfile -t fodinha-server .`
 
@@ -266,7 +289,8 @@ Também há um `Dockerfile` de produção em `apps/server/Dockerfile` (build mul
 - [ ] Publicar na Play Store empacotando o site instalável (TWA/Capacitor), sem reescrever o jogo
 - [ ] Login e contas de jogador
 - [ ] Banimento à prova de aba anônima (depende de login)
-- [ ] Histórico de partidas e ranking
+- [ ] Tela de histórico e replay das partidas (a gravação por rodada já existe)
+- [ ] Ranking
 - [ ] Redis para o estado das salas e escala horizontal (o repositório de salas já fica atrás de uma interface para essa troca)
 - [ ] Chat na mesa
 

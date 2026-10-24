@@ -34,7 +34,7 @@
 - Bots reagem: a cada carta jogada, 10% de chance de um emoji sorteado (`CHANCE_DE_REACAO_DO_BOT`, sorteio injetado no `CondutorDePartidas`).
 - Plano dessas regras: `docs/planos/PLANO-pausa-entrada-moderacao.md`.
 
-**Fora do escopo do MVP** (YAGNI [#8]): login/contas, banco de dados, histórico/ranking, escala horizontal e chat. São a fase 2.
+**Fora do escopo do MVP** (YAGNI [#8]): login/contas, tela de histórico/replay, ranking, escala horizontal e chat. São a fase 2. A gravação do histórico por rodada já existe (veja Banco de Dados).
 
 **Som (`features/som`):** tudo sintetizado no navegador com Web Audio, sem arquivo de áudio nem licença de terceiros: efeitos de fliperama, tic-tac da vez, som de cada reação e a música de fundo (`musica.ts`, gerada em loop com variação). Vibração na vez e ao perder vida. Mudo geral e volumes separados (música, efeitos, reações; começam em 50%) no menu lateral, salvos no localStorage (`fodinha:som`, `fodinha:volume-*`). A música só começa depois do primeiro toque e pausa com a aba oculta.
 
@@ -65,7 +65,7 @@
 - **Frontend:** React + Vite + TypeScript (`apps/web`), organização por feature.
 - **Backend:** Node 24 + Fastify + Socket.IO + TypeScript (`apps/server`), bundle com tsup, dev com `tsx watch`.
 - **Contratos compartilhados:** `packages/shared` (TypeScript puro; também será consumido pelo futuro app Android).
-- **Banco de Dados:** nenhum no MVP. Salas em memória; sem login (convidado + código de sala).
+- **Banco de Dados:** Turso/libSQL (`@libsql/client`) só para o histórico das partidas; as salas continuam em memória e não há login (convidado + código de sala). Cada partida real vira o diário do domínio (`domain/diario.ts`: mãos, palpites e cartas na ordem, e em cada decisão a visão do jogador e quem decidiu), gravado uma linha JSON por rodada pela porta `RegistroDePartidas` (`application/historico-de-partidas.ts`, fila assíncrona: falha só vai ao log `error`, nunca para o jogo). Tutorial e `CENARIOS_DE_TESTE` não gravam. Sem `TURSO_DATABASE_URL`, adaptador nulo; banco que não abre na subida também cai no nulo. Migrations versionadas em `apps/server/migrations/` (`NNNN_nome.sql`), aplicadas na subida com a tabela `migracoes_aplicadas`; migration nova é sempre um arquivo novo, nunca edição de um já aplicado. Export para treino: `npm run exportar-treino -w apps/server` (JSONL, uma linha por decisão).
 - **Qualidade:** ESLint + Prettier, Vitest, `tsc` estrito.
 - **Infraestrutura/DevOps:** Docker Compose (dev), Dockerfile multi-stage (prod) [#85], GitHub Actions (CI) [#76]; deploy: frontend na Vercel (root `apps/web`), backend na Render (web service Node, `render.yaml`).
 
@@ -101,8 +101,9 @@ fodinha/
 │   │   ├── src/
 │   │   │   ├── domain/              # regras puras: baralho, força, vaza, rodadas, partida, projeção (quem vê o quê), estratégia de bot
 │   │   │   ├── application/         # salas, serviço de sala, bots, agendador de prazos da vez
-│   │   │   ├── infrastructure/      # http (/health), gateway Socket.IO (+ entradas: unknown → tipos), repositório em memória
+│   │   │   ├── infrastructure/      # http (/health), gateway Socket.IO (+ entradas: unknown → tipos), repositório em memória, historico/ (libSQL, migrations, export)
 │   │   │   └── main.ts              # composition root (liga tudo; lê o ambiente)
+│   │   ├── migrations/              # SQL versionado do histórico (aplicado na subida)
 │   │   ├── test/                    # Vitest: domínio, aplicação
 │   │   ├── Dockerfile               # imagem de PRODUÇÃO (multi-stage, contexto = raiz)
 │   │   └── tsup.config.ts
@@ -133,7 +134,7 @@ Regra de dependência: `domain` não depende de nada; `application` depende de `
 - Verificar a identidade do remetente em cada ação (só joga na sua vez, só a carta que é sua, só o anfitrião configura/inicia). [#51]
 - CORS restrito via `CORS_ORIGINS`; sem `*` em produção. [#57]
 - Rate limiting nos eventos de socket/rotas públicas quando o servidor for exposto de forma ampla. [#58]
-- Apenas apelido livre e efêmero (sem PII); nada persistido; apelidos fora dos logs `info`. [#63]
+- Apenas apelido livre e efêmero (sem PII); apelidos fora dos logs `info`. O histórico grava as partidas só por id opaco de jogador (o lugar na sala), sem apelido nem `dispositivoId`; o teste do diário cobra isso. [#63]
 - `VITE_*` é público (vai para o navegador): nunca colocar segredo nelas. [#37]
 
 ## Ambiente Local (Docker)
@@ -155,7 +156,7 @@ Serviços do compose: **`deps`** (one-shot, instala dependências dentro do cont
 
 ## Comandos Úteis
 
-`npm run dev` · `npm run build` · `npm test` · `npm run typecheck` · `npm run lint` · `npm run format` · `npm run test:e2e` (testes de tela, Playwright em `apps/e2e`; ao mudar layout da mesa, do palpite ou do tutorial, rode-os)
+`npm run dev` · `npm run build` · `npm test` · `npm run typecheck` · `npm run lint` · `npm run format` · `npm run test:e2e` (testes de tela, Playwright em `apps/e2e`; ao mudar layout da mesa, do palpite ou do tutorial, rode-os) · `npm run exportar-treino -w apps/server -- --url <banco> --saida <arquivo.jsonl>`
 
 ## Deploy (automático a cada merge na `main`)
 
