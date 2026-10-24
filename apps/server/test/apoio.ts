@@ -10,7 +10,8 @@ import {
   type Valor,
 } from '@fodinha/shared';
 import { CondutorDePartidas, type TemposDoCondutor } from '../src/application/condutor-de-partidas';
-import type { Notificador, Relogio } from '../src/application/portas';
+import { HistoricoDePartidas } from '../src/application/historico-de-partidas';
+import type { Notificador, RegistroDePartidas, Relogio } from '../src/application/portas';
 import { ServicoDeSalas, type Ator } from '../src/application/servico-de-salas';
 import type { GeradorAleatorio } from '../src/domain/aleatoriedade';
 import {
@@ -21,6 +22,7 @@ import {
 import { jogarAVez } from '../src/domain/jogar-a-vez';
 import { Partida } from '../src/domain/partida';
 import { RepositorioDeSalasEmMemoria } from '../src/infrastructure/adaptadores';
+import { RegistroDePartidasEmMemoria } from '../src/infrastructure/historico/registro-em-memoria';
 
 /** Gerador determinístico (mulberry32) para partidas reproduzíveis nos testes. */
 export function geradorComSemente(semente: number): GeradorAleatorio {
@@ -144,22 +146,36 @@ export const ator = (sessao: Ator): Ator => ({
   jogadorId: sessao.jogadorId,
 });
 
-/** Monta serviço + condutor + relógio falso, com identificadores e sorteio determinísticos. */
+/**
+ * Monta serviço + condutor + relógio falso, com identificadores e sorteio determinísticos.
+ * O histórico grava num registro em memória (ou no informado) e guarda os erros que logaria.
+ */
 export function montarCenario(
   temposExtras: Partial<TemposDoCondutor> = {},
   sorteioDosBots: () => number = BOTS_CALADOS,
   estrategias: EstrategiasDosPerfis = criarEstrategiasDosPerfis(BOT_SEM_ERRO),
+  registro: RegistroDePartidas = new RegistroDePartidasEmMemoria(),
 ) {
   const relogio = new RelogioFalso();
   const notificador = new NotificadorFalso();
   const repositorio = new RepositorioDeSalasEmMemoria();
   let contador = 0;
+  let partidas = 0;
+  const errosDoHistorico: unknown[] = [];
+  const historico = new HistoricoDePartidas({
+    registro,
+    // Contador próprio: os ids de jogador dos testes não mudam por causa do histórico.
+    identificadores: { novoId: () => `partida${++partidas}` },
+    relogio,
+    registrador: { ...silencioso, error: (dados) => void errosDoHistorico.push(dados) },
+  });
   const condutor = new CondutorDePartidas({
     notificador,
     relogio,
     estrategias,
     registrador: silencioso,
     gerarAleatorio: sorteioDosBots,
+    historico,
     tempos: {
       atrasoDoBotMs: ATRASO_BOT_MS,
       pausaFimDeRodadaMs: PAUSA_FIM_RODADA_MS,
@@ -237,6 +253,9 @@ export function montarCenario(
     notificador,
     repositorio,
     servico,
+    historico,
+    registro,
+    errosDoHistorico,
     partidaDe,
     salaDe,
     criarSala,

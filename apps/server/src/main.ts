@@ -4,6 +4,7 @@ import { Server } from 'socket.io';
 import { PAUSAS_DO_FIM_DE_RODADA } from '@fodinha/shared';
 import type { ServidorDoJogo } from './infrastructure/socket/gateway';
 import { CondutorDePartidas } from './application/condutor-de-partidas';
+import { HistoricoDePartidas } from './application/historico-de-partidas';
 import { ServicoDeSalas } from './application/servico-de-salas';
 import { criarEstrategiasDosPerfis } from './domain/estrategia-bot';
 import {
@@ -13,6 +14,7 @@ import {
   RepositorioDeSalasEmMemoria,
 } from './infrastructure/adaptadores';
 import { lerAmbiente } from './infrastructure/ambiente';
+import { abrirRegistroDePartidas } from './infrastructure/historico/abrir-registro';
 import { GatewayDoJogo, NotificadorSocketIo } from './infrastructure/socket/gateway';
 
 const TEMPO_DE_ABANDONO_MS = 10 * 60_000;
@@ -20,6 +22,10 @@ const TEMPO_DE_ABANDONO_MS = 10 * 60_000;
 const CARENCIA_DE_DESCONEXAO_MS = 10_000;
 // Os eventos do jogo são minúsculos; qualquer coisa maior que isso é abuso.
 const TAMANHO_MAXIMO_DE_MENSAGEM = 10_000;
+// No desligamento, espera as últimas gravações do histórico só até aqui: a Render não espera mais.
+const ESPERA_DAS_GRAVACOES_MS = 5_000;
+// Mesma profundidade em src/ (tsx) e em dist/ (bundle): a pasta fica ao lado das duas.
+const PASTA_DAS_MIGRACOES = new URL('../migrations/', import.meta.url);
 
 /** Composition root: o único lugar que conhece as implementações concretas. */
 async function iniciar(): Promise<void> {
@@ -38,12 +44,21 @@ async function iniciar(): Promise<void> {
   const repositorio = new RepositorioDeSalasEmMemoria();
   const relogio = new RelogioDoSistema();
   const registrador = http.log;
+  const identificadores = new IdentificadoresCriptograficos();
+  const banco = await abrirRegistroDePartidas(ambiente.historico, PASTA_DAS_MIGRACOES, registrador);
+  const historico = new HistoricoDePartidas({
+    registro: banco.registro,
+    identificadores,
+    relogio,
+    registrador,
+  });
   const condutor = new CondutorDePartidas({
     notificador: new NotificadorSocketIo(io),
     relogio,
     estrategias: criarEstrategiasDosPerfis(aleatorioCriptografico),
     registrador,
     gerarAleatorio: aleatorioCriptografico,
+    historico,
     tempos: {
       atrasoDoBotMs: ambiente.atrasoDoBotMs,
       // Compartilhadas: o cliente mede a cena da última vaza contra estas mesmas pausas.
@@ -55,7 +70,7 @@ async function iniciar(): Promise<void> {
   const servico = new ServicoDeSalas({
     repositorio,
     condutor,
-    identificadores: new IdentificadoresCriptograficos(),
+    identificadores,
     relogio,
     gerarAleatorio: aleatorioCriptografico,
     registrador,
@@ -74,6 +89,11 @@ async function iniciar(): Promise<void> {
     http.log.info({ sinal }, 'Encerrando servidor');
     // io.close() também fecha o servidor HTTP do Fastify, que está por baixo.
     await new Promise<void>((resolver) => io.close(() => resolver()));
+    await Promise.race([
+      historico.aguardarGravacoes(),
+      new Promise<void>((resolver) => setTimeout(resolver, ESPERA_DAS_GRAVACOES_MS)),
+    ]);
+    banco.fechar();
     process.exit(0);
   };
   process.on('SIGTERM', () => void desligar('SIGTERM'));

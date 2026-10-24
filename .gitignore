@@ -16,6 +16,9 @@ coverage/
 .env.*
 !.env.example
 
+# Banco local do histórico (TURSO_DATABASE_URL=file:./dados/...)
+dados/
+
 # Logs
 *.log
 npm-debug.log*

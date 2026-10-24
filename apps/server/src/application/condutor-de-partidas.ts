@@ -4,6 +4,7 @@ import type { GeradorAleatorio } from '../domain/aleatoriedade';
 import type { EstrategiasDosPerfis } from '../domain/estrategia-bot';
 import { destinatariosDa, projetarMesa } from '../domain/projecao';
 import type { Desfecho, Sala } from '../domain/sala';
+import type { HistoricoDePartidas } from './historico-de-partidas';
 import type { Cancelamento, Notificador, Registrador, Relogio } from './portas';
 
 /** Chance de o bot mandar uma reação a cada carta que joga: dá vida à mesa sem virar spam. */
@@ -23,6 +24,8 @@ export interface DependenciasDoCondutor {
   readonly tempos: TemposDoCondutor;
   /** Sorteia as reações dos bots; injetado para os testes serem determinísticos. */
   readonly gerarAleatorio: GeradorAleatorio;
+  /** Grava cada rodada que termina; não interfere no andamento da mesa. */
+  readonly historico: HistoricoDePartidas;
 }
 
 interface PassoArmado {
@@ -50,6 +53,7 @@ export class CondutorDePartidas {
    */
   aposMudanca(sala: Sala, desfecho?: Desfecho): void {
     if (desfecho) this.registrarEliminados(sala, desfecho.eliminados);
+    this.deps.historico.acompanhar(sala);
     this.reconciliarCarencias(sala);
     this.agendarProximoPasso(sala);
     this.publicar(sala);
@@ -57,6 +61,7 @@ export class CondutorDePartidas {
 
   /** A sala deixou de existir: cancela tudo o que estava agendado para ela. */
   encerrar(codigoSala: string): void {
+    this.deps.historico.esquecer(codigoSala);
     this.cancelarPasso(codigoSala);
     for (const cancelar of this.carencias.get(codigoSala)?.values() ?? []) cancelar();
     this.carencias.delete(codigoSala);

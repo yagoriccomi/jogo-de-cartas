@@ -10,11 +10,13 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.json",
-    "simular": "esbuild test/simulacao/simular-em-paralelo.ts --bundle --platform=node --format=esm --log-level=warning --outfile=node_modules/.cache/simulacao/simular.mjs && node node_modules/.cache/simulacao/simular.mjs"
+    "simular": "esbuild test/simulacao/simular-em-paralelo.ts --bundle --platform=node --format=esm --log-level=warning --outfile=node_modules/.cache/simulacao/simular.mjs && node node_modules/.cache/simulacao/simular.mjs",
+    "exportar-treino": "tsx --env-file-if-exists=../../.env src/exportar-treino.ts"
   },
   "dependencies": {
     "@fastify/cors": "^10.0.1",
     "@fodinha/shared": "*",
+    "@libsql/client": "^0.18.0",
     "fastify": "^5.2.0",
     "socket.io": "^4.8.1"
   },

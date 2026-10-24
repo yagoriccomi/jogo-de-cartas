@@ -106,7 +106,7 @@ Uma branch e um PR por fatia, em série dentro do módulo. O usuário autorizou 
 | S5 Sala esconde a Partida  | alto  | S4         | `refactor/servidor-sala-esconde-partida` | revisada: pronta    |
 | W3 fonte da partida        | alto  | W2         | `refactor/web-fonte-da-partida` (#32)    | mergeada, deploy ok |
 | W4 planejadores dos hooks  | alto  | W3         | `refactor/web-planejadores` (#33)        | mergeada, deploy ok |
-| H1 diário + Turso + export | alto  | S5         | `feat/historico-de-partidas`             | na fila             |
+| H1 diário + Turso + export | alto  | S5         | `feat/historico-de-partidas`             | revisada: pronta    |
 | L1 login Google            | alto  | H1         | `feat/login-google`                      | na fila             |
 | R1 histórico e replay      | alto  | L1, W4     | `feat/replay-de-partidas`                | na fila             |
 
