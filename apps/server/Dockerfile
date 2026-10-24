@@ -37,6 +37,8 @@ WORKDIR /app
 
 COPY --from=prod-deps --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/apps/server/dist ./dist
+# As migrations são lidas na subida, ao lado de dist/ (dist/../migrations).
+COPY --chown=node:node apps/server/migrations ./migrations
 COPY --chown=node:node apps/server/package.json ./package.json
 
 USER node
