@@ -21,7 +21,7 @@
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
-    "@types/node": "^24.19.2",
+    "@types/node": "^26.6.5",
     "esbuild": "^0.28.2",
     "socket.io-client": "^4.8.1",
     "tsup": "^8.3.5",
