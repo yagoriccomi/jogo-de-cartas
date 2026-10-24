@@ -45,6 +45,59 @@ export interface PrevisaoDaRodada {
   readonly idDoPrimeiro: string;
 }
 
+/** Um lance numerado pelo `andamento` da partida: é a chave que liga o fato à decisão que o causou. */
+export interface PalpiteDado {
+  readonly lance: number;
+  readonly jogadorId: string;
+  readonly quantidade: number;
+}
+
+export interface CartaJogada {
+  readonly lance: number;
+  readonly jogadorId: string;
+  readonly carta: Carta;
+}
+
+/** As cartas na ordem em que foram jogadas (a mesa organizada perde essa ordem). */
+export interface VazaJogada {
+  readonly cartas: readonly CartaJogada[];
+  readonly vencedorId: string | null;
+}
+
+export interface JogadorDaRodada {
+  readonly jogadorId: string;
+  readonly vidasAntes: number;
+  readonly mao: readonly Carta[];
+}
+
+export interface ResultadoDaRodada extends ResultadoJogadorNaRodada {
+  readonly vidasDepois: number;
+}
+
+/**
+ * Tudo o que aconteceu numa rodada, inclusive as mãos de todos. Vai para o diário da partida,
+ * nunca a um cliente: quem decide o que cada um vê é `projetarPara`.
+ */
+export interface FatosDaRodada {
+  readonly numero: number;
+  readonly cartasPorJogador: number;
+  readonly cega: boolean;
+  readonly vira: Carta;
+  readonly manilha: Valor;
+  readonly idDoPe: string;
+  readonly jogadores: readonly JogadorDaRodada[];
+  readonly palpites: readonly PalpiteDado[];
+  readonly vazas: readonly VazaJogada[];
+  readonly resultado: readonly ResultadoDaRodada[];
+}
+
+interface RodadaEmMontagem {
+  readonly fatos: Omit<FatosDaRodada, 'palpites' | 'vazas' | 'resultado'>;
+  readonly palpites: PalpiteDado[];
+  readonly vazas: VazaJogada[];
+  cartasDaVaza: CartaJogada[];
+}
+
 export interface NovaPartida {
   readonly configuracao: ConfiguracaoPartida;
   /** Ordem dos assentos à mesa (sentido horário). */
@@ -79,6 +132,8 @@ export class Partida {
   private resultadoRodada: ResultadoJogadorNaRodada[] | null = null;
   private vencedores: string[] = [];
   private acoes = 0;
+  private rodadaEmMontagem: RodadaEmMontagem | null = null;
+  private ultimaRodadaEncerrada: FatosDaRodada | null = null;
 
   private constructor(
     private configuracao: ConfiguracaoPartida,
@@ -139,6 +194,11 @@ export class Partida {
 
   get rodadaCega(): boolean {
     return this.cartasPorJogador === 1;
+  }
+
+  /** A última rodada que terminou, com todas as mãos: matéria do diário, nunca de um cliente. */
+  get rodadaEncerrada(): FatosDaRodada | null {
+    return this.ultimaRodadaEncerrada;
   }
 
   /** Tem assento à mesa (eliminado ou não). Quem aguarda a próxima rodada ainda não participa. */
@@ -212,6 +272,7 @@ export class Partida {
 
     this.jogador(indice).palpite = quantidade;
     this.acoes += 1;
+    this.rodadaEmMontagem?.palpites.push({ lance: this.acoes, jogadorId, quantidade });
     if (indice !== this.indiceDoPe) {
       this.indiceDaVez = this.proximoVivo(indice);
       return;
@@ -248,6 +309,7 @@ export class Partida {
     const [carta] = jogador.mao.splice(posicaoNaMao, 1) as [Carta];
     this.mesa.push({ jogadorId, carta });
     this.acoes += 1;
+    this.rodadaEmMontagem?.cartasDaVaza.push({ lance: this.acoes, jogadorId, carta });
 
     if (this.mesa.length < this.vivos().length) {
       this.indiceDaVez = this.proximoVivo(indice);
@@ -395,13 +457,33 @@ export class Partida {
       indice = this.proximoVivo(indice);
       this.jogador(indice).mao.push(monte.pop() as Carta);
     }
-    this.vira = monte.pop() as Carta;
-    this.manilha = valorDaManilha(this.vira.valor, this.valores);
+    const vira = monte.pop() as Carta;
+    const manilha = valorDaManilha(vira.valor, this.valores);
+    this.vira = vira;
+    this.manilha = manilha;
 
     this.mesa = [];
     this.vazasEmpatadas = [];
     this.fase = 'palpites';
     this.indiceDaVez = this.proximoVivo(this.indiceDoPe);
+    this.rodadaEmMontagem = {
+      fatos: {
+        numero: this.numeroRodada,
+        cartasPorJogador: this.cartasPorJogador,
+        cega: this.rodadaCega,
+        vira,
+        manilha,
+        idDoPe: this.jogador(this.indiceDoPe).id,
+        jogadores: vivos.map((jogador) => ({
+          jogadorId: jogador.id,
+          vidasAntes: jogador.vidas,
+          mao: [...jogador.mao],
+        })),
+      },
+      palpites: [],
+      vazas: [],
+      cartasDaVaza: [],
+    };
   }
 
   private fecharVaza(): void {
@@ -410,6 +492,11 @@ export class Partida {
     const organizadas = organizarMesa(jogadas, this.manilha as Valor, this.valores);
     this.ultimaVaza = { jogadas: organizadas, vencedorId };
     this.mesa = [];
+    const montagem = this.rodadaEmMontagem;
+    if (montagem) {
+      montagem.vazas.push({ cartas: montagem.cartasDaVaza, vencedorId });
+      montagem.cartasDaVaza = [];
+    }
     if (vencedorId === null) {
       // A mais forte por cima: é a que se lê de relance no montinho.
       const [maisForte] = organizadas;
@@ -453,7 +540,24 @@ export class Partida {
     });
     this.indiceDaVez = null;
     this.fase = 'fim_de_rodada';
+    this.fecharRodadaEmMontagem(participantes);
     this.efetivarSaidas(participantes);
+  }
+
+  private fecharRodadaEmMontagem(participantes: readonly JogadorNaPartida[]): void {
+    const montagem = this.rodadaEmMontagem;
+    if (!montagem || !this.resultadoRodada) return;
+    const vidasDepois = new Map(participantes.map((jogador) => [jogador.id, jogador.vidas]));
+    this.ultimaRodadaEncerrada = {
+      ...montagem.fatos,
+      palpites: montagem.palpites,
+      vazas: montagem.vazas,
+      resultado: this.resultadoRodada.map((resultado) => ({
+        ...resultado,
+        vidasDepois: vidasDepois.get(resultado.jogadorId) as number,
+      })),
+    };
+    this.rodadaEmMontagem = null;
   }
 
   /**

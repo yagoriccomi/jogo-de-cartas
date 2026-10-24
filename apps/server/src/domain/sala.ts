@@ -10,6 +10,12 @@ import {
 import type { GeradorAleatorio } from './aleatoriedade';
 import { PERFIL_DA_JOGADA_AUTOMATICA, sortearPerfis, type PerfilDeBot } from './bot/perfis';
 import { validarConfiguracao } from './configuracao';
+import {
+  DECISAO_HUMANA,
+  DiarioDaPartida,
+  type AutorDaDecisao,
+  type ParticipanteDoDiario,
+} from './diario';
 import { ErroDeRegra } from './erros';
 import type { EstrategiasDosPerfis } from './estrategia-bot';
 import { jogarAVez, type JogadaDaVez } from './jogar-a-vez';
@@ -64,6 +70,8 @@ export interface Expulsao {
 export interface OpcoesDaSala {
   /** Cenários de teste ultrapassam o limite normal de bots. */
   readonly maxBots?: number;
+  /** Mesa montada só para desenvolvimento: não entra no histórico nem nos dados de treino. */
+  readonly cenarioDeTeste?: boolean;
 }
 
 /** Sala de espera + partida corrente. Concentra as regras de quem pode fazer o quê. */
@@ -83,6 +91,8 @@ export class Sala {
   private readonly maxBots: number;
   /** Desde quando a etapa em curso (vez ou fim de rodada) corre: âncora dos prazos da mesa. */
   private marco: MarcoDaEtapa | null = null;
+  private diarioAtual: DiarioDaPartida | null = null;
+  readonly cenarioDeTeste: boolean;
 
   constructor(
     readonly codigo: string,
@@ -91,6 +101,7 @@ export class Sala {
     opcoes: OpcoesDaSala = {},
   ) {
     this.maxBots = opcoes.maxBots ?? LIMITES.maxBots;
+    this.cenarioDeTeste = opcoes.cenarioDeTeste ?? false;
     this.configuracao = validarConfiguracao(configuracao);
     this.participantes.push(criador);
     this.anfitriaoId = criador.id;
@@ -114,6 +125,11 @@ export class Sala {
 
   get partida(): Partida | null {
     return this.partidaAtual;
+  }
+
+  /** Diário da partida corrente; `null` sem partida e nos cenários de teste. */
+  get diario(): DiarioDaPartida | null {
+    return this.diarioAtual;
   }
 
   get emPartida(): boolean {
@@ -285,11 +301,11 @@ export class Sala {
   }
 
   palpitar(jogadorId: string, quantidade: number): void {
-    this.partidaEmJogo().palpitar(jogadorId, quantidade);
+    this.jogar(jogadorId, DECISAO_HUMANA, (partida) => partida.palpitar(jogadorId, quantidade));
   }
 
   jogarCarta(jogadorId: string, cartaId: string): void {
-    this.partidaEmJogo().jogarCarta(jogadorId, cartaId);
+    this.jogar(jogadorId, DECISAO_HUMANA, (partida) => partida.jogarCarta(jogadorId, cartaId));
   }
 
   /**
@@ -297,9 +313,41 @@ export class Sala {
    * saindo, com o perfil neutro. Devolve a jogada para quem chama decidir a reação do bot.
    */
   jogarAVez(jogadorId: string, estrategias: EstrategiasDosPerfis): JogadaDaVez {
-    const partida = this.partidaEmJogo();
     const perfil = this.participante(jogadorId)?.perfilDoBot ?? PERFIL_DA_JOGADA_AUTOMATICA;
-    return jogarAVez(partida, jogadorId, estrategias[perfil]);
+    return this.jogar(jogadorId, this.autorAutomatico(jogadorId, perfil), (partida) =>
+      jogarAVez(partida, jogadorId, estrategias[perfil]),
+    );
+  }
+
+  /**
+   * Toda jogada passa aqui: o diário guarda o que o jogador via antes de agir e quem decidiu.
+   * A visão só é montada quando há diário (os cenários de teste não gravam).
+   */
+  private jogar<T>(jogadorId: string, autor: AutorDaDecisao, acao: (partida: Partida) => T): T {
+    const partida = this.partidaEmJogo();
+    const diario = this.diarioAtual;
+    // O lance desta ação é o próximo andamento: a rodada cega revela as cartas na mesma chamada.
+    const lance = partida.andamento + 1;
+    const visao = diario ? partida.visaoPara(jogadorId) : null;
+    const resultado = acao(partida);
+    if (diario && visao) {
+      diario.anotar(lance, { autor, visao });
+      diario.acompanhar();
+    }
+    return resultado;
+  }
+
+  /** Bot joga com o próprio perfil; o humano que não agiu, com o neutro, marcado pelo motivo. */
+  private autorAutomatico(jogadorId: string, perfil: PerfilDeBot): AutorDaDecisao {
+    if (this.participante(jogadorId)?.ehBot) return { tipo: 'bot', perfil };
+    const saindo = !!this.partidaAtual?.saiAoFimDaRodada(jogadorId);
+    return { tipo: saindo ? 'saida' : 'prazo', perfil };
+  }
+
+  private descreverParaODiario(jogadorId: string): ParticipanteDoDiario {
+    const participante = this.participante(jogadorId);
+    if (!participante?.ehBot) return { jogadorId, tipo: 'humano', perfil: null };
+    return { jogadorId, tipo: 'bot', perfil: participante.perfilDoBot };
   }
 
   /** Fim da exibição do resultado: distribui a rodada seguinte. */
@@ -430,6 +478,9 @@ export class Sala {
     // Partida nova conta o andamento do zero: o marco da anterior não pode ser confundido com ela.
     this.marco = null;
     this.partidaAtual = partida;
+    this.diarioAtual = this.cenarioDeTeste
+      ? null
+      : new DiarioDaPartida(partida, (id) => this.descreverParaODiario(id));
     return partida;
   }
 
