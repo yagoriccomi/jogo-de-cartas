@@ -8,7 +8,7 @@ import type {
   SessaoJogador,
 } from '@fodinha/shared';
 import type { Server, Socket } from 'socket.io';
-import type { Notificador, Registrador } from '../../application/portas';
+import type { Login, Notificador, Registrador } from '../../application/portas';
 import type { Ator, ServicoDeSalas } from '../../application/servico-de-salas';
 import { ErroDeRegra } from '../../domain/erros';
 import {
@@ -22,12 +22,16 @@ import {
   lerPalpite,
   lerReacao,
   lerReconexao,
+  lerTokenDeLogin,
   lerVoto,
 } from './entradas';
+import { contaOuConvidado } from '../login/conta-ou-convidado';
 import { LimitadorDeEventos } from './limitador';
 
 interface DadosDoSocket {
   ator?: Ator;
+  /** Conta conferida no aperto de mão; `null` = convidado. O payload nunca a informa. */
+  contaId?: string | null;
 }
 
 export type ServidorDoJogo = Server<
@@ -63,6 +67,13 @@ export class NotificadorSocketIo implements Notificador {
   }
 }
 
+export interface OpcoesDoGateway {
+  /** Só para desenvolvimento: libera o evento `dev:cenario`. */
+  readonly cenariosDeTeste?: boolean;
+  /** Confere o token de login do aperto de mão; ausente = todos convidados. */
+  readonly login?: Pick<Login, 'ligado' | 'contaDoToken'>;
+}
+
 /**
  * Traduz eventos de socket em casos de uso. A identidade de quem age vem SEMPRE da sessão
  * vinculada ao socket (definida no servidor), nunca de um campo do payload.
@@ -75,22 +86,44 @@ export class GatewayDoJogo {
     private readonly io: ServidorDoJogo,
     private readonly servico: ServicoDeSalas,
     private readonly registrador: Registrador,
-    private readonly cenariosDeTeste = false,
+    private readonly opcoes: OpcoesDoGateway = {},
   ) {}
 
   iniciar(): void {
+    this.io.use((socket, seguir) => {
+      void this.identificarConta(socket).then(() => seguir());
+    });
     this.io.on('connection', (socket) => this.registrarEventos(socket));
+  }
+
+  /** Confere o token do aperto de mão uma vez por conexão; falha = convidado, nunca recusa. */
+  private async identificarConta(socket: SocketDoJogo): Promise<void> {
+    const token = lerTokenDeLogin(socket.handshake.auth);
+    const login = this.opcoes.login;
+    if (token === null || !login?.ligado) {
+      socket.data.contaId = null;
+      return;
+    }
+    const conta = await contaOuConvidado(login, token, this.registrador);
+    socket.data.contaId = conta?.id ?? null;
+  }
+
+  private contaDe(socket: SocketDoJogo): string | null {
+    return socket.data.contaId ?? null;
   }
 
   private registrarEventos(socket: SocketDoJogo): void {
     socket.on('sala:criar', (dados, responder) =>
       this.responder(socket, responder, () =>
-        this.entrarComSessao(socket, this.servico.criarSala(lerCriacao(dados))),
+        this.entrarComSessao(
+          socket,
+          this.servico.criarSala({ ...lerCriacao(dados), contaId: this.contaDe(socket) }),
+        ),
       ),
     );
     socket.on('dev:cenario', (dados, responder) =>
       this.responder(socket, responder, () => {
-        if (!this.cenariosDeTeste) {
+        if (!this.opcoes.cenariosDeTeste) {
           throw new ErroDeRegra('SEM_PERMISSAO', 'Cenários de teste desativados neste servidor.');
         }
         return this.entrarComSessao(socket, this.servico.criarCenario(lerCenario(dados)));
@@ -98,7 +131,10 @@ export class GatewayDoJogo {
     );
     socket.on('sala:entrar', (dados, responder) =>
       this.responder(socket, responder, () =>
-        this.entrarComSessao(socket, this.servico.entrarSala(lerEntrada(dados))),
+        this.entrarComSessao(
+          socket,
+          this.servico.entrarSala({ ...lerEntrada(dados), contaId: this.contaDe(socket) }),
+        ),
       ),
     );
     socket.on('sala:reconectar', (dados, responder) =>

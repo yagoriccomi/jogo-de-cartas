@@ -74,11 +74,10 @@ export class ServicoDeSalas {
     apelido: string;
     configuracao: ConfiguracaoPartida;
     dispositivoId: string;
+    /** Conta conferida pela infraestrutura (sessão do socket); ausente = convidado. */
+    contaId?: string | null;
   }): SessaoJogador {
-    const criador = this.novoHumano(
-      normalizarApelido(dados.apelido),
-      normalizarDispositivo(dados.dispositivoId),
-    );
+    const criador = this.novoHumano(dados);
     const sala = new Sala(this.codigoLivre(), criador, dados.configuracao);
     return this.abrirSala(sala, criador);
   }
@@ -101,10 +100,8 @@ export class ServicoDeSalas {
         `Cenário inválido: jogadores de ${LIMITES.minJogadores} a ${LIMITES.maxJogadores} e cartas a partir de 1.`,
       );
     }
-    const criador = this.novoHumano(
-      normalizarApelido(dados.apelido),
-      normalizarDispositivo(dados.dispositivoId),
-    );
+    // Cenário de teste não vai ao histórico: a conta não teria onde aparecer.
+    const criador = this.novoHumano({ ...dados, contaId: null });
     const sala = new Sala(this.codigoLivre(), criador, CONFIGURACAO_DE_CENARIO, {
       maxBots: LIMITES.maxJogadores - 1,
       cenarioDeTeste: true,
@@ -122,12 +119,15 @@ export class ServicoDeSalas {
   }
 
   /** Funciona também com partida em andamento: quem entra senta na próxima rodada. */
-  entrarSala(dados: { codigoSala: string; apelido: string; dispositivoId: string }): SessaoJogador {
+  entrarSala(dados: {
+    codigoSala: string;
+    apelido: string;
+    dispositivoId: string;
+    /** Conta conferida pela infraestrutura (sessão do socket); ausente = convidado. */
+    contaId?: string | null;
+  }): SessaoJogador {
     const sala = this.salaExistente(normalizarCodigoSala(dados.codigoSala));
-    const participante = this.novoHumano(
-      normalizarApelido(dados.apelido),
-      normalizarDispositivo(dados.dispositivoId),
-    );
+    const participante = this.novoHumano(dados);
     sala.adicionarHumano(participante);
     this.cancelarLimpeza(sala.codigo);
     this.deps.condutor.aposMudanca(sala);
@@ -322,7 +322,14 @@ export class ServicoDeSalas {
     return codigo;
   }
 
-  private novoHumano(apelido: string, dispositivoId: string): Participante {
+  /** Valida antes de gerar ids: entrada recusada não gasta nada. */
+  private novoHumano(dados: {
+    apelido: string;
+    dispositivoId: string;
+    contaId?: string | null;
+  }): Participante {
+    const apelido = normalizarApelido(dados.apelido);
+    const dispositivoId = normalizarDispositivo(dados.dispositivoId);
     return {
       id: this.deps.identificadores.novoId(),
       apelido,
@@ -331,6 +338,8 @@ export class ServicoDeSalas {
       conectado: true,
       tokenSessao: this.deps.identificadores.novoToken(),
       dispositivoId,
+      // A reconexão não troca a conta: o assento fica com quem o abriu.
+      contaId: dados.contaId ?? null,
     };
   }
 
@@ -350,6 +359,7 @@ export class ServicoDeSalas {
       conectado: true,
       tokenSessao: null,
       dispositivoId: null,
+      contaId: null,
     };
   }
 

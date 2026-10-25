@@ -38,6 +38,8 @@ export interface ParticipanteDoDiario {
   readonly jogadorId: string;
   readonly tipo: 'humano' | 'bot';
   readonly perfil: PerfilDeBot | null;
+  /** Conta logada do humano; `null` para convidados e bots. Nunca entra nas rodadas gravadas. */
+  readonly contaId: string | null;
 }
 
 export interface PalpiteDoDiario {

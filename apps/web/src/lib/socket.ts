@@ -1,10 +1,12 @@
 import { io, type Socket } from 'socket.io-client';
 import type {
+  AutenticacaoDoSocket,
   CodigoErro,
   EventosClienteParaServidor,
   EventosServidorParaCliente,
   Resposta,
 } from '@fodinha/shared';
+import { lerTokenDeLogin } from './tokenDeLogin';
 
 export type SocketJogo = Socket<EventosServidorParaCliente, EventosClienteParaServidor>;
 
@@ -18,7 +20,23 @@ const TEMPO_LIMITE_RESPOSTA_MS = 8000;
 export const socket: SocketJogo = io(URL_SERVIDOR, {
   transports: ['websocket'],
   autoConnect: false,
+  // Lido a cada (re)conexão: quem entra ou sai da conta passa a valer no próximo aperto de mão.
+  auth: (enviar) => {
+    const tokenDeLogin = lerTokenDeLogin();
+    const autenticacao: AutenticacaoDoSocket = tokenDeLogin === null ? {} : { tokenDeLogin };
+    enviar(autenticacao);
+  },
 });
+
+/**
+ * O servidor confere a conta só no aperto de mão: depois de entrar ou sair da conta, a conexão
+ * recomeça (a sessão de jogo, se houver, é retomada sozinha no `connect`).
+ */
+export function reconectarComOLoginAtual(): void {
+  if (!socket.connected) return;
+  socket.disconnect();
+  socket.connect();
+}
 
 export class ErroDeRequisicao extends Error {
   readonly codigo: CodigoErro | 'SEM_RESPOSTA';

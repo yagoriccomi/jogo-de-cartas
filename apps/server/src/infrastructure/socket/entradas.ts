@@ -1,4 +1,10 @@
-import { REACOES, type CodigoErro, type ConfiguracaoPartida, type Reacao } from '@fodinha/shared';
+import {
+  LIMITES,
+  REACOES,
+  type CodigoErro,
+  type ConfiguracaoPartida,
+  type Reacao,
+} from '@fodinha/shared';
 import { validarConfiguracao, validarMortosVeemCartas } from '../../domain/configuracao';
 import { ErroDeRegra } from '../../domain/erros';
 
@@ -122,4 +128,16 @@ function texto(valor: unknown, mensagem: string, codigo: CodigoErro = 'ENTRADA_I
 function numero(valor: unknown, mensagem: string, codigo: CodigoErro = 'ENTRADA_INVALIDA'): number {
   if (typeof valor !== 'number') throw new ErroDeRegra(codigo, mensagem);
   return valor;
+}
+
+/**
+ * Token de login do aperto de mão (`AutenticacaoDoSocket`). Ausente ou malformado não é erro:
+ * quem não mandou um token válido joga como convidado.
+ */
+export function lerTokenDeLogin(autenticacao: unknown): string | null {
+  if (typeof autenticacao !== 'object' || autenticacao === null) return null;
+  const token: unknown = (autenticacao as Record<string, unknown>).tokenDeLogin;
+  return typeof token === 'string' && token.length > 0 && token.length <= LIMITES.maxTokenDeLogin
+    ? token
+    : null;
 }

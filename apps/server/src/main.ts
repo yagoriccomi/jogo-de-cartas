@@ -15,6 +15,7 @@ import {
 } from './infrastructure/adaptadores';
 import { lerAmbiente } from './infrastructure/ambiente';
 import { abrirRegistroDePartidas } from './infrastructure/historico/abrir-registro';
+import { abrirLogin } from './infrastructure/login/abrir-login';
 import { GatewayDoJogo, NotificadorSocketIo } from './infrastructure/socket/gateway';
 
 const TEMPO_DE_ABANDONO_MS = 10 * 60_000;
@@ -46,6 +47,14 @@ async function iniciar(): Promise<void> {
   const registrador = http.log;
   const identificadores = new IdentificadoresCriptograficos();
   const banco = await abrirRegistroDePartidas(ambiente.historico, PASTA_DAS_MIGRACOES, registrador);
+  // As sessões do login moram no banco do histórico: sem banco, sem login.
+  const { login, registrarRotas: registrarRotasDoLogin } = abrirLogin({
+    configuracao: ambiente.login,
+    banco: banco.cliente,
+    origensDoWeb: ambiente.origensPermitidas,
+    registrador,
+  });
+  registrarRotasDoLogin(http);
   const historico = new HistoricoDePartidas({
     registro: banco.registro,
     identificadores,
@@ -76,7 +85,10 @@ async function iniciar(): Promise<void> {
     registrador,
     tempoDeAbandonoMs: TEMPO_DE_ABANDONO_MS,
   });
-  new GatewayDoJogo(io, servico, registrador, ambiente.cenariosDeTeste).iniciar();
+  new GatewayDoJogo(io, servico, registrador, {
+    cenariosDeTeste: ambiente.cenariosDeTeste,
+    login,
+  }).iniciar();
 
   // Sondado a cada poucos segundos pelos orquestradores: fora do log de nível info.
   http.get('/health', { logLevel: 'warn' }, async () => ({

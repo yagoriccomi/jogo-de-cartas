@@ -1,4 +1,4 @@
-import type { SessaoJogador } from '@fodinha/shared';
+import { CONFIGURACAO_PADRAO, type SessaoJogador } from '@fodinha/shared';
 import { describe, expect, it } from 'vitest';
 import type { RegistroDePartidas } from '../../src/application/portas';
 import { RegistroDePartidasEmMemoria } from '../../src/infrastructure/historico/registro-em-memoria';
@@ -54,6 +54,29 @@ describe('Histórico das partidas na aplicação', () => {
     expect(partida.fim?.desfecho.motivo).toBe('fim');
     expect(partida.fim?.desfecho.rodadasJogadas).toBe(rodadas);
     expect(cenario.errosDoHistorico).toEqual([]);
+  });
+
+  it('o assento logado leva a conta ao registro; convidado e bot ficam sem conta', async () => {
+    const registro = new RegistroDePartidasEmMemoria();
+    const cenario = montarCenario({}, undefined, undefined, registro);
+    const ana = cenario.servico.criarSala({
+      apelido: 'Ana',
+      configuracao: CONFIGURACAO_PADRAO,
+      dispositivoId: 'disp-ana',
+      contaId: 'conta-da-ana',
+    });
+    const bia = cenario.entrar(ana, 'Bia');
+    cenario.servico.adicionarBot(ator(ana));
+    cenario.servico.iniciarPartida(ator(ana));
+    await cenario.historico.aguardarGravacoes();
+
+    const [partida] = [...registro.partidas.values()];
+    const contas = new Map(partida?.inicio.participantes.map((p) => [p.jogadorId, p.contaId]));
+    expect(contas.get(ana.jogadorId)).toBe('conta-da-ana');
+    expect(contas.get(bia.jogadorId)).toBeNull();
+    expect(partida?.inicio.participantes.filter((p) => p.tipo === 'bot')).toEqual([
+      expect.objectContaining({ contaId: null }),
+    ]);
   });
 
   it('nenhum apelido chega ao registro', async () => {

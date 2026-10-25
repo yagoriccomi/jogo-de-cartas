@@ -9,6 +9,8 @@ import { RegistroDePartidasNulo } from './registro-nulo';
 
 export interface RegistroAberto {
   readonly registro: RegistroDePartidas;
+  /** O banco aberto, com as migrations aplicadas; o login guarda as sessões nele. `null` = sem banco. */
+  readonly cliente: Client | null;
   /** Libera a conexão no desligamento. */
   fechar(): void;
 }
@@ -40,7 +42,7 @@ export async function abrirRegistroDePartidas(
 ): Promise<RegistroAberto> {
   if (!banco) {
     registrador.info({}, 'Histórico de partidas desligado (sem TURSO_DATABASE_URL)');
-    return { registro: new RegistroDePartidasNulo(), fechar: () => {} };
+    return { registro: new RegistroDePartidasNulo(), cliente: null, fechar: () => {} };
   }
   let cliente: Client | null = null;
   try {
@@ -49,10 +51,14 @@ export async function abrirRegistroDePartidas(
     const aplicadas = await aplicarMigracoes(cliente, await lerMigracoes(pastaDasMigracoes));
     registrador.info({ migracoesAplicadas: aplicadas }, 'Histórico de partidas ligado');
     const aberto = cliente;
-    return { registro: new RegistroDePartidasLibsql(aberto), fechar: () => aberto.close() };
+    return {
+      registro: new RegistroDePartidasLibsql(aberto),
+      cliente: aberto,
+      fechar: () => aberto.close(),
+    };
   } catch (erro) {
     cliente?.close();
     registrador.error({ erro }, 'Banco do histórico indisponível: partidas não serão gravadas');
-    return { registro: new RegistroDePartidasNulo(), fechar: () => {} };
+    return { registro: new RegistroDePartidasNulo(), cliente: null, fechar: () => {} };
   }
 }

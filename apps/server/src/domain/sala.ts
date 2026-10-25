@@ -33,6 +33,11 @@ export interface Participante {
   readonly tokenSessao: string | null;
   /** Identificador do navegador (só humanos): base do banimento e da volta do criador. */
   readonly dispositivoId: string | null;
+  /**
+   * Conta logada dona do assento (id opaco, conferido pelo servidor na borda); `null` para
+   * convidados e bots. Vai ao histórico só para o dono rever as próprias partidas.
+   */
+  readonly contaId: string | null;
 }
 
 /** Quem está com o resumo das regras aberto e desde quando (relógio do condutor). */
@@ -339,8 +344,10 @@ export class Sala {
 
   private descreverParaODiario(jogadorId: string): ParticipanteDoDiario {
     const participante = this.participante(jogadorId);
-    if (!participante?.ehBot) return { jogadorId, tipo: 'humano', perfil: null };
-    return { jogadorId, tipo: 'bot', perfil: participante.perfilDoBot };
+    if (!participante?.ehBot) {
+      return { jogadorId, tipo: 'humano', perfil: null, contaId: participante?.contaId ?? null };
+    }
+    return { jogadorId, tipo: 'bot', perfil: participante.perfilDoBot, contaId: null };
   }
 
   /** Fim da exibição do resultado: distribui a rodada seguinte. */

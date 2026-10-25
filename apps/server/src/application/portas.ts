@@ -70,3 +70,31 @@ export interface RegistroDePartidas {
   gravarRodada(rodada: RodadaParaGravar): Promise<void>;
   encerrarPartida(fim: FimDaPartida): Promise<void>;
 }
+
+/** Conta Google de quem está logado. Só o `id` chega ao histórico (P4); nome e e-mail, à tela. */
+export interface ContaDeLogin {
+  readonly id: string;
+  readonly nome: string;
+  readonly email: string;
+}
+
+/** O que o web recebe ao trocar o código de uso único da volta do Google. */
+export interface SessaoDeLogin {
+  /** Vai no cabeçalho `Authorization` e no aperto de mão do socket. */
+  readonly token: string;
+  readonly conta: ContaDeLogin;
+}
+
+/**
+ * Login opcional (Better Auth + Google). Desligado (`ligado: false`) sem as variáveis do Google ou
+ * sem banco: todos jogam como convidado, que é sempre o padrão.
+ */
+export interface Login {
+  readonly ligado: boolean;
+  /** `null` quando o token não vale: expirado, encerrado, forjado ou com o login desligado. */
+  contaDoToken(token: string): Promise<ContaDeLogin | null>;
+  /** Consome o código de uso único; `null` se ele não existe, já foi usado ou expirou. */
+  trocarCodigo(codigo: string): Promise<SessaoDeLogin | null>;
+  /** Encerra a sessão no servidor: o token deixa de valer em qualquer aba. */
+  encerrar(token: string): Promise<void>;
+}
