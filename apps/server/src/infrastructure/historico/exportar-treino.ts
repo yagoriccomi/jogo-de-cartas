@@ -67,7 +67,7 @@ export function ehRodadaDoDiario(valor: unknown): valor is RodadaDoDiario {
   );
 }
 
-function lerJson(texto: unknown): unknown {
+export function lerJson(texto: unknown): unknown {
   if (typeof texto !== 'string') return null;
   try {
     return JSON.parse(texto) as unknown;
