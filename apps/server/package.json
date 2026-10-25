@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.json",
     "simular": "esbuild test/simulacao/simular-em-paralelo.ts --bundle --platform=node --format=esm --log-level=warning --outfile=node_modules/.cache/simulacao/simular.mjs && node node_modules/.cache/simulacao/simular.mjs",
-    "exportar-treino": "tsx --env-file-if-exists=../../.env src/exportar-treino.ts"
+    "exportar-treino": "tsx --env-file-if-exists=../../.env src/exportar-treino.ts",
+    "semear-replay": "tsx src/semear-replay.ts"
   },
   "dependencies": {
     "@fastify/cors": "^10.0.1",
