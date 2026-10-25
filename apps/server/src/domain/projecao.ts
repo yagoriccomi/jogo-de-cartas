@@ -99,12 +99,20 @@ export interface RetratoDaPartida {
 }
 
 /**
+ * `aoVivo`: a partida corre e ninguém vivo vê mão alheia. `depoisDoFim`: a partida terminou pelas
+ * regras (replay); nada mais está em jogo, então quem revê enxerga a mão de todos (premissa P8).
+ */
+export type MomentoDaVisao = 'aoVivo' | 'depoisDoFim';
+
+/**
  * Visão sem mão alheia revelada (salvo a carta na testa da rodada cega), para espectadores e
- * jogadores. Exceção: com `mortosVeemCartas`, o eliminado vê a mão dos outros.
+ * jogadores. Exceções: com `mortosVeemCartas`, o eliminado vê a mão dos outros; e, depois do fim
+ * da partida, todos veem todas.
  */
 export function projetarPara(
   retrato: RetratoDaPartida,
   observadorId: string | null,
+  momento: MomentoDaVisao = 'aoVivo',
 ): VisaoDaPartida {
   const observador = retrato.jogadores.find((jogador) => jogador.id === observadorId) ?? null;
   const ehOPe = observador !== null && observador.id === retrato.idDoPe;
@@ -125,7 +133,7 @@ export function projetarPara(
       vazasGanhas: [...jogador.vazasGanhas],
       cartasNaMao: jogador.mao.length,
       cartaNaTesta: cartaNaTestaVistaPor(retrato, jogador, observador),
-      maoRevelada: maoReveladaPara(retrato, jogador, observador),
+      maoRevelada: maoReveladaPara(retrato, jogador, observador, momento),
       saiAoFimDaRodada: jogador.saiAoFimDaRodada,
     })),
     idDoPe: retrato.idDoPe,
@@ -155,8 +163,10 @@ function maoReveladaPara(
   retrato: RetratoDaPartida,
   jogador: JogadorNoRetrato,
   observador: JogadorNoRetrato | null,
+  momento: MomentoDaVisao,
 ): Carta[] | null {
-  const podeVer = retrato.configuracao.mortosVeemCartas && !!observador?.eliminado;
+  const podeVer =
+    momento === 'depoisDoFim' || (retrato.configuracao.mortosVeemCartas && !!observador?.eliminado);
   if (!podeVer || jogador.id === observador?.id) return null;
   return ordenarDaMaisForte(retrato, jogador.mao);
 }
