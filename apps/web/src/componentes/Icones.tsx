@@ -127,3 +127,22 @@ export const IconeAbaixo = (p: Props) => (
     <path d="M6 9l6 6 6-6" />
   </Icone>
 );
+
+/** Controles do replay. */
+export const IconeAnterior = (p: Props) => (
+  <Icone {...p}>
+    <path d="M15 6l-6 6 6 6" />
+  </Icone>
+);
+
+export const IconeProximo = (p: Props) => (
+  <Icone {...p}>
+    <path d="M9 6l6 6-6 6" />
+  </Icone>
+);
+
+export const IconePularRodada = (p: Props) => (
+  <Icone {...p}>
+    <path d="M5 6l7 6-7 6zM13 6l7 6-7 6z" />
+  </Icone>
+);

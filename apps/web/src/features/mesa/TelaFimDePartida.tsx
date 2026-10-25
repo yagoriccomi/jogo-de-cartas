@@ -68,7 +68,7 @@ function Trofeu() {
 }
 
 export function TelaFimDePartida({ jogo, meuId }: Props) {
-  const { sala } = useApp();
+  const { sala, fonte } = useApp();
   const [ocupado, executar] = useAcao();
 
   const ehDono = sala?.participantes.find((p) => p.id === meuId)?.ehAnfitriao ?? false;
@@ -134,32 +134,47 @@ export function TelaFimDePartida({ jogo, meuId }: Props) {
             ))}
         </ol>
 
-        <div className="fim__acoes">
-          {ehDono ? (
+        {fonte.origem === 'replay' ? (
+          <div className="fim__acoes">
+            <p className="fim__texto">
+              Fim do replay. Use a barra acima para rever qualquer lance.
+            </p>
             <button
               type="button"
               className="botao botao--primario botao--bloco"
-              disabled={ocupado}
-              onClick={() => void executar(iniciarPartida)}
-            >
-              Jogar novamente
-            </button>
-          ) : (
-            <p className="fim__texto">Aguardando o dono da sala iniciar outra partida…</p>
-          )}
-          <div className="fim__acoes-secundarias">
-            <button type="button" className="botao botao--bloco" onClick={voltarAoLobby}>
-              Ver lobby
-            </button>
-            <button
-              type="button"
-              className="botao botao--perigo botao--bloco"
               onClick={() => void sairDaSala()}
             >
-              Sair da sala
+              Sair do replay
             </button>
           </div>
-        </div>
+        ) : (
+          <div className="fim__acoes">
+            {ehDono ? (
+              <button
+                type="button"
+                className="botao botao--primario botao--bloco"
+                disabled={ocupado}
+                onClick={() => void executar(iniciarPartida)}
+              >
+                Jogar novamente
+              </button>
+            ) : (
+              <p className="fim__texto">Aguardando o dono da sala iniciar outra partida…</p>
+            )}
+            <div className="fim__acoes-secundarias">
+              <button type="button" className="botao botao--bloco" onClick={voltarAoLobby}>
+                Ver lobby
+              </button>
+              <button
+                type="button"
+                className="botao botao--perigo botao--bloco"
+                onClick={() => void sairDaSala()}
+              >
+                Sair da sala
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

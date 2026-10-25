@@ -3,6 +3,7 @@ import { CONFIGURACAO_PADRAO, LIMITES } from '@fodinha/shared';
 import { BotaoInstalar } from '../../componentes/BotaoInstalar';
 import { IconeFechar, IconeLivro } from '../../componentes/Icones';
 import { PainelDoLogin } from '../login/PainelDoLogin';
+import { MinhasPartidas } from '../replay/MinhasPartidas';
 import { AVISO_DA_ENTRADA } from '../login/textos';
 import { iniciarTutorial } from '../tutorial/motor';
 import { criarSala, dispensarAvisoDeEntrada, entrarNaSala } from '../../estado/acoes';
@@ -198,6 +199,7 @@ export function TelaEntrada() {
         )}
 
         <PainelDoLogin />
+        <MinhasPartidas />
 
         {/* Não depende do servidor: dá para aprender enquanto ele acorda. */}
         <button

@@ -1,0 +1,162 @@
+/* Barra do replay: uma linha só, no fluxo do .app (a mesa abaixo encolhe; a página nunca rola). */
+.replay {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px 8px;
+  border-bottom: 2px solid var(--linha);
+  background: var(--superficie);
+}
+
+.replay__selo {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: var(--rosa-forte);
+  color: var(--texto);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.replay__posicao {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.replay__botoes {
+  display: flex;
+  flex: none;
+  gap: 6px;
+}
+
+.replay__botoes .botao:disabled {
+  border-color: var(--bloqueado-borda);
+  color: var(--bloqueado-texto);
+}
+
+.replay__progresso {
+  position: absolute;
+  inset: auto 0 -2px;
+  height: 2px;
+  background: transparent;
+}
+
+.replay__progresso-barra {
+  display: block;
+  height: 100%;
+  background: var(--ciano);
+  box-shadow: var(--brilho-ciano);
+  transition: width 0.3s ease;
+}
+
+/* Celular: posição numa linha e os botões noutra, todos com o alvo mínimo de toque. */
+@media (max-width: 600px) {
+  .replay {
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    padding: 4px 10px 6px;
+  }
+
+  .replay__posicao {
+    font-size: 0.8rem;
+  }
+
+  .replay__botoes {
+    flex-basis: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* Celular baixo: tudo numa linha, a posição encurta; cada pixel de altura vai para a mesa. */
+@media (max-width: 600px) and (max-height: 700px) {
+  .replay {
+    flex-wrap: nowrap;
+  }
+
+  .replay__selo {
+    display: none;
+  }
+
+  .replay__botoes {
+    flex-basis: auto;
+    gap: 4px;
+  }
+}
+
+/* ---------- Minhas partidas (diálogo da entrada) ---------- */
+.historico__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.historico__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px 10px 14px;
+  border: 2px solid var(--linha);
+  border-radius: 14px;
+  background: var(--superficie-funda);
+}
+
+.historico__dados {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.historico__data {
+  color: var(--texto);
+  font-weight: 600;
+}
+
+.historico__mesa {
+  overflow: hidden;
+  color: var(--texto-fraco);
+  font-size: 0.85rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.historico__rever {
+  padding: 0 14px;
+}
+
+.historico__erro {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+/* Celular estreito: o selo desce para baixo da data e o botão fica à direita. */
+@media (max-width: 380px) {
+  .historico__item {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .historico__item .selo {
+    grid-row: 2;
+    justify-self: start;
+  }
+
+  .historico__rever {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+  }
+}

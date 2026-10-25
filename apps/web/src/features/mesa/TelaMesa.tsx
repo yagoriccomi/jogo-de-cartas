@@ -46,6 +46,8 @@ type Consulta = 'placar' | 'regras' | null;
 export function TelaMesa() {
   const { jogo, sala, sessao, jogoRecebidoEm, fonte } = useApp();
   const comServidor = fonte.origem === 'servidor';
+  // No replay a mesa é a mesma, vista do meu assento, mas ninguém age: só os controles mexem nela.
+  const assistindo = fonte.origem === 'replay';
   const [ocupado, executar] = useAcao();
   const [consulta, definirConsulta] = useState<Consulta>(null);
   const [maoAbertaDe, definirMaoAbertaDe] = useState<string | null>(null);
@@ -57,12 +59,12 @@ export function TelaMesa() {
     rodadaCega: jogo?.rodadaCega ?? false,
     fase: jogo?.fase ?? null,
   });
-  useSonsDaMesa(jogo, sessao?.jogadorId ?? null);
+  useSonsDaMesa(jogo, assistindo ? null : (sessao?.jogadorId ?? null));
   const viraRef = useRef<HTMLDivElement>(null);
   const adversariosRef = useRef<HTMLUListElement>(null);
   // Hooks antes dos retornos antecipados; o resto da visão da mesa é calculado mais abaixo.
   const idDaVezAtivo = jogo === null ? null : idDaVezAtiva(jogo);
-  useTituloDaVez(idDaVezAtivo !== null && idDaVezAtivo === sessao?.jogadorId);
+  useTituloDaVez(!assistindo && idDaVezAtivo !== null && idDaVezAtivo === sessao?.jogadorId);
   useRolarAtePlacaDaVez(adversariosRef, idDaVezAtivo);
   // Enquanto a vaza fechada está em cena, é ela que as linhas exibem (a mesa já foi limpa).
   const cartasNaMesa = animacao.vaza?.jogadas ?? jogo?.mesa ?? SEM_CARTAS;
@@ -96,12 +98,12 @@ export function TelaMesa() {
     souDaVez,
     estouEliminado,
     aguardandoProximaRodada,
-    palpitando,
-    podeJogar,
     prazoFinal,
     vazaAtual,
     nomeDe,
   } = visao;
+  const palpitando = visao.palpitando && !assistindo;
+  const podeJogar = visao.podeJogar && !assistindo;
   const jogadorDaMaoAberta = jogo.jogadores.find((j) => j.id === maoAbertaDe);
 
   const cartasTexto = jogo.cartasPorJogador === 1 ? 'carta' : 'cartas';
@@ -228,7 +230,7 @@ export function TelaMesa() {
           </div>
 
           {/* Chamada de atenção a cada vez nova; a chave remonta o elemento e reinicia a animação. */}
-          {visao.devoAgir && (
+          {visao.devoAgir && !assistindo && (
             <p
               key={`${jogo.numeroRodada}-${jogo.fase}-${jogo.mesa.length}`}
               className="faixa-da-vez"

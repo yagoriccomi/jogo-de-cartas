@@ -25,7 +25,7 @@ export interface AcoesDaPartida {
 
 /**
  * Quem alimenta `sessao`, `sala` e `jogo` do armazém e responde às ações. É um campo só do
- * armazém: "tutorial ligado" e "quem responde" nunca discordam. O servidor não guarda as ações
+ * armazém: "tutorial (ou replay) ligado" e "quem responde" nunca discordam. O servidor não guarda as ações
  * aqui porque o adaptador dele depende do armazém (ficaria um ciclo de módulos).
  */
 export type FonteDaPartida =
@@ -34,6 +34,20 @@ export type FonteDaPartida =
       readonly origem: 'tutorial';
       /** Passo atual do roteiro (índice). */
       readonly passo: number;
+      readonly acoes: AcoesDaPartida;
+    }
+  | {
+      /** Rever uma partida terminada: a mesa mostra lances gravados e ninguém joga. */
+      readonly origem: 'replay';
+      readonly idPartida: string;
+      readonly totalDeRodadas: number;
+      /** Rodada a partir de 1; lance a partir de 0, dentro dos `lancesNaRodada`. */
+      readonly rodada: number;
+      readonly lance: number;
+      readonly lancesNaRodada: number;
+      readonly tocando: boolean;
+      /** Buscando a próxima rodada no servidor: os controles esperam. */
+      readonly carregando: boolean;
       readonly acoes: AcoesDaPartida;
     };
 
