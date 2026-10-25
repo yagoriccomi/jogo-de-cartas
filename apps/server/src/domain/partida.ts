@@ -16,7 +16,12 @@ import { montarBaralhoEmbaralhado, totalDeCartas, valoresEmJogo } from './baralh
 import { validarConfiguracao } from './configuracao';
 import { ErroDeRegra } from './erros';
 import { valorDaManilha } from './forca';
-import { projetarPara, type RetratoDaPartida, type VisaoDaPartida } from './projecao';
+import {
+  projetarPara,
+  type MomentoDaVisao,
+  type RetratoDaPartida,
+  type VisaoDaPartida,
+} from './projecao';
 import {
   maxCartasPorJogador,
   palpiteProibidoDoPe,
@@ -466,10 +471,10 @@ export class Partida {
   }
 
   /** Quem observa só recebe o que pode ver: as regras de visibilidade ficam em `projetarPara`. */
-  visaoPara(jogadorId: string | null): VisaoDaPartida {
+  visaoPara(jogadorId: string | null, momento: MomentoDaVisao = 'aoVivo'): VisaoDaPartida {
     // `indiceDe` recusa quem não está na partida antes de qualquer coisa ser montada.
     const observadorId = jogadorId === null ? null : this.jogador(this.indiceDe(jogadorId)).id;
-    return projetarPara(this.retrato(), observadorId);
+    return projetarPara(this.retrato(), observadorId, momento);
   }
 
   private retrato(): RetratoDaPartida {

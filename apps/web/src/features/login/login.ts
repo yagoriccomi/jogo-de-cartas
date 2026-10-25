@@ -48,7 +48,8 @@ export function useLogin(): EstadoDoLoginNaTela {
   );
 }
 
-function cabecalhos(): HeadersInit {
+/** O token do login no cabeçalho; vazio para o convidado. Também usado pelo histórico. */
+export function cabecalhos(): HeadersInit {
   const token = lerTokenDeLogin();
   return token === null ? {} : { authorization: `Bearer ${token}` };
 }

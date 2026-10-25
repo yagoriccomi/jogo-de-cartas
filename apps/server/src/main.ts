@@ -4,6 +4,7 @@ import { Server } from 'socket.io';
 import { PAUSAS_DO_FIM_DE_RODADA } from '@fodinha/shared';
 import type { ServidorDoJogo } from './infrastructure/socket/gateway';
 import { CondutorDePartidas } from './application/condutor-de-partidas';
+import { HistoricoDaConta } from './application/historico-da-conta';
 import { HistoricoDePartidas } from './application/historico-de-partidas';
 import { ServicoDeSalas } from './application/servico-de-salas';
 import { criarEstrategiasDosPerfis } from './domain/estrategia-bot';
@@ -15,6 +16,7 @@ import {
 } from './infrastructure/adaptadores';
 import { lerAmbiente } from './infrastructure/ambiente';
 import { abrirRegistroDePartidas } from './infrastructure/historico/abrir-registro';
+import { registrarRotasDoHistorico } from './infrastructure/historico/rotas-do-historico';
 import { abrirLogin } from './infrastructure/login/abrir-login';
 import { GatewayDoJogo, NotificadorSocketIo } from './infrastructure/socket/gateway';
 
@@ -55,6 +57,11 @@ async function iniciar(): Promise<void> {
     registrador,
   });
   registrarRotasDoLogin(http);
+  registrarRotasDoHistorico(http, {
+    historico: new HistoricoDaConta(banco.leitura, registrador),
+    login,
+    registrador,
+  });
   const historico = new HistoricoDePartidas({
     registro: banco.registro,
     identificadores,

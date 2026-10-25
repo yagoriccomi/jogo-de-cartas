@@ -14,6 +14,8 @@ export const LIMITES = {
   maxPrazoDaVezSegundos: 120,
   /** Pausa 'lendo as regras': a mesa espera o novato no máximo isto, uma vez por partida. */
   maxLeituraDasRegrasSegundos: 60,
+  /** Teto de partidas por página em "Minhas partidas" (o pedido sem `limite` usa o teto). */
+  maxPartidasPorPagina: 20,
 } as const;
 
 export interface ConfiguracaoPartida {

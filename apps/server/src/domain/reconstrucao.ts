@@ -67,14 +67,33 @@ function exigirMesmoResultado(partida: Partida, rodada: RodadaDoDiario): void {
 }
 
 /**
- * Uma rodada, dada a configuração da partida e a herança da rodada anterior. Lança `ErroDeRegra`
- * quando o diário não é coerente com as regras (jogada fora da vez, carta que não estava na mão).
+ * Quem acompanha a reencenação: `antesDeAgir` vê a mesa no instante da decisão (o export de
+ * treino), `depoisDeAgir` vê a mesa que a ação deixou (o replay).
  */
-export function reconstruirRodada(
+export interface OuvinteDaReencenacao {
+  /** A mesa recém-distribuída, antes de qualquer ação. */
+  aoAbrir?(partida: Partida): void;
+  antesDeAgir?(partida: Partida, decisao: Omit<DecisaoReconstruida, 'ordem' | 'visao'>): void;
+  depoisDeAgir?(partida: Partida): void;
+}
+
+export interface RodadaReencenada {
+  /** A partida como a última ação da rodada a deixou (fim da rodada ou partida encerrada). */
+  readonly partida: Partida;
+  readonly heranca: HerancaDaRodada;
+}
+
+/**
+ * Repõe a rodada numa `Partida` e refaz cada ação do diário, na ordem, avisando o ouvinte. Lança
+ * `ErroDeRegra` quando o diário não é coerente com as regras (jogada fora da vez, carta que não
+ * estava na mão, resultado diferente do gravado).
+ */
+export function reencenarRodada(
   configuracao: ConfiguracaoPartida,
   rodada: RodadaDoDiario,
   heranca: HerancaDaRodada,
-): RodadaReconstruida {
+  ouvinte: OuvinteDaReencenacao = {},
+): RodadaReencenada {
   const partida = Partida.reencenar({
     configuracao: { ...configuracao, mortosVeemCartas: rodada.mortosVeemCartas },
     numero: rodada.numero,
@@ -85,8 +104,8 @@ export function reconstruirRodada(
     ultimaVaza: heranca.ultimaVaza,
     resultadoAnterior: heranca.resultado,
   });
+  ouvinte.aoAbrir?.(partida);
   const pendentes = [...rodada.ocorrencias].sort((a, b) => a.depoisDe - b.depoisDe);
-  const decisoes: DecisaoReconstruida[] = [];
   let feitas = 0;
 
   const agir = (
@@ -98,12 +117,10 @@ export function reconstruirRodada(
     while (pendentes[0] && pendentes[0].depoisDe <= feitas) {
       aplicar(partida, pendentes.shift() as OcorrenciaDaRodada);
     }
-    if (autor) {
-      const visao = partida.visaoPara(jogadorId);
-      decisoes.push({ ordem: decisoes.length, jogadorId, autor, visao, acao });
-    }
+    if (autor) ouvinte.antesDeAgir?.(partida, { jogadorId, autor, acao });
     executar();
     feitas += 1;
+    ouvinte.depoisDeAgir?.(partida);
   };
 
   for (const { jogadorId, quantidade, autor } of rodada.palpites) {
@@ -123,7 +140,23 @@ export function reconstruirRodada(
   }
   exigirMesmoResultado(partida, rodada);
   const { ultimaVaza, resultadoRodada } = partida.visaoPara(null);
-  return { decisoes, heranca: { ultimaVaza, resultado: resultadoRodada } };
+  return { partida, heranca: { ultimaVaza, resultado: resultadoRodada } };
+}
+
+/** Uma rodada, dada a configuração da partida e a herança da rodada anterior. */
+export function reconstruirRodada(
+  configuracao: ConfiguracaoPartida,
+  rodada: RodadaDoDiario,
+  heranca: HerancaDaRodada,
+): RodadaReconstruida {
+  const decisoes: DecisaoReconstruida[] = [];
+  const reencenada = reencenarRodada(configuracao, rodada, heranca, {
+    antesDeAgir: (partida, { jogadorId, autor, acao }) => {
+      const visao = partida.visaoPara(jogadorId);
+      decisoes.push({ ordem: decisoes.length, jogadorId, autor, visao, acao });
+    },
+  });
+  return { decisoes, heranca: reencenada.heranca };
 }
 
 /** A partida inteira, rodada a rodada; as rodadas precisam vir completas e em ordem desde a 1ª. */

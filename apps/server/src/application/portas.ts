@@ -4,7 +4,12 @@ import type {
   EstadoSala,
   ReacaoNaMesa,
 } from '@fodinha/shared';
-import type { DesfechoDoDiario, ParticipanteDoDiario, RodadaDoDiario } from '../domain/diario';
+import type {
+  DesfechoDoDiario,
+  MotivoDoFim,
+  ParticipanteDoDiario,
+  RodadaDoDiario,
+} from '../domain/diario';
 import type { Sala } from '../domain/sala';
 
 /** Contratos que a aplicação exige da infraestrutura (inversão de dependência). */
@@ -97,4 +102,59 @@ export interface Login {
   trocarCodigo(codigo: string): Promise<SessaoDeLogin | null>;
   /** Encerra a sessão no servidor: o token deixa de valer em qualquer aba. */
   encerrar(token: string): Promise<void>;
+}
+
+/** Onde a listagem continua: a partida mais antiga da página anterior. */
+export interface CursorDoHistorico {
+  readonly iniciadaEm: number;
+  readonly idPartida: string;
+}
+
+export interface ConsultaDoHistorico {
+  readonly contaId: string;
+  /** `null` = a primeira página. */
+  readonly depoisDe: CursorDoHistorico | null;
+  readonly limite: number;
+}
+
+export interface PartidaGravadaDaConta {
+  readonly idPartida: string;
+  readonly iniciadaEm: number;
+  readonly encerradaEm: number;
+  readonly jogadores: number;
+  readonly rodadas: number;
+  /** A melhor colocação dos assentos da conta; `null` se não foi gravada. */
+  readonly colocacao: number | null;
+}
+
+/** Um assento da partida, sem conta: quem revê só precisa saber se era bot. */
+export interface AssentoGravado {
+  readonly jogadorId: string;
+  readonly tipo: 'humano' | 'bot';
+}
+
+export interface PartidaParaRever {
+  /** `unknown`: o JSON do banco é validado no domínio, como qualquer entrada. */
+  readonly configuracao: unknown;
+  readonly motivoDoFim: MotivoDoFim | null;
+  readonly totalDeRodadas: number;
+  /** O assento da conta que pede (o primeiro, se ela abriu mais de um). */
+  readonly jogadorIdDaConta: string;
+  /** Na ordem em que entraram na partida. */
+  readonly assentos: readonly AssentoGravado[];
+}
+
+/**
+ * Leitura do histórico para "Minhas partidas" e o replay. Só enxerga partidas em que a conta
+ * jogou: a checagem de quem participou mora na consulta, não na tela.
+ */
+export interface LeituraDoHistorico {
+  /** `false` sem banco: as rotas avisam o web, que esconde o histórico. */
+  readonly ligada: boolean;
+  /** Só as terminadas pelas regras (as únicas com replay), da mais recente para trás. */
+  partidasDaConta(consulta: ConsultaDoHistorico): Promise<PartidaGravadaDaConta[]>;
+  /** `null` = a partida não existe ou a conta não jogou nela. */
+  partidaParaRever(contaId: string, idPartida: string): Promise<PartidaParaRever | null>;
+  /** As rodadas de 1 até `ate`, em ordem; as que não passam na validação do formato ficam de fora. */
+  rodadasAte(idPartida: string, ate: number): Promise<RodadaDoDiario[]>;
 }

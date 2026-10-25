@@ -6,6 +6,7 @@ import { useApp } from './estado/armazem';
 import { TelaEntrada } from './features/entrada/TelaEntrada';
 import { TelaLobby } from './features/lobby/TelaLobby';
 import { TelaMesa } from './features/mesa/TelaMesa';
+import { ControlesDoReplay } from './features/replay/ControlesDoReplay';
 import { BalaoTutorial } from './features/tutorial/BalaoTutorial';
 import { URL_SERVIDOR } from './lib/socket';
 
@@ -64,8 +65,8 @@ function Rotas() {
 export function App() {
   const { conexao, sessao, fonte } = useApp();
   const emTutorial = fonte.origem === 'tutorial';
-  // O tutorial roda sem servidor: a queda ou o cold start não devem aparecer no meio dele.
-  const semConexao = conexao !== 'conectado' && !emTutorial;
+  // Tutorial e replay rodam sem o socket: a queda ou o cold start não devem aparecer no meio deles.
+  const semConexao = conexao !== 'conectado' && fonte.origem === 'servidor';
   const demorando = useDemorandoParaConectar(semConexao);
 
   return (
@@ -81,6 +82,7 @@ export function App() {
                 : 'Sem conexão com o servidor. Tentando novamente…'}
         </div>
       )}
+      <ControlesDoReplay />
       <main className="conteudo">
         <Rotas />
       </main>

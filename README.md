@@ -158,7 +158,7 @@ flowchart LR
 - **Servidor autoritativo** em Clean Architecture: o domínio (baralho, força, vaza, rodadas, partida, estratégia de bot) não conhece rede, relógio nem aleatoriedade, o que deixa as regras testáveis de forma determinística.
 - **Contrato único:** todo evento e estado vem de `@fodinha/shared`, reaproveitável pelo futuro app Android.
 - **Salas em memória**, atrás de uma interface de repositório pronta para trocar por Redis.
-- **Histórico das partidas** (opcional) no Turso, um SQLite na nuvem: cada rodada vira uma linha só com os fatos: as mãos, os palpites e as cartas na ordem, e quem decidiu cada lance (pessoa, bot ou jogada automática). O que o jogador via em cada decisão não é gravado; o export refaz essa visão com as próprias regras do jogo. Jogadores só por id; o apelido não é gravado.
+- **Histórico das partidas** (opcional) no Turso, um SQLite na nuvem: cada rodada vira uma linha só com os fatos: as mãos, os palpites e as cartas na ordem, e quem decidiu cada lance (pessoa, bot ou jogada automática). O que o jogador via em cada decisão não é gravado; o export refaz essa visão com as próprias regras do jogo. Jogadores só por id; o apelido não é gravado. Quem entra com a conta vê, em "Minhas partidas", as suas partidas terminadas e pode reabrir qualquer rodada na mesma mesa do jogo ao vivo: aí as mãos de todos aparecem, porque a partida já acabou.
 - **Login com Google** (opcional) pelo Better Auth, montado no próprio servidor, com as sessões no mesmo banco do histórico. Convidado continua sendo o padrão; quem entra tem a conta ligada ao lugar dele em cada partida gravada.
 
 | Camada    | Tecnologias                                                          |
@@ -324,7 +324,7 @@ Também há um `Dockerfile` de produção em `apps/server/Dockerfile` (build mul
 - [ ] Publicar na Play Store empacotando o site instalável (TWA/Capacitor), sem reescrever o jogo
 - [x] Login com Google opcional (as partidas ficam ligadas à conta)
 - [ ] Banimento à prova de aba anônima (depende de login)
-- [ ] Tela de histórico e replay das partidas (a gravação por rodada e o vínculo com a conta já existem)
+- [x] Tela de histórico e replay das partidas
 - [ ] Ranking
 - [ ] Redis para o estado das salas e escala horizontal (o repositório de salas já fica atrás de uma interface para essa troca)
 - [ ] Chat na mesa
