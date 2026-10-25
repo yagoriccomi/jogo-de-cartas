@@ -104,6 +104,7 @@ Sem cadastro · até 10 na mesa · celular e computador · servidor que não dei
 **🎮 Jogo**
 
 - Salas por código, sem cadastro: só o apelido, "Criar sala" ou "Entrar com código".
+- Login com Google opcional, para guardar as suas partidas na conta (veja [Login com Google](#login-com-google-opcional)); sem login, tudo funciona igual.
 - Convite por link com mensagem pronta: compartilhamento nativo do aparelho, botão direto do WhatsApp ou cópia do link; o link já preenche o código da sala.
 - A sala nasce com a configuração padrão e o anfitrião ajusta no lobby (baralhos, vidas, 8-9-10, tempo da vez), adiciona bots e inicia; o botão diz o que falta ("Adicione 1 jogador para iniciar").
 - Bots que jogam como um bom jogador, sem trapacear (veem só o que um humano veria):
@@ -158,14 +159,15 @@ flowchart LR
 - **Contrato único:** todo evento e estado vem de `@fodinha/shared`, reaproveitável pelo futuro app Android.
 - **Salas em memória**, atrás de uma interface de repositório pronta para trocar por Redis.
 - **Histórico das partidas** (opcional) no Turso, um SQLite na nuvem: cada rodada vira uma linha só com os fatos: as mãos, os palpites e as cartas na ordem, e quem decidiu cada lance (pessoa, bot ou jogada automática). O que o jogador via em cada decisão não é gravado; o export refaz essa visão com as próprias regras do jogo. Jogadores só por id; o apelido não é gravado.
+- **Login com Google** (opcional) pelo Better Auth, montado no próprio servidor, com as sessões no mesmo banco do histórico. Convidado continua sendo o padrão; quem entra tem a conta ligada ao lugar dele em cada partida gravada.
 
-| Camada    | Tecnologias                                               |
-| --------- | --------------------------------------------------------- |
-| Web       | React, Vite, TypeScript, Web Audio, PWA                   |
-| Servidor  | Node 24, Fastify, Socket.IO, TypeScript, tsup             |
-| Banco     | Turso / libSQL (opcional, só o histórico das partidas)    |
-| Qualidade | ESLint, Prettier, Vitest, Playwright, GitHub Actions      |
-| Infra     | Docker e Docker Compose (dev), Vercel (web), Render (API) |
+| Camada    | Tecnologias                                                          |
+| --------- | -------------------------------------------------------------------- |
+| Web       | React, Vite, TypeScript, Web Audio, PWA                              |
+| Servidor  | Node 24, Fastify, Socket.IO, Better Auth, TypeScript, tsup           |
+| Banco     | Turso / libSQL (opcional: histórico das partidas e sessões de login) |
+| Qualidade | ESLint, Prettier, Vitest, Playwright, GitHub Actions                 |
+| Infra     | Docker e Docker Compose (dev), Vercel (web), Render (API)            |
 
 ## Rodando localmente
 
@@ -230,6 +232,34 @@ npm run exportar-treino -w apps/server -- --url file:./dados/fodinha.db --saida 
 
 Sem `--url`, o comando usa `TURSO_DATABASE_URL` (e `TURSO_AUTH_TOKEN`); sem `--saida`, escreve na tela. Cada linha traz a visão do jogador no momento da decisão (refeita a partir dos fatos gravados), a decisão (palpite ou carta), quem decidiu e como a rodada terminou para ele. Rodadas de formato antigo, ou de uma partida em que falta uma rodada anterior, ficam de fora e entram na contagem do resumo.
 
+### Login com Google (opcional)
+
+O jogo continua sem cadastro: quem não entra com Google joga como convidado, como sempre. Quem entra tem as partidas ligadas à conta, para poder revê-las depois. O login só liga com as quatro variáveis `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `BETTER_AUTH_SECRET` e `BETTER_AUTH_URL` **e** com o banco do histórico (`TURSO_DATABASE_URL`), porque as sessões ficam nele. Sem elas, o botão "Entrar com Google" não aparece. Preencher só parte das quatro é engano de configuração e impede o servidor de subir, com a lista do que falta no log.
+
+**Privacidade:** da conta Google guardamos só o nome e o e-mail, para você rever as suas partidas. Eles nunca entram nos dados de treino dos bots, que usam só ids opacos. Por enquanto não há prazo de exclusão automática.
+
+**Como criar o cliente OAuth no Google Cloud (passo a passo):**
+
+1. Abra o [Google Cloud Console](https://console.cloud.google.com/) e crie (ou escolha) um projeto.
+2. Em **APIs e serviços → Tela de permissão OAuth** (ou **Google Auth Platform → Branding**), configure o app como **Externo**, com nome, e-mail de suporte e os escopos `openid`, `email` e `profile`. Enquanto o app estiver em modo de teste, só os e-mails cadastrados em **Usuários de teste** conseguem entrar; publique o app para liberar qualquer conta.
+3. Em **APIs e serviços → Credenciais → Criar credenciais → ID do cliente OAuth**, escolha o tipo **Aplicativo da Web**.
+4. Em **URIs de redirecionamento autorizados**, cadastre o endereço de volta de cada ambiente (é sempre o endereço do servidor, nunca o do web):
+   - desenvolvimento: `http://localhost:3001/api/auth/callback/google`
+   - produção: `https://fodinha-server-2sg2.onrender.com/api/auth/callback/google`
+5. Deixe as **Origens JavaScript autorizadas** vazias: o navegador nunca fala direto com o Google.
+6. Copie o **ID do cliente** para `GOOGLE_CLIENT_ID` e a **chave secreta** para `GOOGLE_CLIENT_SECRET`.
+7. Gere o segredo das sessões (no mínimo 32 caracteres) com `openssl rand -base64 32` e ponha em `BETTER_AUTH_SECRET`. Cada ambiente tem o seu; trocar o segredo derruba as sessões abertas.
+8. Ponha em `BETTER_AUTH_URL` o endereço público do servidor: `http://localhost:3001` em desenvolvimento, `https://fodinha-server-2sg2.onrender.com` em produção.
+
+Para testar localmente: preencha as quatro variáveis e `TURSO_DATABASE_URL=file:./dados/fodinha.db` no `.env`, suba o ambiente e toque em "Entrar com Google" na tela inicial.
+
+**Como funciona (web e servidor em domínios diferentes):** o web fica na Vercel e o servidor na Render, então um cookie do servidor seria de terceiros para o web, e o Safari (e cada vez mais o Chrome) bloqueia esse tipo de cookie. Por isso o login não depende dele:
+
+1. "Entrar com Google" abre a página do servidor (`/auth/google`), que manda ao Google. O cookie de segurança do OAuth vive só no domínio do servidor, como cookie próprio, e volta junto com o Google.
+2. Na volta, o servidor confere a sessão e devolve o navegador ao web com um código de uso único, que vale 1 minuto, no fragmento do endereço (`#login=...`, que não aparece nos logs).
+3. O web troca o código por um token de sessão (`POST /auth/trocar`) e o guarda no aparelho. Daí em diante, as chamadas mandam `Authorization: Bearer` e a conexão do jogo manda o token no aperto de mão do Socket.IO; o servidor confere a sessão no banco e só então liga o jogador à conta. O cliente nunca informa a própria conta.
+4. Só são aceitas as origens de `CORS_ORIGINS`, também como destino da volta do login, o que impede usar o login para redirecionar a um site qualquer.
+
 ## Testes e qualidade
 
 ```bash
@@ -248,19 +278,23 @@ A cada push e pull request, o GitHub Actions executa lint, typecheck, testes, bu
 
 ## Variáveis de ambiente
 
-Copie o `.env.example` para `.env`. Só o `TURSO_AUTH_TOKEN` é segredo, e ele é opcional: sem banco configurado, nada é gravado.
+Copie o `.env.example` para `.env`. São segredos o `TURSO_AUTH_TOKEN`, o `GOOGLE_CLIENT_SECRET` e o `BETTER_AUTH_SECRET`, todos opcionais: sem banco configurado, nada é gravado, e sem as variáveis do Google o login fica desligado.
 
-| Variável             | Onde     | Para que serve                                                                                                                           |
-| -------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `PORT`               | servidor | Porta HTTP/WebSocket do servidor de jogo (padrão `3001`).                                                                                |
-| `CORS_ORIGINS`       | servidor | Origens autorizadas a conectar, separadas por vírgula (padrão `http://localhost:5173`).                                                  |
-| `LOG_LEVEL`          | servidor | Nível de log: `debug`, `info`, `warn` ou `error`.                                                                                        |
-| `BOT_DELAY_MS`       | servidor | Milissegundos que o bot espera antes de jogar (padrão `2000`). Os testes de tela usam um valor baixo.                                    |
-| `CENARIOS_DE_TESTE`  | servidor | Só desenvolvimento (padrão `false`; o Docker de dev liga). Libera a criação de salas de teste com bots. Nunca habilite em produção.      |
-| `TURSO_DATABASE_URL` | servidor | Opcional. Banco do histórico das partidas: `libsql://...` (Turso) ou `file:./dados/fodinha.db` (arquivo local). Sem ela, nada é gravado. |
-| `TURSO_AUTH_TOKEN`   | servidor | Opcional. Token do Turso (segredo; nunca no Git). O arquivo local não precisa.                                                           |
-| `VITE_SERVER_URL`    | web      | URL pública do servidor de jogo. Fica exposta no navegador: nunca coloque nada sensível.                                                 |
-| `WEB_PORT`           | Docker   | Opcional. Porta do frontend no host (padrão `5173`). Se mudar, inclua a nova origem em `CORS_ORIGINS`.                                   |
+| Variável               | Onde     | Para que serve                                                                                                                                                      |
+| ---------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`                 | servidor | Porta HTTP/WebSocket do servidor de jogo (padrão `3001`).                                                                                                           |
+| `CORS_ORIGINS`         | servidor | Origens autorizadas a conectar, separadas por vírgula (padrão `http://localhost:5173`).                                                                             |
+| `LOG_LEVEL`            | servidor | Nível de log: `debug`, `info`, `warn` ou `error`.                                                                                                                   |
+| `BOT_DELAY_MS`         | servidor | Milissegundos que o bot espera antes de jogar (padrão `2000`). Os testes de tela usam um valor baixo.                                                               |
+| `CENARIOS_DE_TESTE`    | servidor | Só desenvolvimento (padrão `false`; o Docker de dev liga). Libera a criação de salas de teste com bots. Nunca habilite em produção.                                 |
+| `TURSO_DATABASE_URL`   | servidor | Opcional. Banco do histórico das partidas: `libsql://...` (Turso) ou `file:./dados/fodinha.db` (arquivo local). Sem ela, nada é gravado.                            |
+| `TURSO_AUTH_TOKEN`     | servidor | Opcional. Token do Turso (segredo; nunca no Git). O arquivo local não precisa.                                                                                      |
+| `GOOGLE_CLIENT_ID`     | servidor | Opcional. ID do cliente OAuth do Google (veja [Login com Google](#login-com-google-opcional)). Liga o login junto com as três seguintes e com `TURSO_DATABASE_URL`. |
+| `GOOGLE_CLIENT_SECRET` | servidor | Opcional. Chave secreta do cliente OAuth (segredo; nunca no Git).                                                                                                   |
+| `BETTER_AUTH_SECRET`   | servidor | Opcional. Segredo das sessões de login, com 32 caracteres ou mais (`openssl rand -base64 32`; segredo, um por ambiente).                                            |
+| `BETTER_AUTH_URL`      | servidor | Opcional. Endereço público do servidor (`http://localhost:3001` em dev); a volta do Google é `<BETTER_AUTH_URL>/api/auth/callback/google`.                          |
+| `VITE_SERVER_URL`      | web      | URL pública do servidor de jogo. Fica exposta no navegador: nunca coloque nada sensível.                                                                            |
+| `WEB_PORT`             | Docker   | Opcional. Porta do frontend no host (padrão `5173`). Se mudar, inclua a nova origem em `CORS_ORIGINS`.                                                              |
 
 ## Deploy
 
@@ -272,6 +306,7 @@ O frontend vai para a **Vercel** e o servidor de jogo para a **Render**.
 2. Defina `CORS_ORIGINS` com a URL do frontend (por exemplo `https://game.yagoriccomi.com.br`). Várias origens são separadas por vírgula.
 3. `LOG_LEVEL` já tem valor padrão no Blueprint.
 4. Opcional, para gravar o histórico: crie um banco no Turso e defina `TURSO_DATABASE_URL` e `TURSO_AUTH_TOKEN` no painel. Sem elas o servidor roda igual, sem gravar; se o banco não responder na subida, o jogo sobe mesmo assim e o erro aparece no log.
+5. Opcional, para o login com Google (exige o banco do passo 4): crie o cliente OAuth como em [Login com Google](#login-com-google-opcional) e defina `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `BETTER_AUTH_SECRET` e `BETTER_AUTH_URL=https://fodinha-server-2sg2.onrender.com` no painel. A Vercel não precisa de nada novo.
 
 Também há um `Dockerfile` de produção em `apps/server/Dockerfile` (build multi-stage, usuário não-root). Para gerar a imagem, a partir da raiz: `docker build -f apps/server/Dockerfile -t fodinha-server .`
 
@@ -287,9 +322,9 @@ Também há um `Dockerfile` de produção em `apps/server/Dockerfile` (build mul
 ## Roadmap
 
 - [ ] Publicar na Play Store empacotando o site instalável (TWA/Capacitor), sem reescrever o jogo
-- [ ] Login e contas de jogador
+- [x] Login com Google opcional (as partidas ficam ligadas à conta)
 - [ ] Banimento à prova de aba anônima (depende de login)
-- [ ] Tela de histórico e replay das partidas (a gravação por rodada já existe)
+- [ ] Tela de histórico e replay das partidas (a gravação por rodada e o vínculo com a conta já existem)
 - [ ] Ranking
 - [ ] Redis para o estado das salas e escala horizontal (o repositório de salas já fica atrás de uma interface para essa troca)
 - [ ] Chat na mesa
