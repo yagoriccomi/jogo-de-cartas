@@ -1,0 +1,71 @@
+.login {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.login--logado {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 10px 6px 10px 14px;
+  border: 2px solid var(--linha);
+  border-radius: 14px;
+  background: var(--superficie);
+}
+
+.login__quem {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.login__rotulo {
+  font-size: 0.78rem;
+  color: var(--texto-fraco);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.login__nome {
+  overflow: hidden;
+  color: var(--texto-neon);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.login__email {
+  overflow: hidden;
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.login__aviso {
+  display: flex;
+  flex-basis: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 6px 10px 14px;
+  border: 2px solid var(--rosa);
+  border-radius: 14px;
+  background: var(--superficie);
+  box-shadow: var(--brilho-rosa);
+}
+
+.login__privacidade {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--texto-suave);
+}
+
+.login__privacidade li::marker {
+  color: var(--ciano);
+}

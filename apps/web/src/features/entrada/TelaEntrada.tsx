@@ -2,6 +2,8 @@ import { useState, type FormEvent } from 'react';
 import { CONFIGURACAO_PADRAO, LIMITES } from '@fodinha/shared';
 import { BotaoInstalar } from '../../componentes/BotaoInstalar';
 import { IconeFechar, IconeLivro } from '../../componentes/Icones';
+import { PainelDoLogin } from '../login/PainelDoLogin';
+import { AVISO_DA_ENTRADA } from '../login/textos';
 import { iniciarTutorial } from '../tutorial/motor';
 import { criarSala, dispensarAvisoDeEntrada, entrarNaSala } from '../../estado/acoes';
 import { useApp } from '../../estado/armazem';
@@ -195,6 +197,8 @@ export function TelaEntrada() {
           </p>
         )}
 
+        <PainelDoLogin />
+
         {/* Não depende do servidor: dá para aprender enquanto ele acorda. */}
         <button
           type="button"
@@ -208,6 +212,7 @@ export function TelaEntrada() {
         <div className="entrada__instalar">
           <BotaoInstalar />
         </div>
+        <p className="entrada__privacidade">{AVISO_DA_ENTRADA}</p>
       </form>
     </div>
   );

@@ -93,6 +93,12 @@
   margin-top: auto;
 }
 
+.entrada__privacidade {
+  font-size: 0.78rem;
+  color: var(--texto-fraco);
+  text-align: center;
+}
+
 @media (min-width: 900px) {
   .entrada {
     flex-direction: row;
