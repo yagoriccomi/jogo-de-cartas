@@ -94,26 +94,26 @@ Unidade no domínio (agenda, invariantes, projeção, diário, visão da mesa, c
 
 Uma branch e um PR por fatia, em série dentro do módulo. O usuário autorizou o merge com tudo verde e pediu para vigiar os deploys.
 
-| Fatia                      | Nível | Depende de | Branch (PR)                              | Estado                    |
-| -------------------------- | ----- | ---------- | ---------------------------------------- | ------------------------- |
-| S1 agenda da mesa          | alto  | —          | `refactor/servidor-arquitetura` (#25)    | mergeada, deploy ok       |
-| W1 visão da mesa           | alto  | —          | `refactor/web-mesa` (#27)                | mergeada, deploy ok       |
-| P1 preferência do aparelho | alto  | —          | `refactor/web-preferencias` (#26)        | mergeada, deploy ok       |
-| S2 invariantes da Sala     | alto  | S1         | `refactor/servidor-sala` (#28)           | mergeada, deploy ok       |
-| W2 cena da vaza            | alto  | W1         | `refactor/web-cena-da-vaza` (#29)        | mergeada, deploy ok       |
-| S3 jogar a vez             | alto  | S2         | `refactor/servidor-jogar-a-vez` (#30)    | mergeada, deploy ok       |
-| S4 projeção completa       | alto  | S3         | `refactor/servidor-projecao` (#31)       | mergeada, deploy ok       |
-| S5 Sala esconde a Partida  | alto  | S4         | `refactor/servidor-sala-esconde-partida` | revisada: pronta          |
-| W3 fonte da partida        | alto  | W2         | `refactor/web-fonte-da-partida` (#32)    | mergeada, deploy ok       |
-| W4 planejadores dos hooks  | alto  | W3         | `refactor/web-planejadores` (#33)        | mergeada, deploy ok       |
-| H1 diário + Turso + export | alto  | S5         | `feat/historico-de-partidas`             | revisada: pronta          |
-| L1 login Google            | alto  | H1         | `feat/login-google`                      | revisada: pronta (PR #37) |
-| R1 histórico e replay      | alto  | L1, W4     | `feat/replay-de-partidas`                | na fila                   |
+| Fatia                      | Nível | Depende de | Branch (PR)                                    | Estado              |
+| -------------------------- | ----- | ---------- | ---------------------------------------------- | ------------------- |
+| S1 agenda da mesa          | alto  | —          | `refactor/servidor-arquitetura` (#25)          | mergeada, deploy ok |
+| W1 visão da mesa           | alto  | —          | `refactor/web-mesa` (#27)                      | mergeada, deploy ok |
+| P1 preferência do aparelho | alto  | —          | `refactor/web-preferencias` (#26)              | mergeada, deploy ok |
+| S2 invariantes da Sala     | alto  | S1         | `refactor/servidor-sala` (#28)                 | mergeada, deploy ok |
+| W2 cena da vaza            | alto  | W1         | `refactor/web-cena-da-vaza` (#29)              | mergeada, deploy ok |
+| S3 jogar a vez             | alto  | S2         | `refactor/servidor-jogar-a-vez` (#30)          | mergeada, deploy ok |
+| S4 projeção completa       | alto  | S3         | `refactor/servidor-projecao` (#31)             | mergeada, deploy ok |
+| S5 Sala esconde a Partida  | alto  | S4         | `refactor/servidor-sala-esconde-partida` (#34) | mergeada, deploy ok |
+| W3 fonte da partida        | alto  | W2         | `refactor/web-fonte-da-partida` (#32)          | mergeada, deploy ok |
+| W4 planejadores dos hooks  | alto  | W3         | `refactor/web-planejadores` (#33)              | mergeada, deploy ok |
+| H1 diário + Turso + export | alto  | S5         | `feat/historico-de-partidas` (#35)             | mergeada, deploy ok |
+| L1 login Google            | alto  | H1         | `feat/login-google` (#37)                      | mergeada, deploy ok |
+| R1 histórico e replay      | alto  | L1, W4     | `feat/replay-de-partidas` (#38)                | mergeada, deploy ok |
 
 ## 10. Definição de Pronto
 
-- [ ] Todas as fatias `revisada: pronta`
-- [ ] Bateria do projeto verde em cada PR [#49]
-- [ ] Sem segredo em código [#37]
-- [ ] README, `.env.example` e `CLAUDE.md` atualizados (banco, login, histórico) [#96]
-- [ ] `docs/planos/ENTREGA-correcao-e-historico.md` escrito
+- [x] Todas as fatias `revisada: pronta` (mergeadas, deploy ok)
+- [x] Bateria do projeto verde em cada PR [#49]
+- [x] Sem segredo em código [#37]
+- [x] README, `.env.example` e `CLAUDE.md` atualizados (banco, login, histórico) [#96]
+- [x] `docs/planos/ENTREGA-correcao-e-historico.md` escrito
