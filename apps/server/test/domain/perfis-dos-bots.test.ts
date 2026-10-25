@@ -103,6 +103,7 @@ describe('Perfis dos bots — na sala', () => {
       conectado: true,
       tokenSessao: ehBot ? null : `token-${id}`,
       dispositivoId: ehBot ? null : `disp-${id}`,
+      contaId: null,
     };
   }
 

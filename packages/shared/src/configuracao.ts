@@ -8,6 +8,8 @@ export const LIMITES = {
   maxVidas: 10,
   maxApelido: 20,
   maxIdentificador: 100,
+  /** Token de sessão do login (o do Better Auth tem 32 caracteres; a folga cobre a assinatura). */
+  maxTokenDeLogin: 256,
   minPrazoDaVezSegundos: 10,
   maxPrazoDaVezSegundos: 120,
   /** Pausa 'lendo as regras': a mesa espera o novato no máximo isto, uma vez por partida. */

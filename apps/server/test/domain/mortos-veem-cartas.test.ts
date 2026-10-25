@@ -26,6 +26,7 @@ function humano(id: string): Participante {
     conectado: true,
     tokenSessao: `token-${id}`,
     dispositivoId: `disp-${id}`,
+    contaId: null,
   };
 }
 

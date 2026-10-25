@@ -10,9 +10,16 @@ import { VERSAO_DO_DIARIO, type ParticipanteDoDiario } from '../../domain/diario
 function inserirParticipante(idPartida: string, participante: ParticipanteDoDiario): InStatement {
   return {
     // Ignora o repetido: quem já estava na partida não é sobrescrito por uma gravação atrasada.
-    sql: `INSERT OR IGNORE INTO participantes_da_partida (partida_id, jogador_id, tipo, perfil)
-          VALUES (?, ?, ?, ?)`,
-    args: [idPartida, participante.jogadorId, participante.tipo, participante.perfil],
+    sql: `INSERT OR IGNORE INTO participantes_da_partida
+            (partida_id, jogador_id, tipo, perfil, conta_id)
+          VALUES (?, ?, ?, ?, ?)`,
+    args: [
+      idPartida,
+      participante.jogadorId,
+      participante.tipo,
+      participante.perfil,
+      participante.contaId,
+    ],
   };
 }
 

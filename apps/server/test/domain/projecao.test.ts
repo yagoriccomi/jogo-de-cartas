@@ -18,6 +18,7 @@ function participante(id: string, ehBot = false): Participante {
     conectado: true,
     tokenSessao: ehBot ? null : `token-${id}`,
     dispositivoId: ehBot ? null : `disp-${id}`,
+    contaId: null,
   };
 }
 
