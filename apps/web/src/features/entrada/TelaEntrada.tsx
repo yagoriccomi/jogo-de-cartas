@@ -172,6 +172,8 @@ export function TelaEntrada() {
           </div>
         )}
 
+        <PainelDoLogin />
+
         <button
           type="submit"
           className="botao botao--primario botao--bloco"
@@ -198,7 +200,6 @@ export function TelaEntrada() {
           </p>
         )}
 
-        <PainelDoLogin />
         <MinhasPartidas />
 
         {/* Não depende do servidor: dá para aprender enquanto ele acorda. */}
