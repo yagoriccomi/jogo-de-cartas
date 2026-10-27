@@ -1,17 +1,15 @@
-import { useState } from 'react';
 import { IconeFechar } from '../../componentes/Icones';
 import { useAcao } from '../../lib/useAcao';
-import { DialogoDoLogin } from './DialogoDoLogin';
-import { dispensarAvisoDoLogin, sairDaConta, useLogin } from './login';
+import { dispensarAvisoDoLogin, entrarComGoogle, sairDaConta, useLogin } from './login';
 import './login.css';
 
 /**
- * Conta Google na entrada: botão para entrar ou quem está logado e "Sair". Some por inteiro quando
- * o servidor não tem login (ou ainda não respondeu): o convidado nunca espera por ele.
+ * Conta Google na entrada, como alternativa ao apelido: botão para entrar ou quem está logado e
+ * "Sair". Some por inteiro quando o servidor não tem login (ou ainda não respondeu): o convidado
+ * nunca espera por ele.
  */
 export function PainelDoLogin() {
   const { situacao, aviso } = useLogin();
-  const [dialogoAberto, definirDialogoAberto] = useState(false);
   const [saindo, executar] = useAcao();
 
   const avisoDeFalha = aviso && (
@@ -55,15 +53,9 @@ export function PainelDoLogin() {
   return (
     <section className="login" aria-label="Conta (opcional)">
       {avisoDeFalha}
-      <button
-        type="button"
-        className="botao botao--bloco login__entrar"
-        onClick={() => definirDialogoAberto(true)}
-      >
+      <button type="button" className="botao botao--bloco login__entrar" onClick={entrarComGoogle}>
         Entrar com Google
       </button>
-      <span className="entrada__ajuda">Opcional: para rever suas partidas depois.</span>
-      {dialogoAberto && <DialogoDoLogin onFechar={() => definirDialogoAberto(false)} />}
     </section>
   );
 }

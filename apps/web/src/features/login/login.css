@@ -56,16 +56,3 @@
   background: var(--superficie);
   box-shadow: var(--brilho-rosa);
 }
-
-.login__privacidade {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 0;
-  padding-left: 18px;
-  color: var(--texto-suave);
-}
-
-.login__privacidade li::marker {
-  color: var(--ciano);
-}
