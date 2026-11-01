@@ -204,12 +204,6 @@ describe('visaoDaMesa — palpite', () => {
     expect(v.vivosNaMesa).toBe(3);
     expect(v.adversarios.map((j) => j.id)).toEqual(['a', 'd', 'b']);
   });
-
-  it('deveRotularMaoEPeSoNoPrimeiroPalpiteDaPartida', () => {
-    expect(visao(partida({ numeroRodada: 1 })).rotularMaoEPe).toBe(true);
-    expect(visao(partida({ numeroRodada: 1, fase: 'jogando' })).rotularMaoEPe).toBe(false);
-    expect(visao(partida({ numeroRodada: 2 })).rotularMaoEPe).toBe(false);
-  });
 });
 
 describe('visaoDaMesa — contadores', () => {

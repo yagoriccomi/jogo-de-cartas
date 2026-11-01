@@ -93,7 +93,7 @@ Sem cadastro · até 10 na mesa · celular e computador · servidor que não dei
 - **Montinhos:** cada vaza ganha vira um montinho na frente de quem ganhou; as vazas todas empatadas vão para um monte abaixo da manilha (no celular, só o contador). Acima da vira, um contador mostra a vaza da rodada (ex.: 2/5).
 - **Ritmo:** a última vaza de cada rodada fica 3 segundos na mesa antes de ir para o montinho, e o resultado da rodada fica uns 6 segundos na tela (uns 4 a mais nas rodadas cegas, que se resolvem sozinhas). Quando a partida acaba, uma tela celebra o vencedor.
 - **Sua vez:** a faixa "Sua vez!" cruza a mesa, suas cartas pulsam em rosa, toca uma campainha própria, o título da aba muda e as placas de cima rolam acompanhando quem está jogando. O seu tempo aparece uma vez só, na pílula "Sua vez": pulsa nos últimos 10 segundos e faz tic-tac nos últimos 5.
-- **Placas:** seguem a ordem de jogo, com a mão à esquerda e o pé à direita. No primeiro palpite da partida elas dizem "MÃO" e "PÉ" por extenso; depois fica só o ícone (a mão e a pegada).
+- **Placas:** seguem a ordem de jogo, com a mão à esquerda e o pé à direita. Só o ícone (a mão e a pegada), sem rótulo escrito.
 - **Durante os palpites:** o centro da mesa mostra quem está palpitando, quanto a mesa já pediu e quantos já palpitaram.
 - **Painel de palpite:** pergunta "Vai fazer quantas?" e mostra o saldo em palavras ("Pediram 3 de 5 · sobram 2", ou "passou 1"). O botão diz "Toque num número" até haver escolha e depois "Confirmar N"; quem é o pé vê o aviso de que não pode fechar a soma, com o número proibido riscado. "Mostrar mais" abre quem já palpitou, em ordem, e quantos ainda palpitam depois de você.
 
