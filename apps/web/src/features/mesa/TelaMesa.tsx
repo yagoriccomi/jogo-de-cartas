@@ -154,7 +154,6 @@ export function TelaMesa() {
                 jogador={jogador}
                 ehPe={jogador.id === jogo.idDoPe}
                 ehPrimeiro={jogador.id === jogo.idDoPrimeiro}
-                rotularMaoEPe={visao.rotularMaoEPe}
                 ehDaVez={ehDaVez}
                 prazoFinal={ehDaVez ? prazoFinal : null}
                 manilha={jogo.manilha}

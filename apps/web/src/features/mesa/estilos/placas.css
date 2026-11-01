@@ -182,26 +182,6 @@
   padding-right: 56px;
 }
 
-/* Primeiro palpite da partida: ícone + "MÃO"/"PÉ" por extenso; depois encolhe para só o ícone. */
-.simbolo--com-rotulo {
-  width: auto;
-  gap: 3px;
-  padding: 0 5px 0 3px;
-  font-weight: 800;
-  font-size: 0.62rem;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-
-.placa:has(.simbolos--com-rotulo) .placa__nome {
-  padding-right: 52px;
-}
-
-.placa:has(.simbolos--com-rotulo .simbolo--mao):has(.simbolos--com-rotulo .simbolo--pe)
-  .placa__nome {
-  padding-right: 100px;
-}
-
 /* ---------- Palpite e vazas feitas (placas, minha área e placar) ---------- */
 
 .numeros {

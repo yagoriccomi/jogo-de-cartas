@@ -57,7 +57,6 @@ export interface VisaoDaMesa {
   readonly devoAgir: boolean;
   /** Na fase de jogo, a mão fica apagada enquanto a vez é de outro. */
   readonly apagarMao: boolean;
-  readonly rotularMaoEPe: boolean;
   /** Fim do prazo da vez em tempo local; `null` sem prazo, fora da rodada ou na pausa. */
   readonly prazoFinal: number | null;
   readonly situacao: Situacao;
@@ -187,7 +186,6 @@ export function visaoDaMesa(entrada: EntradaDaVisao): VisaoDaMesa {
     devoAgir,
     apagarMao: jogo.fase === 'jogando' && !souDaVez,
     // Primeiro palpite da partida: mão e pé aparecem com o nome, depois só o ícone.
-    rotularMaoEPe: jogo.numeroRodada === 1 && jogo.fase === 'palpites',
     // Contagem a partir do "tempo restante" que o servidor mandou, não do relógio dele.
     prazoFinal:
       idDaVez !== null && jogo.prazoDaVezRestanteMs !== null
