@@ -18,9 +18,9 @@
     "@fastify/cors": "^10.0.1",
     "@fodinha/shared": "*",
     "@libsql/client": "^0.18.0",
-    "better-auth": "^1.7.12",
-    "fastify": "^5.2.0",
-    "kysely": "^0.29.7",
+    "better-auth": "^1.7.18",
+    "fastify": "^5.12.8",
+    "kysely": "^0.29.8",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
@@ -29,6 +29,6 @@
     "socket.io-client": "^4.8.1",
     "tsup": "^8.3.5",
     "tsx": "^4.19.2",
-    "vitest": "^5.0.4"
+    "vitest": "^5.1.0"
   }
 }
